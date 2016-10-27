@@ -8,7 +8,7 @@ Qhd verwenden
 ##Start des Autos
 * roslaunch kinect2_bridge kinect2_bridge.launch
 * Ps_basis mit sudo su ausführen
-* Rosrun rqt_gui rqt_gui -> zeigt Kamera und aktuelle Daten
+* rqt (bzw. rosrun rqt_gui rqt_gui) -> zeigt kinect Bilder
 
 ##App Benutzung
 ifconfig    -> Zum Auslesen der IP Adresse
