@@ -1,0 +1,15 @@
+Zuerst install_ros1.sh ausführen
+
+echo "source /opt/ros/indigo/setup.bash" >> /home/pses/.bashrc
+source /home/pses/.bashrc
+
+install_ros2.sh ausführen
+
+sudo su
+
+echo "source /opt/ros/indigo/setup.bash" >> /etc/bash.bashrc
+echo "source /home/pses/catkin_ws/devel/setup.bash" >> /etc/bash.bashrc
+source  /etc/bash.bashrc
+exit
+
+install_ros3.sh ausführen
