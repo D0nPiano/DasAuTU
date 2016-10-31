@@ -7,7 +7,8 @@ Qhd verwenden
 
 ##Start des Autos
 * roslaunch kinect2_bridge kinect2_bridge.launch
-* Ps_basis mit sudo su ausführen
+* Ps_basis mit sudo su ausführen:
+* roslaunch pses_basis pses_basis kinect:=bool dashboard:=bool
 * rqt (bzw. rosrun rqt_gui rqt_gui) -> zeigt kinect Bilder
 
 ##App Benutzung
