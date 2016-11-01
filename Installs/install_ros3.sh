@@ -1,6 +1,8 @@
 #!/bin/bash
 user=pses
 
+sudo apt-get -y dist-upgrade
+sudo apt-get -y install libgles2-mesa
 sudo apt-get -y install qtbase5-dev
 cd /home/$user/catkin_ws/src
 rm CMakeLists.txt
