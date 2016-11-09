@@ -28,20 +28,41 @@
 // %Tag(FULLTEXT)%
 #include "ros/ros.h"
 #include "std_msgs/String.h"
+#include <pses_basis/Command.h>
 #include "pses_basis/SensorData.h"
+#include <iostream>
+
+typedef pses_basis::Command command_data;
 
 /**
  * This tutorial demonstrates simple receipt of messages over the ROS system.
  */
 // %Tag(CALLBACK)%
-void chatterCallback(const pses_basis::SensorData::ConstPtr& msg, ros::NodeHandle& n)
-{
+void chatterCallback(const pses_basis::SensorData::ConstPtr& msg, ros::Publisher& chatter_pub, float* currentVelPtr){
+	float currentRange = msg->range_sensor_front;
     ROS_INFO("distance to front: [%f]", msg->range_sensor_front);
+    ROS_INFO("currentVel: [%f]", *currentVelPtr);
+
+    if(currentRange < 1.5 && *currentVelPtr > 0){
+	    command_data cmd;
+	    cmd.header.stamp = ros::Time::now();
+	    cmd.motor_level= 0;
+
+	    //ROS_INFO("%s", retmsg.data.c_str());
+	    chatter_pub.publish(cmd);
+	    ros::spinOnce();    	
+    }
 }
 // %EndTag(CALLBACK)%
 
+void getCurrentVelocity(const command_data::ConstPtr& msg, float* currentVelPtr){
+	*currentVelPtr = msg->motor_level;
+}
+
 int main(int argc, char **argv)
 {
+
+	float currentVel = 1;
     /**
    * The ros::init() function needs to see argc and argv so that it can perform
    * any ROS arguments and name remapping that were provided at the command line.
@@ -61,6 +82,9 @@ int main(int argc, char **argv)
    */
     ros::NodeHandle n;
 
+
+  	ros::Publisher chatter_pub = n.advertise<command_data>("pses_basis/command", 1000);
+
     /**
    * The subscribe() call is how you tell ROS that you want to receive messages
    * on a given topic.  This invokes a call to the ROS
@@ -77,7 +101,8 @@ int main(int argc, char **argv)
    * away the oldest ones.
    */
     // %Tag(SUBSCRIBER)
-    ros::Subscriber sub = n.subscribe<pses_basis::SensorData>("pses_basis/sensor_data", 1000,  std::bind (chatterCallback,std::placeholders::_1,n));
+    ros::Subscriber cmd_sub = n.subscribe<command_data>("pses_basis/command", 1000,  std::bind (getCurrentVelocity,std::placeholders::_1, &currentVel));
+    ros::Subscriber sub = n.subscribe<pses_basis::SensorData>("pses_basis/sensor_data", 1000,  std::bind (chatterCallback,std::placeholders::_1,chatter_pub, &currentVel));
     // %EndTag(SUBSCRIBER)%
 
     /**
