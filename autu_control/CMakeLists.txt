@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
 )
 
+find_package(RTABMap 0.11 REQUIRED)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -99,6 +100,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
+  LIBRARIES rtabmap_ros
 #  INCLUDE_DIRS include
 #  LIBRARIES autu_control
 #  CATKIN_DEPENDS pses_basis roscpp
@@ -115,6 +117,7 @@ catkin_package(
 include_directories(
   ${catkin_INCLUDE_DIRS}
   include
+  ${RTABMap_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library

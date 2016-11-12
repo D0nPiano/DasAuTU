@@ -42,9 +42,10 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>pses_basis</build_depend>
   <build_depend>roscpp</build_depend>
+  <build_depend>rtabmap</build_depend>
   <run_depend>pses_basis</run_depend>
   <run_depend>roscpp</run_depend>
-
+ <run_depend>rtabmap</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
