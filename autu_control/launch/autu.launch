@@ -3,42 +3,15 @@
 <launch>
   <include file="$(find pses_basis)/launch/pses_basis.launch" />
 
+  <node name="depthimage_to_laserscan" pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" > 
+  	<remap from="image" to="/kinect2/hd/image_depth_rect"/>
+  </node>
 
-<!-- start sensor-->
-
- <!-- run pointcloud_to_laserscan node -->
-    <node pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" name="pointcloud_to_laserscan">
-
-        <remap from="cloud_in" to="/kinect2/sd/points"/>
-        <remap from="scan" to="scan"/>
-        <rosparam>
-            target_frame: camera_link # Leave disabled to output scan in pointcloud frame
-            transform_tolerance: 0.01
-            min_height: 0.0
-            max_height: 1.0
-
-            angle_min: -1.5708 # -M_PI/2
-            angle_max: 1.5708 # M_PI/2
-            angle_increment: 0.087 # M_PI/360.0
-            scan_time: 0.3333
-            range_min: 0.45
-            range_max: 4.0
-            use_inf: true
-
-            # Concurrency level, affects number of pointclouds queued for processing and number of threads used
-            # 0 : Detect number of cores
-            # 1 : Single threaded
-            # 2->inf : Parallelism level
-            concurrency_level: 1
-        </rosparam>
-
-</node>
+ 
 
   <!-- The C++ talker node will publish a custom message. -->
-  <node pkg="autu_control" type="talker" name="talker">
-  </node>
+ <!-- <node pkg="autu_control" type="talker" name="talker"/>-->
 
   <!-- The C++ listener node subscribes to the custom message that either talker is publishing. -->
-  <node pkg="autu_control" type="listener" name="listener" output="screen">
-  </node>
+ <!-- <node pkg="autu_control" type="listener" name="listener" output="screen"/>-->
 </launch>
