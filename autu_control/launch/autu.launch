@@ -7,6 +7,14 @@
   	<remap from="image" to="/kinect2/hd/image_depth_rect"/>
   </node>
 
+ <node pkg="gmapping" type="slam_gmapping" name="gmapping_thing" output="screen" >
+    <remap from="scan" to="scan" />
+    <rosparam>
+      odom_frame: odom
+      base_frame: base_footprint
+    </rosparam>
+  </node>
+
  
 
   <!-- The C++ talker node will publish a custom message. -->
