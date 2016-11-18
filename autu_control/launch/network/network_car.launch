@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<launch>
 <include file="$(find pses_basis)/launch/pses_basis.launch" >
 	<arg name="dashboard" value="false" />
 </include>
+</launch>
