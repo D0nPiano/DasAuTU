@@ -1,0 +1,21 @@
+Folgende Befehle sind beim Start eines jeden Terminalfensters (auch bei neuen Reitern) auszuführen:
+
+	Für Laptop:
+
+		export ROS_IP="10.42.0.70"
+		export ROS_HOSTNAME="10.42.0.70"
+		export ROS_MASTER_URI="http://10.42.0.70:11311/"
+
+	Für Auto:
+
+		export ROS_IP="10.42.0.1"
+		export ROS_HOSTNAME="10.42.0.1"
+		export ROS_MASTER_URI=http://10.42.0.70:11311
+
+Anschließend roscore auf Laptop starten. Erst dananch alle anderen Nodes.
+
+
+
+
+
+
