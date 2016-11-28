@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   pses_basis
   roscpp
 )
+find_package(OpenCV REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -112,10 +113,10 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 # include_directories(include)
-include_directories(
-  ${catkin_INCLUDE_DIRS}
-  include
-)
+#include_directories(include)
+include_directories(includeS)
+include_directories(include ${catkin_INCLUDE_DIRS})
+include_directories(include ${OpenCV_INCLUDE_DIRS})
 
 ## Declare a C++ library
 # add_library(autu_control
@@ -130,11 +131,20 @@ include_directories(
 ## Declare a C++ executable
 # add_executable(autu_control_node src/autu_control_node.cpp)
 
+
+
+
+
 add_executable(talker src/talker.cpp)
+add_executable(listener src/listener.cpp)
+add_executable(kalman src/kalman.cpp)
 target_link_libraries(talker ${catkin_LIBRARIES})
 
-add_executable(listener src/listener.cpp)
+
 target_link_libraries(listener ${catkin_LIBRARIES})
+
+target_link_libraries(kalman ${catkin_LIBRARIES} ${OpenCV_LIBS})
+
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
