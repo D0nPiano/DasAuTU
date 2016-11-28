@@ -43,7 +43,7 @@ void chatterCallback(const pses_basis::SensorData::ConstPtr& msg, ros::Publisher
     ROS_INFO("distance to front: [%f]", msg->range_sensor_front);
     ROS_INFO("currentVel: [%f]", *currentVelPtr);
 
-    if(currentRange < 1.5 && *currentVelPtr > 0){
+    if(currentRange < .5 && *currentVelPtr > 0){
 	    command_data cmd;
 	    cmd.header.stamp = ros::Time::now();
 	    cmd.motor_level= 0;
@@ -81,7 +81,6 @@ int main(int argc, char **argv)
    * NodeHandle destructed will close down the node.
    */
     ros::NodeHandle n;
-
 
   	ros::Publisher chatter_pub = n.advertise<command_data>("pses_basis/command", 1000);
 
