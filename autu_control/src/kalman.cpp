@@ -3,6 +3,8 @@
 #include <iostream>
 #include "opencv2/opencv.hpp"
 #include "opencv2/core/mat.hpp"
+#include "autu_control/cardata.h"
+#include "std_msgs/String.h"
 
 typedef pses_basis::SensorData sensor_data;
 using namespace cv;
@@ -14,7 +16,7 @@ Mat x = (Mat_<double>(3,1) << 0,0,0);
 //folgende Werte müssen noch eingstellt werden:
 Mat P =(Mat_<double>(3,3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);
 Mat Q = (Mat_<double>(3,3) << 0,0,0,0,0.1, 0,0,0,0);
-double u=0.1; //was ist das?
+double u;
 double R=0.2;
 ros::Timer timer;
 ros::Time startTimer;
@@ -28,16 +30,20 @@ void calc(const Mat_<double> C, const double y){
     P=(Mat::eye(3,3, CV_64F)-K*C)*P;
     //std::cout << (ros::Time::now()-nowtime).toNSec()<<  "calc done" << std::endl;
 }
-void sensorCallback(const sensor_data::ConstPtr& msg){
+void sensorCallback(const sensor_data::ConstPtr& msg, ros::Publisher pub){
     timer.stop();
-
+    u=msg->accelerometer_x;
     //calc(CPos, gefahrene Distanz);
     calc(CVel, 1.0);
+    autu_control::cardata pub_msg;
+    //pub_msg.speed=x.at(0);
+    //pub_msg.acceleration=x.at(1);
+    pub.publish(pub_msg);
     timer.start();
     startTimer = ros::Time::now();
 }
 //interpolateCallback braucht etwa 6-25k ns, mit Schwankungen in Richtung 60k ns
-void interpolateCallback(const ros::TimerEvent& t){
+void interpolateCallback(const ros::TimerEvent& t, ros::Publisher pub){
     double Calltime;
     ros::Time nowtime=ros::Time::now();
     if(t.last_real.toNSec()!=0)
@@ -56,10 +62,11 @@ void interpolateCallback(const ros::TimerEvent& t){
 int main(int argc, char **argv){
     ros::init(argc, argv, "kalman");
     ros::NodeHandle nh;
+    ros::Publisher pub = nh.advertise<autu_control::cardata>("autu_control/cardata", 10);
     //interpolateCallback wird etwa alle 110k ns aufgerufen, aber mit einigen Schwankungen in Richtung 140k ns und 50k ns
-    timer = nh.createTimer(ros::Duration(0.001), std::bind(interpolateCallback));
+    timer = nh.createTimer(ros::Duration(0.001), std::bind(interpolateCallback, std::placeholders::_1, pub));
     timer.stop();
-    ros::Subscriber sub = nh.subscribe<sensor_data>("pses_basis/sensor_data", 10, sensorCallback);
+    ros::Subscriber sub = nh.subscribe<sensor_data>("pses_basis/sensor_data", 10, std::bind(sensorCallback,std::placeholders::_1, pub));
     ros::spin();
     return 0;
 }
