@@ -38,7 +38,8 @@ typedef pses_basis::Command command_data;
  * This tutorial demonstrates simple receipt of messages over the ROS system.
  */
 // %Tag(CALLBACK)%
-void chatterCallback(const pses_basis::SensorData::ConstPtr& msg, ros::Publisher& chatter_pub, float* currentVelPtr){
+void chatterCallback(const pses_basis::SensorData::ConstPtr& msg, ros::Publisher& chatter_pub, float* currentVelPtr, bool* mode){
+	if(*mode == true){
 	float currentRange = msg->range_sensor_front;
     ROS_INFO("distance to front: [%f]", msg->range_sensor_front);
     ROS_INFO("currentVel: [%f]", *currentVelPtr);
@@ -52,17 +53,29 @@ void chatterCallback(const pses_basis::SensorData::ConstPtr& msg, ros::Publisher
 	    chatter_pub.publish(cmd);
 	    ros::spinOnce();    	
     }
+	}
 }
+void getMode(const std_msgs::String::ConstPtr& msg,bool* mode){
+
+    if(msg->data == "Remote Control"){
+    *mode = true;
+    }else{
+        *mode = false;
+    }
+   
+}
+
 // %EndTag(CALLBACK)%
 
 void getCurrentVelocity(const command_data::ConstPtr& msg, float* currentVelPtr){
 	*currentVelPtr = msg->motor_level;
 }
-
 int main(int argc, char **argv)
 {
 
 	float currentVel = 1;
+    bool mode = true; //false falls es nicht Startzustand ist
+    
     /**
    * The ros::init() function needs to see argc and argv so that it can perform
    * any ROS arguments and name remapping that were provided at the command line.
@@ -81,7 +94,7 @@ int main(int argc, char **argv)
    * NodeHandle destructed will close down the node.
    */
     ros::NodeHandle n;
-
+    
 
   	ros::Publisher chatter_pub = n.advertise<command_data>("pses_basis/command", 1000);
 
@@ -100,9 +113,11 @@ int main(int argc, char **argv)
    * is the number of messages that will be buffered up before beginning to throw
    * away the oldest ones.
    */
-    // %Tag(SUBSCRIBER)
+    // %Tag(SUBSCRIBER)#
+    ros::Subscriber submode = n.subscribe<std_msgs::String>("pses_basis/mode_control", 1000,std::bind (getMode,std::placeholders::_1, &mode) );
     ros::Subscriber cmd_sub = n.subscribe<command_data>("pses_basis/command", 1000,  std::bind (getCurrentVelocity,std::placeholders::_1, &currentVel));
-    ros::Subscriber sub = n.subscribe<pses_basis::SensorData>("pses_basis/sensor_data", 1000,  std::bind (chatterCallback,std::placeholders::_1,chatter_pub, &currentVel));
+    ros::Subscriber sub = n.subscribe<pses_basis::SensorData>("pses_basis/sensor_data", 1000,  std::bind (chatterCallback,std::placeholders::_1,chatter_pub, &currentVel, &mode));
+    
     // %EndTag(SUBSCRIBER)%
 
     /**
