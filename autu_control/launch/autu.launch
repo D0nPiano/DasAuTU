@@ -11,9 +11,9 @@
   </node>
 -->
   <!-- The C++ listener node subscribes to the custom message that either talker is publishing. -->
-<!--  <node pkg="autu_control" type="listener" name="listener" output="screen">
+  <node pkg="autu_control" type="listener" name="listener" output="screen">
     <remap from="example" to="chatter"/>
   </node>
--->
+
   <node pkg="autu_control" type="kalman" name="kalman" output="screen"/>
 </launch>

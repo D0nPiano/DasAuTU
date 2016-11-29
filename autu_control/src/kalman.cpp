@@ -33,11 +33,12 @@ void calc(const Mat_<double> C, const double y){
 void sensorCallback(const sensor_data::ConstPtr& msg, ros::Publisher pub){
     timer.stop();
     u=msg->accelerometer_x;
-    //calc(CPos, gefahrene Distanz);
-    calc(CVel, 1.0);
+    //calc(CVel, 1.0); //1.0 entspricht der Beschleunigung
+    calc(CPos, 1.0); //1.0 entspricht der Geschwindigkeit
     autu_control::cardata pub_msg;
-    //pub_msg.speed=x.at(0);
-    //pub_msg.acceleration=x.at(1);
+    pub_msg.speed=x.at<double>(0);
+    pub_msg.acceleration=x.at<double>(1);
+    pub_msg.stamp=ros::Time::now();
     pub.publish(pub_msg);
     timer.start();
     startTimer = ros::Time::now();
@@ -45,7 +46,7 @@ void sensorCallback(const sensor_data::ConstPtr& msg, ros::Publisher pub){
 //interpolateCallback braucht etwa 6-25k ns, mit Schwankungen in Richtung 60k ns
 void interpolateCallback(const ros::TimerEvent& t, ros::Publisher pub){
     double Calltime;
-    ros::Time nowtime=ros::Time::now();
+    //ros::Time nowtime=ros::Time::now();
     if(t.last_real.toNSec()!=0)
         Calltime = (t.current_real-t.last_real).toNSec(); //Calltime = Time since last Call
     else
@@ -56,7 +57,13 @@ void interpolateCallback(const ros::TimerEvent& t, ros::Publisher pub){
     Mat B = (Mat_<double>(3,1) << Calltime*Calltime/2, Calltime, 0);
     x=A*x+B*u;
     P=A*P*(A.t())+Q;
-    std::cout << (ros::Time::now()-nowtime).toNSec()<<  "   interpolate done" << std::endl;
+
+    autu_control::cardata pub_msg;
+    pub_msg.speed=x.at<double>(0);
+    pub_msg.acceleration=x.at<double>(1);
+    pub_msg.stamp=ros::Time::now();
+    pub.publish(pub_msg);
+    //std::cout << (ros::Time::now()-nowtime).toNSec()<<  "   interpolate done" << std::endl;
 }
 
 int main(int argc, char **argv){

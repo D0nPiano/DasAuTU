@@ -32,6 +32,8 @@
 #include "pses_basis/SensorData.h"
 #include <iostream>
 #include "autu_control/listener.h"
+#include "autu_control/cardata.h"
+
 typedef pses_basis::Command command_data;
 
 /**
@@ -59,6 +61,10 @@ void getCurrentVelocity(const command_data::ConstPtr& msg, float* currentVelPtr)
 	*currentVelPtr = msg->motor_level;
 }
 
+void carDataCallback(const autu_control::cardata::ConstPtr& msg){
+    ROS_INFO_STREAM(std::fixed << " Speed: " << msg->speed << " Acceleration: " << msg->acceleration << " Sec: " << msg->stamp.toSec());
+}
+
 int main(int argc, char **argv)
 {
 
@@ -83,7 +89,7 @@ int main(int argc, char **argv)
     ros::NodeHandle n;
 
 
-  	ros::Publisher chatter_pub = n.advertise<command_data>("pses_basis/command", 1000);
+    //ros::Publisher chatter_pub = n.advertise<command_data>("pses_basis/command", 1000);
 
     /**
    * The subscribe() call is how you tell ROS that you want to receive messages
@@ -101,10 +107,10 @@ int main(int argc, char **argv)
    * away the oldest ones.
    */
     // %Tag(SUBSCRIBER)
-    ros::Subscriber cmd_sub = n.subscribe<command_data>("pses_basis/command", 1000,  std::bind (getCurrentVelocity,std::placeholders::_1, &currentVel));
-    ros::Subscriber sub = n.subscribe<pses_basis::SensorData>("pses_basis/sensor_data", 1000,  std::bind (chatterCallback,std::placeholders::_1,chatter_pub, &currentVel));
+    //ros::Subscriber cmd_sub = n.subscribe<command_data>("pses_basis/command", 1000,  std::bind (getCurrentVelocity,std::placeholders::_1, &currentVel));
+    //ros::Subscriber sub = n.subscribe<pses_basis::SensorData>("pses_basis/sensor_data", 1000,  std::bind (chatterCallback,std::placeholders::_1,chatter_pub, &currentVel));
     // %EndTag(SUBSCRIBER)%
-
+    ros::Subscriber cdSub = n.subscribe<autu_control::cardata>("autu_control/cardata", 10, carDataCallback);
     /**
    * ros::spin() will enter a loop, pumping callbacks.  With this version, all
    * callbacks will be called from within this thread (the main one).  ros::spin()
