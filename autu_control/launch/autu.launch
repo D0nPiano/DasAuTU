@@ -3,23 +3,16 @@
 <launch>
   <include file="$(find pses_basis)/launch/pses_basis.launch" />
 
+<!-- Set static tf transformations -->
+  <node pkg="tf" type="static_transform_publisher" name="map_broadcaster" args="0 0 0 0 0 0 1 map odom 10"/>
+  <param name="robot_description" textfile="$(find pses_simulation)/data/urdf_model/apollo_13.urdf"/>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/>
+
+
   <node name="depthimage_to_laserscan" pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" > 
   	<remap from="image" to="/kinect2/hd/image_depth_rect"/>
+         <param name="output_frame_id" value="scan"/>
   </node>
 
- <node pkg="gmapping" type="slam_gmapping" name="gmapping_thing" output="screen" >
-    <remap from="scan" to="scan" />
-    <rosparam>
-      odom_frame: base_footprint
-      base_frame: base_footprint
-    </rosparam>
-  </node>
-
- 
-
-  <!-- The C++ talker node will publish a custom message. -->
- <!-- <node pkg="autu_control" type="talker" name="talker"/>-->
-
-  <!-- The C++ listener node subscribes to the custom message that either talker is publishing. -->
- <!-- <node pkg="autu_control" type="listener" name="listener" output="screen"/>-->
 </launch>
