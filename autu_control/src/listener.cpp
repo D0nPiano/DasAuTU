@@ -55,13 +55,84 @@ void chatterCallback(const pses_basis::SensorData::ConstPtr& msg, ros::Publisher
     }
 	}
 }
+
+void simplecontrol(const pses_basis::SensorData::ConstPtr& msg, ros::Publisher& chatter_pub, float* currentVelPtr, bool* mode){
+	command_data cmd;
+
+	if(*mode == true){
+	float ldist = msg->range_sensor_left;
+	float rdist = msg->range_sensor_right;
+	float currentRange = msg->range_sensor_front;
+	float solldist = 0.8;
+	float steerfact = 10;
+
+	
+	
+	/* 2Punktregler
+	cmd.motor_level= 5;
+	if(ldist>rdist){    cmd.steering_level=  20;}
+	if(rdist>ldist){	cmd.steering_level= -20;}
+	*/
+
+	// P-Regler, tb = 62s 
+
+	cmd.motor_level= 10;
+	float p = -8;
+
+	float e = solldist - ldist;
+	cmd.steering_level = steerfact*p*e;
+	
+
+	/*PID-Geschwindigkeitsalgorithmus, tb = ? 
+	cdmotor_level= 5;
+
+	static float esum = 0;
+	static ealt = 0;
+	
+	float p = -8;
+	fload i = 1;
+	float d = 1;
+
+	float e = solldist - ldist;
+
+	esum = esum + e;
+
+	cmd.steering_level=steerfact*(p*e+i*esum+d*(e-ealt))
+	
+	ealt = e;
+	*/
+
+    if(currentRange < 0.5 && *currentVelPtr > 0){
+	    cmd.motor_level= 0;
+	}
+	    //ROS_INFO("%s", retmsg.data.c_str());
+		cmd.header.stamp = ros::Time::now();
+	    chatter_pub.publish(cmd);
+	    ros::spinOnce();    	
+    
+	}else{
+
+		cmd.motor_level=0;
+		cmd.steering_level=0;
+		cmd.header.stamp = ros::Time::now();
+	    chatter_pub.publish(cmd);
+	    ros::spinOnce(); 
+
+	}
+}
+
+
+
+
+
 void getMode(const std_msgs::String::ConstPtr& msg,bool* mode){
 
-    if(msg->data == "Remote Control"){
+    if(msg->data == "Follow Wall"){
     *mode = true;
     }else{
         *mode = false;
     }
+
    
 }
 
@@ -74,7 +145,7 @@ int main(int argc, char **argv)
 {
 
 	float currentVel = 1;
-    bool mode = true; //false falls es nicht Startzustand ist
+    bool mode = false; //false falls es nicht Startzustand ist
     
     /**
    * The ros::init() function needs to see argc and argv so that it can perform
@@ -116,7 +187,7 @@ int main(int argc, char **argv)
     // %Tag(SUBSCRIBER)#
     ros::Subscriber submode = n.subscribe<std_msgs::String>("pses_basis/mode_control", 1000,std::bind (getMode,std::placeholders::_1, &mode) );
     ros::Subscriber cmd_sub = n.subscribe<command_data>("pses_basis/command", 1000,  std::bind (getCurrentVelocity,std::placeholders::_1, &currentVel));
-    ros::Subscriber sub = n.subscribe<pses_basis::SensorData>("pses_basis/sensor_data", 1000,  std::bind (chatterCallback,std::placeholders::_1,chatter_pub, &currentVel, &mode));
+    ros::Subscriber sub = n.subscribe<pses_basis::SensorData>("pses_basis/sensor_data", 1000,  std::bind (simplecontrol,std::placeholders::_1,chatter_pub, &currentVel, &mode));
     
     // %EndTag(SUBSCRIBER)%
 
