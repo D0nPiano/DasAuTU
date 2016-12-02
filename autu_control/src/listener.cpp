@@ -79,7 +79,7 @@ void simplecontrol(const pses_basis::SensorData::ConstPtr &msg,
 
     // P-Regler, tb = 62s
 
-    cmd.motor_level = 10;
+    cmd.motor_level = 5;
     float p = -8;
 
     float e = solldist - ldist;
@@ -104,8 +104,7 @@ void simplecontrol(const pses_basis::SensorData::ConstPtr &msg,
     ealt = e;
     */
 
-    ROS_INFO("distance to front: [%f]", msg->range_sensor_front);
-    ROS_INFO("currentVel: [%f]", *currentVelPtr);
+    
 
     if (currentRange < 0.5 && *currentVelPtr > 0) {
       cmd.motor_level = 0;
@@ -116,7 +115,6 @@ void simplecontrol(const pses_basis::SensorData::ConstPtr &msg,
     ros::spinOnce();
 
   } else {
-
     cmd.motor_level = 0;
     cmd.steering_level = 0;
     cmd.header.stamp = ros::Time::now();

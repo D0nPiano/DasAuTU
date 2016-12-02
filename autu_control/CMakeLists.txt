@@ -130,8 +130,6 @@ include_directories(
 ## Declare a C++ executable
 # add_executable(autu_control_node src/autu_control_node.cpp)
 
-add_executable(talker src/talker.cpp)
-target_link_libraries(talker ${catkin_LIBRARIES})
 
 add_executable(listener src/listener.cpp)
 target_link_libraries(listener ${catkin_LIBRARIES})

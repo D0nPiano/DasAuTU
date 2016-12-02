@@ -8,6 +8,5 @@
 
 <node pkg="autu_control" type="listener" name="listener" output="screen"/>
 
-<node pkg="autu_control" type="talker" name="talker"/>
   
 </launch>
