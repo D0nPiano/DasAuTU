@@ -45,6 +45,7 @@
 
    <node name="depthimage_to_laserscan" pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" > 
   	<remap from="image" to="/kinect2/$(arg resolution)/image_depth_rect"/>
+        <param name="output_frame_id" value="scan"/>
   </node>
   
    <!-- ODOMETRY MAIN ARGUMENTS: 
