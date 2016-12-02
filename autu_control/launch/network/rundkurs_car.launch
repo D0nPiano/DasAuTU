@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+<include file="$(find pses_basis)/launch/pses_basis.launch" >
+ 	<arg name="dashboard" value="false"/>
+    <arg name="kinect" value="false" />
+ </include>
+
+
+<node pkg="autu_control" type="listener" name="listener" output="screen"/>
+
+<node pkg="autu_control" type="talker" name="talker"/>
+  
+</launch>

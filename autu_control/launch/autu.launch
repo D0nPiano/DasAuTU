@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <!-- Starts up everything needed to run the example listener/talker nodes. -->
 <launch>
   <include file="$(find pses_simulation)/launch/simulation.launch" />
