@@ -14,6 +14,9 @@
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
   <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/>
 
+
+  <node pkg="tf" type="static_transform_publisher" name="kinect_con"
+        args="$0 0 0 0 0 0 1 base_laser kinect2_base_link 100" /> 
 <!-- Kinect 2
         Install Kinect2 : Follow ALL directives at https://github.com/code-iai/iai_kinect2
                           Make sure it is calibrated!
