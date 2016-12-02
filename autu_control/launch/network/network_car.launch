@@ -8,6 +8,12 @@
 	<arg name="publish_tf" value="true" />
 </include>
 
+<!-- Set static tf transformations -->
+  <node pkg="tf" type="static_transform_publisher" name="map_broadcaster" args="0 0 0 0 0 0 1 map odom 10"/>
+  <param name="robot_description" textfile="$(find pses_simulation)/data/urdf_model/apollo_13.urdf"/>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/>
+
 <!-- Kinect 2
         Install Kinect2 : Follow ALL directives at https://github.com/code-iai/iai_kinect2
                           Make sure it is calibrated!
