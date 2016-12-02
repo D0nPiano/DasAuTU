@@ -68,7 +68,7 @@ void simplecontrol(const pses_basis::SensorData::ConstPtr &msg,
     float ldist = msg->range_sensor_left;
     float rdist = msg->range_sensor_right;
     float currentRange = msg->range_sensor_front;
-    float solldist = 0.8;
+    float solldist = 0.4;
     float steerfact = 10;
 
     /* 2Punktregler
@@ -80,10 +80,16 @@ void simplecontrol(const pses_basis::SensorData::ConstPtr &msg,
     // P-Regler, tb = 62s
 
     cmd.motor_level = 5;
-    float p = -8;
+    float p = -6;
 
     float e = solldist - ldist;
     cmd.steering_level = steerfact * p * e;
+    if(cmd.steering_level > 40)
+	cmd.steering_level = 40;
+    else if (cmd.steering_level < -40)
+	cmd.steering_level = -40;
+    ROS_INFO("e: %f",e);
+
 
     /*PID-Geschwindigkeitsalgorithmus, tb = ?
     cdmotor_level= 5;
@@ -106,10 +112,10 @@ void simplecontrol(const pses_basis::SensorData::ConstPtr &msg,
 
     
 
-    if (currentRange < 0.5 && *currentVelPtr > 0) {
-      cmd.motor_level = 0;
+    if (currentRange < 0.2 && *currentVelPtr > 0) {
+//      cmd.motor_level = 0;
     }
-    // ROS_INFO("%s", retmsg.data.c_str());
+    ROS_INFO("steering_level: %d",cmd.steering_level );
     cmd.header.stamp = ros::Time::now();
     chatter_pub.publish(cmd);
     ros::spinOnce();
