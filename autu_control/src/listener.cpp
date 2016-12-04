@@ -34,6 +34,7 @@
 #include <iostream>
 #include <pses_basis/Command.h>
 typedef pses_basis::Command command_data;
+#include <sensor_msgs/LaserScan.h>
 
 /**
  * This tutorial demonstrates simple receipt of messages over the ROS system.
@@ -68,8 +69,8 @@ void simplecontrol(const pses_basis::SensorData::ConstPtr &msg,
     float ldist = msg->range_sensor_left;
     float rdist = msg->range_sensor_right;
     float currentRange = msg->range_sensor_front;
-    float solldist = 0.4;
-    float steerfact = 10;
+    float solldist = 0.8;
+    float steerfact = 9;
 
     /* 2Punktregler
     cmd.motor_level= 5;
@@ -79,16 +80,16 @@ void simplecontrol(const pses_basis::SensorData::ConstPtr &msg,
 
     // P-Regler, tb = 62s
 
-    cmd.motor_level = 5;
+    cmd.motor_level = 7;
     float p = -6;
 
     float e = solldist - ldist;
     cmd.steering_level = steerfact * p * e;
     if(cmd.steering_level > 40)
-	cmd.steering_level = 40;
+		cmd.steering_level = 40;
     else if (cmd.steering_level < -40)
-	cmd.steering_level = -40;
-    ROS_INFO("e: %f",e);
+		cmd.steering_level = -40;
+    //ROS_INFO("e: %f",e);
 
 
     /*PID-Geschwindigkeitsalgorithmus, tb = ?
@@ -115,7 +116,7 @@ void simplecontrol(const pses_basis::SensorData::ConstPtr &msg,
     if (currentRange < 0.2 && *currentVelPtr > 0) {
 //      cmd.motor_level = 0;
     }
-    ROS_INFO("steering_level: %d",cmd.steering_level );
+    //ROS_INFO("steering_level: %d",cmd.steering_level );
     cmd.header.stamp = ros::Time::now();
     chatter_pub.publish(cmd);
     ros::spinOnce();
@@ -144,9 +145,34 @@ void getCurrentVelocity(const command_data::ConstPtr &msg,
                         float *currentVelPtr) {
   *currentVelPtr = msg->motor_level;
 }
+
+
+void getCurrentLaserFL(const sensor_msgs::LaserScan::ConstPtr& msg,
+                        bool *corner) {
+    //ROS_INFO(msg);
+	float laserDiffFront = msg->ranges[320] - msg->ranges[330];
+	float laserDiffBack = msg->ranges[330] - msg->ranges[340];
+
+
+    if(laserDiffFront > 1.3 && laserDiffBack < 0.3) {
+    	if(!(*corner)){
+    		ROS_INFO("********** CORNER DETECTED ************"); 
+    	}
+		ROS_INFO("laserDiffFront: [%f]", laserDiffFront);
+    	ROS_INFO("laserDiffBack: [%f]", laserDiffBack);
+		*corner = true;   	
+    } else if(*corner) {
+    	ROS_INFO("***************************************"); 
+		*corner = false;   	    	
+    }
+}
+
+
 int main(int argc, char **argv) {
 
   float currentVel = 1;
+  bool corner = false;
+
   bool mode = false; // false falls es nicht Startzustand ist
 
   /**
@@ -198,6 +224,9 @@ int main(int argc, char **argv) {
   ros::Subscriber cmd_sub = n.subscribe<command_data>(
       "pses_basis/command", 1000,
       std::bind(getCurrentVelocity, std::placeholders::_1, &currentVel));
+  ros::Subscriber laser_sub = n.subscribe<sensor_msgs::LaserScan>(
+      "/scan", 1000,
+      std::bind(getCurrentLaserFL, std::placeholders::_1, &corner));
   ros::Subscriber sub = n.subscribe<pses_basis::SensorData>(
       "pses_basis/sensor_data", 1000,
       std::bind(simplecontrol, std::placeholders::_1, chatter_pub, &currentVel,
