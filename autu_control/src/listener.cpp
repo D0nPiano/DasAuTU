@@ -36,6 +36,10 @@
 typedef pses_basis::Command command_data;
 #include <sensor_msgs/LaserScan.h>
 
+#define CORNER_SENSITIVITY 1.0
+#define CURVETIMER_DELTA .1
+
+
 /**
  * This tutorial demonstrates simple receipt of messages over the ROS system.
  */
@@ -60,28 +64,22 @@ void chatterCallback(const pses_basis::SensorData::ConstPtr &msg,
   }
 }
 
-void simplecontrol(const pses_basis::SensorData::ConstPtr &msg,
+void driveStraight(const pses_basis::SensorData::ConstPtr &msg,
                    ros::Publisher &chatter_pub, float *currentVelPtr,
-                   bool *mode) {
-  command_data cmd;
+                   bool *mode){
+	command_data cmd;
 
   if (*mode == true) {
     float ldist = msg->range_sensor_left;
     float rdist = msg->range_sensor_right;
     float currentRange = msg->range_sensor_front;
-    float solldist = 0.8;
+    float solldist = 0.7;
     float steerfact = 9;
-
-    /* 2Punktregler
-    cmd.motor_level= 5;
-    if(ldist>rdist){    cmd.steering_level=  20;}
-    if(rdist>ldist){	cmd.steering_level= -20;}
-    */
 
     // P-Regler, tb = 62s
 
-    cmd.motor_level = 7;
-    float p = -6;
+    cmd.motor_level = 20;
+    float p = -3;
 
     float e = solldist - ldist;
     cmd.steering_level = steerfact * p * e;
@@ -89,27 +87,6 @@ void simplecontrol(const pses_basis::SensorData::ConstPtr &msg,
 		cmd.steering_level = 40;
     else if (cmd.steering_level < -40)
 		cmd.steering_level = -40;
-    //ROS_INFO("e: %f",e);
-
-
-    /*PID-Geschwindigkeitsalgorithmus, tb = ?
-    cdmotor_level= 5;
-
-    static float esum = 0;
-    static ealt = 0;
-
-    float p = -8;
-    fload i = 1;
-    float d = 1;
-
-    float e = solldist - ldist;
-
-    esum = esum + e;
-
-    cmd.steering_level=steerfact*(p*e+i*esum+d*(e-ealt))
-
-    ealt = e;
-    */
 
     
 
@@ -122,11 +99,37 @@ void simplecontrol(const pses_basis::SensorData::ConstPtr &msg,
     ros::spinOnce();
 
   } else {
-    cmd.motor_level = 0;
-    cmd.steering_level = 0;
-    cmd.header.stamp = ros::Time::now();
-    chatter_pub.publish(cmd);
-    ros::spinOnce();
+    //cmd.motor_level = 0;
+    //cmd.steering_level = 0;
+    //cmd.header.stamp = ros::Time::now();
+    //chatter_pub.publish(cmd);
+    //ros::spinOnce();
+  }
+}
+
+void simplecontrol(const pses_basis::SensorData::ConstPtr &msg,
+                   ros::Publisher &chatter_pub, float *currentVelPtr,
+                   bool *mode, float *curveTimer, bool *curveCompleted) {
+	if(*curveCompleted){
+		driveStraight(msg, chatter_pub, currentVelPtr, mode);
+	} else {
+		command_data cmd;
+
+		if(*curveTimer < 1.8){
+	    	cmd.motor_level = 10;
+	    	cmd.steering_level = 0;
+		} else if(*curveTimer < 3.1){
+	    	cmd.motor_level = 10;
+	    	cmd.steering_level = 40;
+		} else {
+	    	cmd.motor_level = 10;
+	    	cmd.steering_level = 0;
+	  		*curveTimer = 0.0;
+	  		*curveCompleted = true;
+		}
+	    cmd.header.stamp = ros::Time::now();
+	    chatter_pub.publish(cmd);
+	    ros::spinOnce();
   }
 }
 
@@ -147,24 +150,69 @@ void getCurrentVelocity(const command_data::ConstPtr &msg,
 }
 
 
-void getCurrentLaserFL(const sensor_msgs::LaserScan::ConstPtr& msg,
-                        bool *corner) {
-    //ROS_INFO(msg);
+
+bool isNextToCorner(const sensor_msgs::LaserScan::ConstPtr& msg){
 	float laserDiffFront = msg->ranges[320] - msg->ranges[330];
 	float laserDiffBack = msg->ranges[330] - msg->ranges[340];
+	bool retVal = laserDiffFront > (CORNER_SENSITIVITY * 1.3) && laserDiffBack < (0.3 / CORNER_SENSITIVITY);
 
+	//ROS_INFO("laserDiffFront: [%f]", laserDiffFront);
+	//ROS_INFO("laserDiffBack: [%f]", laserDiffBack);
+	return retVal;
+}
 
-    if(laserDiffFront > 1.3 && laserDiffBack < 0.3) {
-    	if(!(*corner)){
-    		ROS_INFO("********** CORNER DETECTED ************"); 
+bool isNextToWall(const sensor_msgs::LaserScan::ConstPtr& msg){
+	if(isNextToCorner(msg))
+		return false;
+
+	float laserDiffFront = msg->ranges[320] - msg->ranges[330];
+	float laserDiffBack = msg->ranges[330] - msg->ranges[340];
+	bool retVal = msg->ranges[320] < 3.0 && msg->ranges[330] < 2.8 && msg->ranges[340] < 2.6 && laserDiffFront < 0.7 && laserDiffBack < 0.5;
+	//ROS_INFO("[%f], [%f], [%f]", msg->ranges[320], msg->ranges[330], msg->ranges[340]);
+	if(retVal)
+		//ROS_INFO("Wall detected");
+	return retVal;
+}
+
+void getCurrentLaserFL(const sensor_msgs::LaserScan::ConstPtr& msg,
+                        bool *corner, bool *curveCompleted, ros::NodeHandle *n) {
+	if(!(*curveCompleted))
+		return;
+    if(*corner && *curveCompleted){
+    	if(isNextToWall(msg)){
+    		*corner = false;
+    		ROS_INFO("************** WALL *******************"); 
     	}
-		ROS_INFO("laserDiffFront: [%f]", laserDiffFront);
-    	ROS_INFO("laserDiffBack: [%f]", laserDiffBack);
-		*corner = true;   	
-    } else if(*corner) {
-    	ROS_INFO("***************************************"); 
-		*corner = false;   	    	
+    } else {
+    	if(isNextToCorner(msg)){
+	    	ROS_INFO("********** CORNER DETECTED ************"); 
+    		*corner = true;
+    		*curveCompleted = false;
+    	}
     }
+
+    /*if(isNextToWall(msg))
+    	ROS_INFO("WALL"); 
+    if(isNextToCorner(msg))
+    	ROS_INFO("Corner"); 
+
+    if(*curveCompleted)
+    	ROS_INFO("No Curve"); 
+    else
+    	ROS_INFO("Curve");*/
+}
+
+void updateCurveCompleted(const ros::TimerEvent& event, bool *curveCompleted, float *curveTimer){
+	  if(!(*curveCompleted)){
+	  	if(*curveTimer >= 5.0){
+	  		*curveTimer = 0.0;
+	  		*curveCompleted = true;
+	  	} else {
+	  		*curveTimer += CURVETIMER_DELTA;
+	  	}
+	    ROS_INFO("CurveTimer [%f]", *curveTimer);	
+	  }
+
 }
 
 
@@ -172,6 +220,8 @@ int main(int argc, char **argv) {
 
   float currentVel = 1;
   bool corner = false;
+  bool curveCompleted = true;
+  float curveTimer = 0;
 
   bool mode = false; // false falls es nicht Startzustand ist
 
@@ -217,6 +267,9 @@ int main(int argc, char **argv) {
  * is the number of messages that will be buffered up before beginning to throw
  * away the oldest ones.
  */
+
+
+
   // %Tag(SUBSCRIBER)#
   ros::Subscriber submode = n.subscribe<std_msgs::String>(
       "pses_basis/mode_control", 1000,
@@ -226,13 +279,15 @@ int main(int argc, char **argv) {
       std::bind(getCurrentVelocity, std::placeholders::_1, &currentVel));
   ros::Subscriber laser_sub = n.subscribe<sensor_msgs::LaserScan>(
       "/scan", 1000,
-      std::bind(getCurrentLaserFL, std::placeholders::_1, &corner));
+      std::bind(getCurrentLaserFL, std::placeholders::_1, &corner, &curveCompleted, &n));
   ros::Subscriber sub = n.subscribe<pses_basis::SensorData>(
       "pses_basis/sensor_data", 1000,
       std::bind(simplecontrol, std::placeholders::_1, chatter_pub, &currentVel,
-                &mode));
+                &mode, &curveTimer, &curveCompleted));
 
   // %EndTag(SUBSCRIBER)%
+  ros::Timer timer = n.createTimer(ros::Duration(CURVETIMER_DELTA),
+  	std::bind(updateCurveCompleted, std::placeholders::_1, &curveCompleted, &curveTimer));
 
   /**
  * ros::spin() will enter a loop, pumping callbacks.  With this version, all
