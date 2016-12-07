@@ -33,11 +33,14 @@
 #include "std_msgs/String.h"
 #include <iostream>
 #include <pses_basis/Command.h>
+#include <math.h>       
+
 typedef pses_basis::Command command_data;
 #include <sensor_msgs/LaserScan.h>
 
 #define CORNER_SENSITIVITY 1.0
 #define CURVETIMER_DELTA .1
+#define PI 3.14159265
 
 
 /**
@@ -78,8 +81,8 @@ void driveStraight(const pses_basis::SensorData::ConstPtr &msg,
 
     // P-Regler, tb = 62s
 
-    cmd.motor_level = 20;
-    float p = -3;
+    cmd.motor_level = 5;
+    float p = -8;
 
     float e = solldist - ldist;
     cmd.steering_level = steerfact * p * e;
@@ -174,8 +177,43 @@ bool isNextToWall(const sensor_msgs::LaserScan::ConstPtr& msg){
 	return retVal;
 }
 
+float getAngleToWall(const sensor_msgs::LaserScan::ConstPtr& msg){
+	const int range_diff = 10;
+	float angle_range = msg->angle_max - msg->angle_min; // 70 deg
+
+	ROS_INFO("angle_range [%f]", angle_range);
+
+
+	float alpha = range_diff * msg->angle_increment; // angle alpha used for Calculation in rad
+
+
+	ROS_INFO("alpha [%f]", alpha);
+
+
+	float b = msg->ranges[349];
+	ROS_INFO("b [%f]", b);
+	float c = msg->ranges[349 - range_diff];
+	ROS_INFO("c [%f]", c);
+
+
+	float a = sqrt(b*b+c*c-2*b*c*cos(alpha));
+
+
+	ROS_INFO("a [%f]", a);
+
+	float beta = asin(b*sin(alpha)/a);
+	ROS_INFO("beta [%f]", beta);
+	ROS_INFO("beta in deg: [%f]", beta* 180 / PI);
+	float epsilon = PI/2 - angle_range/2 + alpha;
+	ROS_INFO("epsilon in deg: [%f]", epsilon* 180 / PI);
+
+	return (PI - beta - epsilon );
+}
+
 void getCurrentLaserFL(const sensor_msgs::LaserScan::ConstPtr& msg,
                         bool *corner, bool *curveCompleted, ros::NodeHandle *n) {
+	ROS_INFO("Angle to wall: [%f]", getAngleToWall(msg));
+	ROS_INFO("Angle to wall in deg: [%f]", getAngleToWall(msg)* 180 / PI);
 	if(!(*curveCompleted))
 		return;
     if(*corner && *curveCompleted){
