@@ -116,23 +116,33 @@ void simplecontrol(const pses_basis::SensorData::ConstPtr &msg,
                    ros::Publisher &chatter_pub, float *currentVelPtr,
                    bool *mode, float *curveTimer, bool *curveCompleted, float *cornerBeginAngle) {
 
+	static float driveStraightTime;
+	static float driveCurveTime;
+
 	ROS_INFO("CurveCompleted: Angle to wall in deg: [%f]", *cornerBeginAngle * 180 / PI);
 
 	if(*curveCompleted){
 		driveStraight(msg, chatter_pub, currentVelPtr, mode);
 	} else {
 		command_data cmd;
-		float ldist = msg->range_sensor_left;
-		float curveSeconds = (2.5 * ldist) + (3.1 * (*cornerBeginAngle / PI / 2));
-		ROS_INFO("CurveCompleted: Left Dist: [%f]", (2 * (*cornerBeginAngle / PI / 2)));
-		ROS_INFO("CurveCompleted: Left Dist: [%f]", curveSeconds);
 
-		if(*curveTimer < (2.5 * ldist)) {
+		if(*curveTimer < 0.2){
+			float ldist = msg->range_sensor_left;
+			driveStraightTime = 0.7 + (1.2 * ldist);
+
+			float curveSeconds = (1.8 * (*cornerBeginAngle / PI / 2));
+			driveCurveTime = driveStraightTime + .6 + curveSeconds;
+
+			ROS_INFO("CurveCompleted: driveStraightTime: [%f]", driveStraightTime);
+			ROS_INFO("CurveCompleted: driveCurveTime: [%f]", driveCurveTime);	
+		}
+
+		if(*curveTimer < driveStraightTime) {
 	    	cmd.motor_level = 10;
 	    	cmd.steering_level = 0;
-		} else if(*curveTimer < curveSeconds){
-	    	cmd.motor_level = 10;
-	    	cmd.steering_level = 40;
+		} else if(*curveTimer < driveCurveTime){
+	    	cmd.motor_level = 15;
+	    	cmd.steering_level = 30;
 		} else {
 	    	cmd.motor_level = 10;
 	    	cmd.steering_level = 0;
