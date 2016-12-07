@@ -107,10 +107,14 @@ void simplecontrol(const pses_basis::SensorData::ConstPtr &msg,
 	static float driveStraightTime;
 	static float driveCurveTime;
 
+  if(! *mode){
+    return;
+  }
 	//ROS_INFO("CurveCompleted: Angle to wall in deg: [%f]", *cornerBeginAngle * 180 / PI);
 
 	if(*curveCompleted){
-		if(msg->range_sensor_left > 2.0){
+		if(msg->range_sensor_left > 1.2){
+      ROS_INFO("************* Curve ***********");
 			*corner = true;
 			*curveCompleted = false;
 		}
@@ -147,16 +151,20 @@ void simplecontrol(const pses_basis::SensorData::ConstPtr &msg,
 	    chatter_pub.publish(cmd);
 	    ros::spinOnce();
 */
-	if(*curveTimer < 3.0){
-		cmd.motor_level = 5;
-		cmd.steering_level = 30;
-	} else if (*curveTimer < 5.0){
-		cmd.motor_level = 5;
-		cmd.steering_level = 0;
-	} else {
-		*curveTimer = 0.0;
-		*curveCompleted = true;
-	}
+  	if(*curveTimer < 4.0){
+  		cmd.motor_level = 5;
+  		cmd.steering_level = 40;
+      ROS_INFO("driving Curve");
+  	} else if (*curveTimer < 6.0){
+  		cmd.motor_level = 5;
+  		cmd.steering_level = 0;
+  	} else {
+  		*curveTimer = 0.0;
+  		*curveCompleted = true;
+  	}
+    cmd.header.stamp = ros::Time::now();
+    chatter_pub.publish(cmd);
+    ros::spinOnce();
   }
 }
 
@@ -275,7 +283,7 @@ void getCurrentLaserFL(const sensor_msgs::LaserScan::ConstPtr& msg,
 
 void updateCurveCompleted(const ros::TimerEvent& event, bool *curveCompleted, float *curveTimer){
 	  if(!(*curveCompleted)){
-	  	if(*curveTimer >= 5.0){
+	  	if(*curveTimer >= 3.0){
 	  		*curveTimer = 0.0;
 	  		*curveCompleted = true;
 	  	} else {
