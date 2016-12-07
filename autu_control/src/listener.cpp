@@ -151,11 +151,10 @@ void simplecontrol(const pses_basis::SensorData::ConstPtr &msg,
 	    chatter_pub.publish(cmd);
 	    ros::spinOnce();
 */
-  	if(*curveTimer < 4.0){
+  	if(*curveTimer < 2){
   		cmd.motor_level = 5;
   		cmd.steering_level = 40;
-      ROS_INFO("driving Curve");
-  	} else if (*curveTimer < 6.0){
+  	} else if (*curveTimer < 4){
   		cmd.motor_level = 5;
   		cmd.steering_level = 0;
   	} else {
@@ -283,7 +282,7 @@ void getCurrentLaserFL(const sensor_msgs::LaserScan::ConstPtr& msg,
 
 void updateCurveCompleted(const ros::TimerEvent& event, bool *curveCompleted, float *curveTimer){
 	  if(!(*curveCompleted)){
-	  	if(*curveTimer >= 3.0){
+	  	if(*curveTimer >= 20.0){
 	  		*curveTimer = 0.0;
 	  		*curveCompleted = true;
 	  	} else {
