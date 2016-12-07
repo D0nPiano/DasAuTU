@@ -42,6 +42,8 @@ typedef pses_basis::Command command_data;
 #define CURVETIMER_DELTA .1
 #define PI 3.14159265
 
+#define RANGE_DIFF 13
+
 
 /**
  * This tutorial demonstrates simple receipt of messages over the ROS system.
@@ -81,8 +83,8 @@ void driveStraight(const pses_basis::SensorData::ConstPtr &msg,
 
     // P-Regler, tb = 62s
 
-    cmd.motor_level = 5;
-    float p = -8;
+    cmd.motor_level = 20;
+    float p = -3;
 
     float e = solldist - ldist;
     cmd.steering_level = steerfact * p * e;
@@ -112,16 +114,23 @@ void driveStraight(const pses_basis::SensorData::ConstPtr &msg,
 
 void simplecontrol(const pses_basis::SensorData::ConstPtr &msg,
                    ros::Publisher &chatter_pub, float *currentVelPtr,
-                   bool *mode, float *curveTimer, bool *curveCompleted) {
+                   bool *mode, float *curveTimer, bool *curveCompleted, float *cornerBeginAngle) {
+
+	ROS_INFO("CurveCompleted: Angle to wall in deg: [%f]", *cornerBeginAngle * 180 / PI);
+
 	if(*curveCompleted){
 		driveStraight(msg, chatter_pub, currentVelPtr, mode);
 	} else {
 		command_data cmd;
+		float ldist = msg->range_sensor_left;
+		float curveSeconds = (2.5 * ldist) + (3.1 * (*cornerBeginAngle / PI / 2));
+		ROS_INFO("CurveCompleted: Left Dist: [%f]", (2 * (*cornerBeginAngle / PI / 2)));
+		ROS_INFO("CurveCompleted: Left Dist: [%f]", curveSeconds);
 
-		if(*curveTimer < 1.8){
+		if(*curveTimer < (2.5 * ldist)) {
 	    	cmd.motor_level = 10;
 	    	cmd.steering_level = 0;
-		} else if(*curveTimer < 3.1){
+		} else if(*curveTimer < curveSeconds){
 	    	cmd.motor_level = 10;
 	    	cmd.steering_level = 40;
 		} else {
@@ -169,7 +178,7 @@ bool isNextToWall(const sensor_msgs::LaserScan::ConstPtr& msg){
 		return false;
 
 	float laserDiffFront = msg->ranges[320] - msg->ranges[330];
-	float laserDiffBack = msg->ranges[330] - msg->ranges[340];
+	float laserDiffBack = msg->ranges[325] - msg->ranges[335];
 	bool retVal = msg->ranges[320] < 3.0 && msg->ranges[330] < 2.8 && msg->ranges[340] < 2.6 && laserDiffFront < 0.7 && laserDiffBack < 0.5;
 	//ROS_INFO("[%f], [%f], [%f]", msg->ranges[320], msg->ranges[330], msg->ranges[340]);
 	if(retVal)
@@ -177,45 +186,53 @@ bool isNextToWall(const sensor_msgs::LaserScan::ConstPtr& msg){
 	return retVal;
 }
 
-float getAngleToWall(const sensor_msgs::LaserScan::ConstPtr& msg){
-	const int range_diff = 10;
-	float angle_range = msg->angle_max - msg->angle_min; // 70 deg
+float calculateBeta(const sensor_msgs::LaserScan::ConstPtr& msg, int angleBegin, float & alpha, float & epsilon){
 
-	ROS_INFO("angle_range [%f]", angle_range);
-
-
-	float alpha = range_diff * msg->angle_increment; // angle alpha used for Calculation in rad
-
-
-	ROS_INFO("alpha [%f]", alpha);
-
-
-	float b = msg->ranges[349];
-	ROS_INFO("b [%f]", b);
-	float c = msg->ranges[349 - range_diff];
-	ROS_INFO("c [%f]", c);
-
-
+	float b = msg->ranges[angleBegin];
+	float c = msg->ranges[angleBegin - RANGE_DIFF];
 	float a = sqrt(b*b+c*c-2*b*c*cos(alpha));
-
-
-	ROS_INFO("a [%f]", a);
-
 	float beta = asin(b*sin(alpha)/a);
-	ROS_INFO("beta [%f]", beta);
-	ROS_INFO("beta in deg: [%f]", beta* 180 / PI);
-	float epsilon = PI/2 - angle_range/2 + alpha;
-	ROS_INFO("epsilon in deg: [%f]", epsilon* 180 / PI);
 
-	return (PI - beta - epsilon );
+	float angleToWall = PI - beta - epsilon;
+	//ROS_INFO("Angle to wall in deg: [%f]", angleToWall * 180 / PI);
+	return beta;
+}
+
+
+float getAngleToWall(const sensor_msgs::LaserScan::ConstPtr& msg){
+	float angle_range = msg->angle_max - msg->angle_min; // 70 deg
+	float alpha = RANGE_DIFF * msg->angle_increment; // angle alpha used for Calculation in rad
+	float epsilon = PI/2 - angle_range/2 + alpha;
+
+	float beta1 = calculateBeta(msg, 349, alpha, epsilon);
+	float beta2 = calculateBeta(msg, 347, alpha, epsilon);
+	float beta3 = calculateBeta(msg, 345, alpha, epsilon);
+	float beta4 = calculateBeta(msg, 343, alpha, epsilon);
+	float beta5 = calculateBeta(msg, 341, alpha, epsilon);
+
+	/*
+	ROS_INFO("beta 1 in deg: [%f]", beta1 * 180 / PI);
+	ROS_INFO("beta 2 in deg: [%f]", beta2 * 180 / PI);
+	ROS_INFO("beta 3 in deg: [%f]", beta3 * 180 / PI);
+	ROS_INFO("beta 2 in deg: [%f]", beta4 * 180 / PI);
+	ROS_INFO("beta 3 in deg: [%f]", beta5 * 180 / PI);
+	*/
+
+	float beta = (beta1 + beta2 + beta3 + beta4 + beta5) / 5.0;
+
+	//ROS_INFO("beta in deg: [%f]", beta * 180 / PI);
+
+	float angleToWall = PI - beta - epsilon;
+	//ROS_INFO("Angle to wall in deg: [%f]", angleToWall * 180 / PI);
+	return angleToWall;
 }
 
 void getCurrentLaserFL(const sensor_msgs::LaserScan::ConstPtr& msg,
-                        bool *corner, bool *curveCompleted, ros::NodeHandle *n) {
-	ROS_INFO("Angle to wall: [%f]", getAngleToWall(msg));
-	ROS_INFO("Angle to wall in deg: [%f]", getAngleToWall(msg)* 180 / PI);
+                        bool *corner, bool *curveCompleted, float *cornerBeginAngle) {
 	if(!(*curveCompleted))
 		return;
+
+	*cornerBeginAngle = getAngleToWall(msg);
     if(*corner && *curveCompleted){
     	if(isNextToWall(msg)){
     		*corner = false;
@@ -224,6 +241,7 @@ void getCurrentLaserFL(const sensor_msgs::LaserScan::ConstPtr& msg,
     } else {
     	if(isNextToCorner(msg)){
 	    	ROS_INFO("********** CORNER DETECTED ************"); 
+			ROS_INFO("Angle to wall: [%f]", *cornerBeginAngle);
     		*corner = true;
     		*curveCompleted = false;
     	}
@@ -260,6 +278,7 @@ int main(int argc, char **argv) {
   bool corner = false;
   bool curveCompleted = true;
   float curveTimer = 0;
+  float cornerBeginAngle = 90.0;
 
   bool mode = false; // false falls es nicht Startzustand ist
 
@@ -317,11 +336,11 @@ int main(int argc, char **argv) {
       std::bind(getCurrentVelocity, std::placeholders::_1, &currentVel));
   ros::Subscriber laser_sub = n.subscribe<sensor_msgs::LaserScan>(
       "/scan", 1000,
-      std::bind(getCurrentLaserFL, std::placeholders::_1, &corner, &curveCompleted, &n));
+      std::bind(getCurrentLaserFL, std::placeholders::_1, &corner, &curveCompleted, &cornerBeginAngle));
   ros::Subscriber sub = n.subscribe<pses_basis::SensorData>(
       "pses_basis/sensor_data", 1000,
       std::bind(simplecontrol, std::placeholders::_1, chatter_pub, &currentVel,
-                &mode, &curveTimer, &curveCompleted));
+                &mode, &curveTimer, &curveCompleted, &cornerBeginAngle));
 
   // %EndTag(SUBSCRIBER)%
   ros::Timer timer = n.createTimer(ros::Duration(CURVETIMER_DELTA),
