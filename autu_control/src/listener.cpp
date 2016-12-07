@@ -108,7 +108,7 @@ void simplecontrol(const pses_basis::SensorData::ConstPtr &msg,
 
 	ROS_INFO("CurveCompleted: Angle to wall in deg: [%f]", *cornerBeginAngle * 180 / PI);
 
-	if(*curveCompleted || true){
+	if(*curveCompleted){
 		driveStraight(msg, chatter_pub, currentVelPtr, mode);
 	} else {
 		command_data cmd;
