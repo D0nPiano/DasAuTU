@@ -57,25 +57,34 @@ void driveStraight(const pses_basis::SensorData::ConstPtr &msg,
     float rdist = msg->range_sensor_right;
     float currentRange = msg->range_sensor_front;
     float solldist = 0.7;
-    float steerfact = 9;
+    float steerfact = -2;
+    static float e0 = 0;
+    static double t0 = 0;
 
     // P-Regler, tb = 62s
 
     cmd.motor_level = 20;
-    float p = -3;
-
+    float p = 18;
+    float d = 10;
+    double t = ros::Time::now().toSec();
     float e = solldist - ldist;
-    cmd.steering_level = steerfact * p * e;
+    cmd.steering_level = steerfact *  p *( e+ (e-e0)*d/(t-t0));
+
+
+    e0 = e;
+    t0 = t;
+
     if(cmd.steering_level > 40)
 		cmd.steering_level = 40;
     else if (cmd.steering_level < -40)
 		cmd.steering_level = -40;
 
     
-
+/* Notstop
     if (currentRange < 0.2 && *currentVelPtr > 0) {
-//      cmd.motor_level = 0;
-    }
+     cmd.motor_level = 0;
+
+*/
     //ROS_INFO("steering_level: %d",cmd.steering_level );
     cmd.header.stamp = ros::Time::now();
     chatter_pub.publish(cmd);
@@ -96,7 +105,7 @@ void simplecontrol(const pses_basis::SensorData::ConstPtr &msg,
 
 	ROS_INFO("CurveCompleted: Angle to wall in deg: [%f]", *cornerBeginAngle * 180 / PI);
 
-	if(*curveCompleted){
+	if(*curveCompleted || true){
 		driveStraight(msg, chatter_pub, currentVelPtr, mode);
 	} else {
 		command_data cmd;
