@@ -45,29 +45,7 @@ typedef pses_basis::Command command_data;
 #define RANGE_DIFF 13
 
 
-/**
- * This tutorial demonstrates simple receipt of messages over the ROS system.
- */
-// %Tag(CALLBACK)%
-void chatterCallback(const pses_basis::SensorData::ConstPtr &msg,
-                     ros::Publisher &chatter_pub, float *currentVelPtr,
-                     bool *mode) {
-  if (*mode == true) {
-    float currentRange = msg->range_sensor_front;
-    ROS_INFO("distance to front: [%f]", msg->range_sensor_front);
-    ROS_INFO("currentVel: [%f]", *currentVelPtr);
 
-    if (currentRange < 1.5 && *currentVelPtr > 0) {
-      command_data cmd;
-      cmd.header.stamp = ros::Time::now();
-      cmd.motor_level = 0;
-
-      // ROS_INFO("%s", retmsg.data.c_str());
-      chatter_pub.publish(cmd);
-      ros::spinOnce();
-    }
-  }
-}
 
 void driveStraight(const pses_basis::SensorData::ConstPtr &msg,
                    ros::Publisher &chatter_pub, float *currentVelPtr,
