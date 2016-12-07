@@ -2,7 +2,7 @@
 <launch>
 <include file="$(find pses_basis)/launch/pses_basis.launch" >
  	<arg name="dashboard" value="false"/>
-    <arg name="kinect" value="false" />
+    <arg name="kinect" value="true" />
  </include>
 
 
