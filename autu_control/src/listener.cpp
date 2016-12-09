@@ -44,11 +44,12 @@ typedef pses_basis::Command command_data;
 
 
 
-//#define RANGE_START 880
-//#define RANGE_DIFF 30
+#define RANGE_START 880
+#define RANGE_DIFF 30
+#define ANGLE_OFFSET 0.122173
 
-#define RANGE_START 349
-#define RANGE_DIFF 10
+//#define RANGE_START 349
+//#define RANGE_DIFF 10
 
 
 
@@ -60,19 +61,21 @@ void driveStraight(const pses_basis::SensorData::ConstPtr &msg,
   float ldist = msg->range_sensor_left;
   float rdist = msg->range_sensor_right;
   float currentRange = msg->range_sensor_front;
-  float solldist = 0.7;
+  float solldist = 0.5;
   float steerfact = -2;
   static float e0 = 0;
   static double t0 = 0;
 
   // P-Regler, tb = 62s
 
-  cmd.motor_level = 8;
+  cmd.motor_level = 12;
   float p = 18;
   float d = 10;
   double t = ros::Time::now().toSec();
   float e = solldist - ldist;
   cmd.steering_level = steerfact *  p *( e+ (e-e0)*d/(t-t0));
+
+  //ROS_INFO("Steering Level: [%d]", cmd.steering_level);
 
 
   e0 = e;
@@ -109,6 +112,12 @@ void simplecontrol(const pses_basis::SensorData::ConstPtr &msg,
 	static float driveCurveTime;
 
   if(! *mode){
+    command_data cmd;
+    cmd.motor_level = 0;
+    cmd.steering_level = 0;    
+    cmd.header.stamp = ros::Time::now();
+    chatter_pub.publish(cmd);
+    ros::spinOnce();
     return;
   }
 	//ROS_INFO("CurveCompleted: Angle to wall in deg: [%f]", *cornerBeginAngle * 180 / PI);
@@ -116,11 +125,11 @@ void simplecontrol(const pses_basis::SensorData::ConstPtr &msg,
     *curveTimer = 0.0;
 		driveStraight(msg, chatter_pub, currentVelPtr);
 	} else {
-		command_data cmd;
+    command_data cmd;
 
 		if(*curveTimer < 0.2){
 			float ldist = msg->range_sensor_left;
-			driveStraightTime = 0.7 + (1.2 * ldist);
+			driveStraightTime = 0.4 + (0.8 * ldist);
 
 			float curveSeconds = (3 * (*cornerBeginAngle / PI / 2)) * 3.3;
 			driveCurveTime = driveStraightTime + .6 + curveSeconds;
@@ -166,8 +175,8 @@ void getCurrentVelocity(const command_data::ConstPtr &msg,
 
 
 bool isNextToCorner(const sensor_msgs::LaserScan::ConstPtr& msg){
-	float laserDiffFront = msg->ranges[320] - msg->ranges[330];
-	float laserDiffBack = msg->ranges[330] - msg->ranges[340];
+	float laserDiffFront = msg->ranges[RANGE_START - RANGE_DIFF*2] - msg->ranges[RANGE_START - RANGE_DIFF];
+	float laserDiffBack = msg->ranges[RANGE_START - RANGE_DIFF] - msg->ranges[RANGE_START];
 	bool retVal = laserDiffFront > (CORNER_SENSITIVITY * 1.3) && laserDiffBack < (0.3 / CORNER_SENSITIVITY);
 
 	//ROS_INFO("laserDiffFront: [%f]", laserDiffFront);
@@ -224,7 +233,7 @@ float getAngleToWall(const sensor_msgs::LaserScan::ConstPtr& msg){
 
 	//ROS_INFO("beta in deg: [%f]", beta * 180 / PI);
 
-	float angleToWall = PI - beta - epsilon;
+	float angleToWall = PI - beta - epsilon - ANGLE_OFFSET;
 	//ROS_INFO("Angle to wall in deg: [%f]", angleToWall * 180 / PI);
 	return angleToWall;
 }
@@ -232,8 +241,10 @@ float getAngleToWall(const sensor_msgs::LaserScan::ConstPtr& msg){
 void getCurrentLaserFL(const sensor_msgs::LaserScan::ConstPtr& msg,
                         bool *corner, bool *curveCompleted, float *cornerBeginAngle) {
 
-  ROS_INFO("Angle to wall in deg: [%f]", getAngleToWall(msg) * 180 / PI);
-
+  //ROS_INFO("Angle to wall in deg: [%f]", getAngleToWall(msg) * 180 / PI);
+	if(isNextToCorner(msg)){
+	    ROS_INFO("********** CORNER DETECTED ************"); 		
+	}
 
 	if(!(*curveCompleted))
 		return;
@@ -241,9 +252,9 @@ void getCurrentLaserFL(const sensor_msgs::LaserScan::ConstPtr& msg,
     //ROS_INFO("Angle to wall in deg: [%f]", *cornerBeginAngle * 180 / PI);
 
     if(*corner && *curveCompleted){
-    	if(isNextToWall(msg)){
+    	/*if(isNextToWall(msg)){
     		ROS_INFO("************** WALL *******************");
-    	}
+    	}*/
     } else {
     	if(isNextToCorner(msg)){
 	    	ROS_INFO("********** CORNER DETECTED ************"); 
