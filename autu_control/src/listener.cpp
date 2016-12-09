@@ -42,63 +42,64 @@ typedef pses_basis::Command command_data;
 #define CURVETIMER_DELTA .1
 #define PI 3.14159265
 
-#define RANGE_START 880
-#define RANGE_DIFF 30
+
+
+//#define RANGE_START 880
+//#define RANGE_DIFF 30
+
+#define RANGE_START 349
+#define RANGE_DIFF 10
 
 
 
 
 void driveStraight(const pses_basis::SensorData::ConstPtr &msg,
-                   ros::Publisher &chatter_pub, float *currentVelPtr,
-                   bool *mode){
+                   ros::Publisher &chatter_pub, float *currentVelPtr){
 	command_data cmd;
 
-  if (*mode == true) {
-    float ldist = msg->range_sensor_left;
-    float rdist = msg->range_sensor_right;
-    float currentRange = msg->range_sensor_front;
-    float solldist = 0.7;
-    float steerfact = -2;
-    static float e0 = 0;
-    static double t0 = 0;
+  float ldist = msg->range_sensor_left;
+  float rdist = msg->range_sensor_right;
+  float currentRange = msg->range_sensor_front;
+  float solldist = 0.7;
+  float steerfact = -2;
+  static float e0 = 0;
+  static double t0 = 0;
 
-    // P-Regler, tb = 62s
+  // P-Regler, tb = 62s
 
-    cmd.motor_level = 8;
-    float p = 18;
-    float d = 10;
-    double t = ros::Time::now().toSec();
-    float e = solldist - ldist;
-    cmd.steering_level = steerfact *  p *( e+ (e-e0)*d/(t-t0));
+  cmd.motor_level = 8;
+  float p = 18;
+  float d = 10;
+  double t = ros::Time::now().toSec();
+  float e = solldist - ldist;
+  cmd.steering_level = steerfact *  p *( e+ (e-e0)*d/(t-t0));
 
 
-    e0 = e;
-    t0 = t;
+  e0 = e;
+  t0 = t;
 
-    if(cmd.steering_level > 40)
-		cmd.steering_level = 40;
-    else if (cmd.steering_level < -40)
-		cmd.steering_level = -40;
+  if(cmd.steering_level > 40)
+	cmd.steering_level = 40;
+  else if (cmd.steering_level < -40)
+	cmd.steering_level = -40;
 
-    
+  
 /* Notstop
-    if (currentRange < 0.2 && *currentVelPtr > 0) {
-     cmd.motor_level = 0;
+  if (currentRange < 0.2 && *currentVelPtr > 0) {
+   cmd.motor_level = 0;
 
 */
-    //ROS_INFO("steering_level: %d",cmd.steering_level );
-    cmd.header.stamp = ros::Time::now();
-    chatter_pub.publish(cmd);
-    ros::spinOnce();
-
-  } else {
-	cmd.motor_level = 0;
-	cmd.steering_level = 0;
-	cmd.header.stamp = ros::Time::now();
-	chatter_pub.publish(cmd);
-	ros::spinOnce();
-  }
+  //ROS_INFO("steering_level: %d",cmd.steering_level );
+  cmd.header.stamp = ros::Time::now();
+  chatter_pub.publish(cmd);
+  ros::spinOnce();
 }
+
+void driveCurve(const pses_basis::SensorData::ConstPtr &msg,
+                   ros::Publisher &chatter_pub, float *currentVelPtr,
+                   bool *mode){
+
+  }
 
 void simplecontrol(const pses_basis::SensorData::ConstPtr &msg,
                    ros::Publisher &chatter_pub, float *currentVelPtr,
@@ -112,22 +113,16 @@ void simplecontrol(const pses_basis::SensorData::ConstPtr &msg,
   }
 	//ROS_INFO("CurveCompleted: Angle to wall in deg: [%f]", *cornerBeginAngle * 180 / PI);
 	if(*curveCompleted){
-		if(msg->range_sensor_left > 5.2){
-      //ROS_INFO("************* Curve ***********");
-			//*corner = true;
-			//*curveCompleted = false;
-		}
-		driveStraight(msg, chatter_pub, currentVelPtr, mode);
+    *curveTimer = 0.0;
+		driveStraight(msg, chatter_pub, currentVelPtr);
 	} else {
-
-
 		command_data cmd;
-/*
+
 		if(*curveTimer < 0.2){
 			float ldist = msg->range_sensor_left;
 			driveStraightTime = 0.7 + (1.2 * ldist);
 
-			float curveSeconds = (1.8 * (*cornerBeginAngle / PI / 2)) * 3.0;
+			float curveSeconds = (3 * (*cornerBeginAngle / PI / 2)) * 3.3;
 			driveCurveTime = driveStraightTime + .6 + curveSeconds;
 
 			ROS_INFO("CurveCompleted: driveStraightTime: [%f]", driveStraightTime);
@@ -149,20 +144,6 @@ void simplecontrol(const pses_basis::SensorData::ConstPtr &msg,
 	    cmd.header.stamp = ros::Time::now();
 	    chatter_pub.publish(cmd);
 	    ros::spinOnce();
-*/
-  	if(*curveTimer < 2){
-  		cmd.motor_level = 5;
-  		cmd.steering_level = 40;
-  	} else if (*curveTimer < 4){
-  		cmd.motor_level = 5;
-  		cmd.steering_level = 0;
-  	} else {
-  		*curveTimer = 0.0;
-  		*curveCompleted = true;
-  	}
-    cmd.header.stamp = ros::Time::now();
-    chatter_pub.publish(cmd);
-    ros::spinOnce();
   }
 }
 
@@ -250,15 +231,18 @@ float getAngleToWall(const sensor_msgs::LaserScan::ConstPtr& msg){
 
 void getCurrentLaserFL(const sensor_msgs::LaserScan::ConstPtr& msg,
                         bool *corner, bool *curveCompleted, float *cornerBeginAngle) {
+
+  ROS_INFO("Angle to wall in deg: [%f]", getAngleToWall(msg) * 180 / PI);
+
+
 	if(!(*curveCompleted))
 		return;
     *cornerBeginAngle = getAngleToWall(msg);
-  ROS_INFO("Angle to wall in deg: [%f]", *cornerBeginAngle * 180 / PI);
+    //ROS_INFO("Angle to wall in deg: [%f]", *cornerBeginAngle * 180 / PI);
 
     if(*corner && *curveCompleted){
     	if(isNextToWall(msg)){
-    		*corner = false;
-    		ROS_INFO("************** WALL *******************"); 
+    		ROS_INFO("************** WALL *******************");
     	}
     } else {
     	if(isNextToCorner(msg)){
@@ -282,7 +266,7 @@ void getCurrentLaserFL(const sensor_msgs::LaserScan::ConstPtr& msg,
 
 void updateCurveCompleted(const ros::TimerEvent& event, bool *curveCompleted, float *curveTimer){
 	  if(!(*curveCompleted)){
-	  	if(*curveTimer >= 2.0){
+	  	if(*curveTimer >= 15.0){
 	  		*curveTimer = 0.0;
 	  		*curveCompleted = true;
 	  	} else {
@@ -303,51 +287,12 @@ int main(int argc, char **argv) {
   float cornerBeginAngle = 90.0;
 
   bool mode = false; // false falls es nicht Startzustand ist
-
-  /**
- * The ros::init() function needs to see argc and argv so that it can perform
- * any ROS arguments and name remapping that were provided at the command line.
- * For programmatic remappings you can use a different version of init() which
- * takes
- * remappings directly, but for most command-line programs, passing argc and
- * argv is
- * the easiest way to do it.  The third argument to init() is the name of the
- * node.
- *
- * You must call one of the versions of ros::init() before using any other
- * part of the ROS system.
- */
   ros::init(argc, argv, "listener");
 
-  /**
- * NodeHandle is the main access point to communications with the ROS system.
- * The first NodeHandle constructed will fully initialize this node, and the
- * last
- * NodeHandle destructed will close down the node.
- */
   ros::NodeHandle n;
 
   ros::Publisher chatter_pub =
       n.advertise<command_data>("pses_basis/command", 1000);
-
-  /**
- * The subscribe() call is how you tell ROS that you want to receive messages
- * on a given topic.  This invokes a call to the ROS
- * master node, which keeps a registry of who is publishing and who
- * is subscribing.  Messages are passed to a callback function, here
- * called chatterCallback.  subscribe() returns a Subscriber object that you
- * must hold on to until you want to unsubscribe.  When all copies of the
- * Subscriber
- * object go out of scope, this callback will automatically be unsubscribed from
- * this topic.
- *
- * The second parameter to the subscribe() function is the size of the message
- * queue.  If messages are arriving faster than they are being processed, this
- * is the number of messages that will be buffered up before beginning to throw
- * away the oldest ones.
- */
-
-
 
   // %Tag(SUBSCRIBER)#
   ros::Subscriber submode = n.subscribe<std_msgs::String>(
