@@ -6,7 +6,16 @@
  </include>
 
 
-<node pkg="autu_control" type="listener" name="listener" output="screen"/>
+<node pkg="autu_control" type="listener" name="listener" output="screen">
+	<remap from="image" to="/kinect2/$(arg resolution)/image_depth_rect"/>
+        <param name="output_frame_id" value="scan"/>
+        <param name="angle_min" value="-0.610865235329"/>
+        <param name="angle_max" value="0.610865235329"/>
+        <param name="angle_increment " value="0.00349065847695"/>
+        <param name="range_min" value="0"/>
+		<param name="range_max" value="10"/>
+        <!--<param name="scan_time" value=""/>-->
+</node>
 
   
 </launch>

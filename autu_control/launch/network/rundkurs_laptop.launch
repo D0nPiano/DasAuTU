@@ -4,7 +4,5 @@
         <!--  allowed params: image_color, image_depth, off -->
         <param name="video_feed" value="off" />
 	</node>
-	<node name="depthimage_to_laserscan" pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" > 
- 		<remap from="image" to="/kinect2/hd/image_depth_rect"/>
-	</node>
+	
 </launch>
