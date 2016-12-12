@@ -51,8 +51,9 @@ void interpolateCallback(const ros::TimerEvent& t, ros::Publisher pub){
         Calltime = (t.current_real-t.last_real).toNSec(); //Calltime = Time since last Call
     else
         Calltime = (t.current_real-startTimer).toNSec();
-    //double sheduledCalltime = (t.current_expected-t.last_expected).toNSec();
-    //std::cout << std::fixed << "real:  "<<Calltime << "  sheduled: " << sheduledCalltime << "  " << t.last_real.toNSec()<< "  " << t.current_real.toNSec() << std::endl; //fixed: verhindert wissenschaftliche Ausgabe des doubles (e^...)
+    double sheduledCalltime = (t.current_expected-t.last_expected).toNSec();
+    ROS_INFO_STREAM(std::fixed << "real:  "<<Calltime << "  sheduled: " << sheduledCalltime << "  " << t.last_real.toNSec()<< "  " << t.current_real.toNSec()); //fixed: verhindert wissenschaftliche Ausgabe des doubles (e^...)
+    ROS_INFO_STREAM_COND(Calltime<1000000, Calltime);
     Mat A = (Mat_<double>(3,3) << 1, Calltime, Calltime*Calltime/2, 0, 1, Calltime, 0, 0, 1);
     Mat B = (Mat_<double>(3,1) << Calltime*Calltime/2, Calltime, 0);
     x=A*x+B*u;
