@@ -134,6 +134,9 @@ include_directories(
 add_executable(rundkursController src/rundkursController.cpp)
 target_link_libraries(rundkursController ${catkin_LIBRARIES})
 
+add_executable(main src/main.cpp)
+target_link_libraries(main ${catkin_LIBRARIES})
+
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(autu_control_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

@@ -3,7 +3,7 @@
 <launch>
   <include file="$(find pses_simulation)/launch/simulation.launch" />
   <!-- The C++ listener node subscribes to the custom message that either talker is publishing. -->
-  <node pkg="autu_control" type="rundkursController" name="rundkursController" output="screen">
+  <node pkg="autu_control" type="main" name="main" output="screen">
     <remap from="example" to="chatter"/>
   </node>
 </launch>
