@@ -11,7 +11,6 @@ class RundkursController : public AutoController  {
    private:
    		void simpleController();
    		ros::NodeHandle * n;
-   		ros::Subscriber modeSubscriber;
 };
 
 RundkursController::RundkursController(ros::NodeHandle * n):
@@ -21,9 +20,9 @@ RundkursController::RundkursController(ros::NodeHandle * n):
 }
 
 void RundkursController::simpleController(){
-  ROS_INFO("test - XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX - ******************");
+  ROS_INFO("test - ******************");
 }
 
-void RundkursController::run () {
+void RundkursController::run() {
 	this->simpleController();
 }
