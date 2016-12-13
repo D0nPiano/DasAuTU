@@ -6,7 +6,7 @@
 #include "std_msgs/String.h"
 #include <iostream>
 
-#define RUNTIMER_DELTA .1
+#define RUNTIMER_DELTA .01
 
 void getMode(const std_msgs::String::ConstPtr &msg, std::string *mode, bool *modeChanged) {
   *mode = msg->data;
