@@ -44,9 +44,9 @@ typedef pses_basis::Command command_data;
 
 
 
-#define RANGE_START 880
-#define RANGE_DIFF 30
-#define ANGLE_OFFSET 0.122173
+#define RANGE_START 349
+#define RANGE_DIFF 10
+#define ANGLE_OFFSET 0.0
 
 //#define RANGE_START 349
 //#define RANGE_DIFF 10
@@ -61,14 +61,14 @@ void driveStraight(const pses_basis::SensorData::ConstPtr &msg,
   float ldist = msg->range_sensor_left;
   float rdist = msg->range_sensor_right;
   float currentRange = msg->range_sensor_front;
-  float solldist = 0.5;
+  float solldist = 0.7;
   float steerfact = -2;
   static float e0 = 0;
   static double t0 = 0;
 
   // P-Regler, tb = 62s
 
-  cmd.motor_level = 12;
+  cmd.motor_level = 20;
   float p = 18;
   float d = 10;
   double t = ros::Time::now().toSec();
@@ -239,30 +239,23 @@ float getAngleToWall(const sensor_msgs::LaserScan::ConstPtr& msg){
 }
 
 void getCurrentLaserFL(const sensor_msgs::LaserScan::ConstPtr& msg,
-                        bool *corner, bool *curveCompleted, float *cornerBeginAngle) {
+                        bool *corner, bool *curveCompleted, float *cornerBeginAngle, float *curveTimer) {
 
   //ROS_INFO("Angle to wall in deg: [%f]", getAngleToWall(msg) * 180 / PI);
-	if(isNextToCorner(msg)){
-	    ROS_INFO("********** CORNER DETECTED ************"); 		
-	}
 
 	if(!(*curveCompleted))
 		return;
-    *cornerBeginAngle = getAngleToWall(msg);
-    //ROS_INFO("Angle to wall in deg: [%f]", *cornerBeginAngle * 180 / PI);
+    
+  *cornerBeginAngle = getAngleToWall(msg);
+  //ROS_INFO("Angle to wall in deg: [%f]", *cornerBeginAngle * 180 / PI);
 
-    if(*corner && *curveCompleted){
-    	/*if(isNextToWall(msg)){
-    		ROS_INFO("************** WALL *******************");
-    	}*/
-    } else {
-    	if(isNextToCorner(msg)){
-	    	ROS_INFO("********** CORNER DETECTED ************"); 
-			ROS_INFO("Angle to wall: [%f]", *cornerBeginAngle);
-    		*corner = true;
-    		*curveCompleted = false;
-    	}
-    }
+  if(isNextToCorner(msg)){
+    	ROS_INFO("********** CORNER DETECTED ************"); 
+      ROS_INFO("CurveTimer [%f]", *curveTimer); 
+		  ROS_INFO("Angle to wall: [%f]", *cornerBeginAngle);
+  		*corner = true;
+  		*curveCompleted = false;
+  	}
 
     /*if(isNextToWall(msg))
     	ROS_INFO("WALL"); 
@@ -314,7 +307,7 @@ int main(int argc, char **argv) {
       std::bind(getCurrentVelocity, std::placeholders::_1, &currentVel));
   ros::Subscriber laser_sub = n.subscribe<sensor_msgs::LaserScan>(
       "/scan", 1000,
-      std::bind(getCurrentLaserFL, std::placeholders::_1, &corner, &curveCompleted, &cornerBeginAngle));
+      std::bind(getCurrentLaserFL, std::placeholders::_1, &corner, &curveCompleted, &cornerBeginAngle, &curveTimer));
   ros::Subscriber sub = n.subscribe<pses_basis::SensorData>(
       "pses_basis/sensor_data", 1000,
       std::bind(simplecontrol, std::placeholders::_1, chatter_pub, &currentVel,
