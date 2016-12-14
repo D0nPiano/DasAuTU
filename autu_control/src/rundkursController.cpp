@@ -50,7 +50,7 @@ void RundkursController::driveCurve(){
 
 	if(curveTimer < 0.3){
 		float ldist = currentSensorData->range_sensor_left;
-		driveStraightTime = (1.2 * ldist);
+		driveStraightTime = 0.3 + (1.5 * ldist);
 		cornerBeginAngle = laserDetector->getAngleToWall();
 
 		float curveSeconds = 1.0 + (cornerBeginAngle / PI / 2) * 9.0;
@@ -64,7 +64,7 @@ void RundkursController::driveCurve(){
 	if(curveTimer < driveStraightTime) {
     	cmd.motor_level = 10;
     	cmd.steering_level = 0;
-	} else if(curveTimer > driveCurveTime - 1.0 && curveTimer < driveCurveTime && laserDetector->getAngleToWallInDeg() < 95.0){
+	} else if(curveTimer > driveCurveTime - 1.1 && curveTimer < driveCurveTime && laserDetector->getAngleToWallInDeg() < 95.0){
     	ROS_INFO("Kurvenfahrt beendet");
     	cmd.motor_level = 10;
     	cmd.steering_level = 0;
@@ -87,10 +87,10 @@ void RundkursController::driveStraight(){
 	command_data cmd;
 
 	float ldist = currentSensorData->range_sensor_left;
-	float rdist = currentSensorData->range_sensor_right;
-	float currentRange = currentSensorData->range_sensor_front;
+	ldist += laserDetector->getDistanceToWall();
+	ldist = ldist / 2.0;
 
-	float solldist = 0.7;
+	float solldist = 0.6;
 	float steerfact = -2;
 	static float e0 = 0;
 	static double t0 = 0;
@@ -135,6 +135,7 @@ void RundkursController::getCurrentSensorData(const pses_basis::SensorData::Cons
 }
 
 void RundkursController::simpleController(){
+	laserDetector->getDistanceToWall();
 	if(drivingCurve){
 		this->driveCurve();
 		if(		laserDetector->isNextToWall()

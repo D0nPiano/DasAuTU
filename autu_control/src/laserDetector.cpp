@@ -8,7 +8,7 @@
 
 LaserDetector::LaserDetector(sensor_msgs::LaserScan * laserPtr): currentLaserScan(laserPtr){
 	ROS_INFO("New LaserDetector");
-	CORNER_SENSITIVITY = 1.8;
+	CORNER_SENSITIVITY = 1.5;
 	RANGE_START = 349;
 	RANGE_DIFF = 0;
 }
@@ -23,7 +23,7 @@ void LaserDetector::initialize(){
 	int steps = (int) (viewangle / currentLaserScan->angle_increment);
 
 	RANGE_START = steps - 1;
-	RANGE_DIFF = (int) steps / 35.0;
+	RANGE_DIFF = (int) steps / 30.0;
 
 	ROS_INFO("RANGE_START: [%d]", RANGE_START);
 	ROS_INFO("RANGE_DIFF: [%d]", RANGE_DIFF);
@@ -32,8 +32,27 @@ void LaserDetector::initialize(){
 bool LaserDetector::isNextToCorner(){
 	float laserDiffFront = currentLaserScan->ranges[RANGE_START - RANGE_DIFF*2] - currentLaserScan->ranges[RANGE_START - RANGE_DIFF];
 	float laserDiffBack = currentLaserScan->ranges[RANGE_START - RANGE_DIFF] - currentLaserScan->ranges[RANGE_START];
-	bool retVal = laserDiffFront > (1.3 / CORNER_SENSITIVITY) && laserDiffBack < (0.3 * CORNER_SENSITIVITY);
+	bool retVal = laserDiffFront > (1.3 / CORNER_SENSITIVITY) && laserDiffBack < (0.2 * CORNER_SENSITIVITY);
+	
+	//ROS_INFO("Distance to Corner Front: [%f]", laserDiffFront);
+	//ROS_INFO("Distance to Corner: [%f]", laserDiffBack);
 	return retVal;
+}
+
+float LaserDetector::getDistanceToWall(){
+	float angle_range = currentLaserScan->angle_max - currentLaserScan->angle_min; // 70 deg
+	float alpha = RANGE_DIFF * currentLaserScan->angle_increment; // angle alpha used for Calculation in rad
+
+	float beta1 = this->calculateBeta(RANGE_START, alpha);
+	float beta2 = this->calculateBeta(RANGE_START - ((int)RANGE_DIFF*0.333), alpha);
+	float beta3 = this->calculateBeta(RANGE_START - ((int)RANGE_DIFF*0.666), alpha);
+	float beta4 = this->calculateBeta(RANGE_START - ((int)RANGE_DIFF*1.0), alpha);
+	float beta5 = this->calculateBeta(RANGE_START - ((int)RANGE_DIFF*1.333), alpha);
+
+	float beta = (beta1 + beta2 + beta3 + beta4 + beta5) / 5.0;
+	float distance = sin(beta) * currentLaserScan->ranges[RANGE_START - RANGE_DIFF];
+	ROS_INFO("Distance to Wall: [%f]", distance);
+	return distance;
 }
 
 float LaserDetector::getDistanceToCorner(){
@@ -53,7 +72,7 @@ bool LaserDetector::isNextToWall(){
 	return retVal;
 }
 
-float LaserDetector::calculateBeta(int angleBegin, float & alpha, float & epsilon){
+float LaserDetector::calculateBeta(int angleBegin, float & alpha){
 
 	float b = currentLaserScan->ranges[angleBegin];
 	float c = currentLaserScan->ranges[angleBegin - RANGE_DIFF];
@@ -71,11 +90,11 @@ float LaserDetector::getAngleToWall(){
 	float alpha = RANGE_DIFF * currentLaserScan->angle_increment; // angle alpha used for Calculation in rad
 	float epsilon = PI/2 - angle_range/2 + alpha;
 
-	float beta1 = this->calculateBeta(RANGE_START, alpha, epsilon);
-	float beta2 = this->calculateBeta(RANGE_START - ((int)RANGE_DIFF*0.333), alpha, epsilon);
-	float beta3 = this->calculateBeta(RANGE_START - ((int)RANGE_DIFF*0.666), alpha, epsilon);
-	float beta4 = this->calculateBeta(RANGE_START - ((int)RANGE_DIFF*1.0), alpha, epsilon);
-	float beta5 = this->calculateBeta(RANGE_START - ((int)RANGE_DIFF*1.333), alpha, epsilon);
+	float beta1 = this->calculateBeta(RANGE_START, alpha);
+	float beta2 = this->calculateBeta(RANGE_START - ((int)RANGE_DIFF*0.333), alpha);
+	float beta3 = this->calculateBeta(RANGE_START - ((int)RANGE_DIFF*0.666), alpha);
+	float beta4 = this->calculateBeta(RANGE_START - ((int)RANGE_DIFF*1.0), alpha);
+	float beta5 = this->calculateBeta(RANGE_START - ((int)RANGE_DIFF*1.333), alpha);
 
 	float beta = (beta1 + beta2 + beta3 + beta4 + beta5) / 5.0;
 

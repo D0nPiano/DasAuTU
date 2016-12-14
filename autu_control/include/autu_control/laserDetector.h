@@ -16,8 +16,9 @@ class LaserDetector {
    		float getAngleToWall();
    		float getAngleToWallInDeg();
    		float getDistanceToCorner();
+         float getDistanceToWall();
    private:
-   		float calculateBeta(int angleBegin, float & alpha, float & epsilon);
+   		float calculateBeta(int angleBegin, float & alpha);
    		sensor_msgs::LaserScan *currentLaserScan;
    		int RANGE_START;
    		int RANGE_DIFF;
