@@ -5,14 +5,14 @@
 
 class RemoteController : public AutoController  {
    public:
-   		RemoteController(ros::NodeHandle * n);
+   		RemoteController(ros::NodeHandle * n, ros::Publisher *command_pub);
     	void run();
    private:
    		ros::NodeHandle * n;
 };
 
 
-RemoteController::RemoteController(ros::NodeHandle * n):
+RemoteController::RemoteController(ros::NodeHandle * n, ros::Publisher *command_pub):
   n(n)
   {
   ROS_INFO("New RemoteController");

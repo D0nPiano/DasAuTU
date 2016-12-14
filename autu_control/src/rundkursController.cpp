@@ -4,10 +4,8 @@
 #include "ros/ros.h"
 #include "autu_control/rundkursController.h"
 
-RundkursController::RundkursController(ros::NodeHandle * n): n(n){
+RundkursController::RundkursController(ros::NodeHandle * n, ros::Publisher *command_pub): n(n), command_pub(command_pub){
 	ROS_INFO("New RundkursController");
-
-	command_pub = n->advertise<command_data>("pses_basis/command", 1000);
 
 	laser_sub = n->subscribe<sensor_msgs::LaserScan>(
       "/scan", 1000, &RundkursController::getCurrentLaserScan, this);
@@ -79,7 +77,7 @@ void RundkursController::driveCurve(){
 	}
 
 	cmd.header.stamp = ros::Time::now();
-	command_pub.publish(cmd);
+	command_pub->publish(cmd);
 	ros::spinOnce();
 }
 
@@ -113,7 +111,7 @@ void RundkursController::driveStraight(){
 	cmd.steering_level = -40;
 
 	cmd.header.stamp = ros::Time::now();
-	command_pub.publish(cmd);
+	command_pub->publish(cmd);
 	ros::spinOnce();
 }
 
@@ -122,7 +120,7 @@ void RundkursController::stop(){
 	cmd.motor_level = 0;
 	cmd.steering_level = 0;
 	cmd.header.stamp = ros::Time::now();
-	command_pub.publish(cmd);
+	command_pub->publish(cmd);
 	ros::spinOnce();
 }
 

@@ -28,7 +28,7 @@ typedef pses_basis::Command command_data;
 
 class RundkursController : public AutoController  {
    public:
-   		RundkursController(ros::NodeHandle * n);
+   		RundkursController(ros::NodeHandle * n, ros::Publisher *command_pub);
    		~RundkursController();
     	void run();
    private:
@@ -39,7 +39,7 @@ class RundkursController : public AutoController  {
    		void getCurrentSensorData(const pses_basis::SensorData::ConstPtr& );
    		void simpleController();
    		ros::NodeHandle * n;
-   		ros::Publisher command_pub;
+   		ros::Publisher *command_pub;
    		ros::Subscriber laser_sub;
    		ros::Subscriber sensor_sub;
    		sensor_msgs::LaserScan *currentLaserScan;
