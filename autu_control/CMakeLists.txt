@@ -115,36 +115,39 @@ catkin_package(
 include_directories(
   ${catkin_INCLUDE_DIRS}
   include
+  include/autu_control
 )
 
 ## Declare a C++ library
-# add_library(autu_control
-#   src/${PROJECT_NAME}/autu_control.cpp
-# )
+add_library(rundkursController src/rundkursController.cpp)
+add_library(laserDetector src/laserDetector.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
 # add_dependencies(autu_control ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_dependencies(rundkursController ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(laserDetector ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 ## Declare a C++ executable
 # add_executable(autu_control_node src/autu_control_node.cpp)
 
-
-add_executable(rundkursController src/rundkursController.cpp)
-target_link_libraries(rundkursController ${catkin_LIBRARIES})
-
 add_executable(main src/main.cpp)
 target_link_libraries(main ${catkin_LIBRARIES})
+target_link_libraries(main rundkursController)
+target_link_libraries(main laserDetector)
+
+#add_dependencies(main ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(autu_control_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(autu_control_node
-#   ${catkin_LIBRARIES}
-# )
+#target_link_libraries(main
+#  ${catkin_LIBRARIES}
+#)
 
 #############
 ## Install ##
@@ -161,18 +164,18 @@ target_link_libraries(main ${catkin_LIBRARIES})
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS autu_control autu_control_node
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+install(TARGETS rundkursController laserDetector
+   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
+install(DIRECTORY include/${PROJECT_NAME}/
+   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+   FILES_MATCHING PATTERN "*.h"
+   PATTERN ".svn" EXCLUDE
+ )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES
