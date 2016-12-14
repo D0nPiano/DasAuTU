@@ -13,6 +13,7 @@ class LaserDetector {
    		bool isNextToCorner();
    		bool isNextToWall();
    		float getAngleToWall();
+   		float getAngleToWallInDeg();
    private:
    		float calculateBeta(int angleBegin, float & alpha, float & epsilon);
    		sensor_msgs::LaserScan *currentLaserScan;
@@ -23,7 +24,7 @@ class LaserDetector {
 
 LaserDetector::LaserDetector(sensor_msgs::LaserScan * laserPtr): currentLaserScan(laserPtr){
 	ROS_INFO("New LaserDetector");
-	CORNER_SENSITIVITY = 1.0;
+	CORNER_SENSITIVITY = 1.3;
 	RANGE_START = 349;
 	RANGE_DIFF = 10;
 }
@@ -36,7 +37,7 @@ LaserDetector::~LaserDetector()
 bool LaserDetector::isNextToCorner(){
 	float laserDiffFront = currentLaserScan->ranges[RANGE_START - RANGE_DIFF*2] - currentLaserScan->ranges[RANGE_START - RANGE_DIFF];
 	float laserDiffBack = currentLaserScan->ranges[RANGE_START - RANGE_DIFF] - currentLaserScan->ranges[RANGE_START];
-	bool retVal = laserDiffFront > (CORNER_SENSITIVITY * 1.3) && laserDiffBack < (0.3 / CORNER_SENSITIVITY);
+	bool retVal = laserDiffFront > (1.3 / CORNER_SENSITIVITY) && laserDiffBack < (0.3 * CORNER_SENSITIVITY);
 	return retVal;
 }
 
@@ -44,9 +45,9 @@ bool LaserDetector::isNextToWall(){
 	if(this->isNextToCorner())
 		return false;
 
-	float laserDiffFront = currentLaserScan->ranges[320] - currentLaserScan->ranges[330];
-	float laserDiffBack = currentLaserScan->ranges[325] - currentLaserScan->ranges[335];
-	bool retVal = currentLaserScan->ranges[320] < 3.0 && currentLaserScan->ranges[330] < 2.8 && currentLaserScan->ranges[340] < 2.6 && laserDiffFront < 0.7 && laserDiffBack < 0.5;
+	float laserDiffFront = currentLaserScan->ranges[RANGE_START - RANGE_DIFF*3] - currentLaserScan->ranges[RANGE_START - RANGE_DIFF*2];
+	float laserDiffBack = currentLaserScan->ranges[RANGE_START - RANGE_DIFF * 1] - currentLaserScan->ranges[RANGE_START - RANGE_DIFF * 2];
+	bool retVal = currentLaserScan->ranges[RANGE_START - RANGE_DIFF*3] < 3.0 && currentLaserScan->ranges[RANGE_START - RANGE_DIFF*2] < 2.8 && currentLaserScan->ranges[RANGE_START - RANGE_DIFF*1] < 2.6 && laserDiffFront < 0.7 && laserDiffBack < 0.5;
 	return retVal;
 }
 
@@ -81,6 +82,11 @@ float LaserDetector::getAngleToWall(){
 	float angleToWall = PI - beta - epsilon - ANGLE_OFFSET;
 	//ROS_INFO("Angle to wall in deg: [%f]", angleToWall * 180 / PI);
 	return angleToWall;
+}
+
+float LaserDetector::getAngleToWallInDeg(){
+	float angleToWall = this->getAngleToWall();
+	return (angleToWall * 180.0 / PI);
 }
 
 #endif

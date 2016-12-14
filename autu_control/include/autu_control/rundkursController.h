@@ -4,7 +4,7 @@
 
 #define PI 3.14159265
 
-#define RundkursController_MIN_CURVE_SECONDS 2.5
+#define RundkursController_MAX_CURVE_SECONDS 8.0
 
 /*
 	If LaserScan is uninitialized, it's range[0] is -1.0
@@ -95,11 +95,10 @@ void RundkursController::driveCurve(){
 
 	if(curveTimer < 0.3){
 		float ldist = currentSensorData->range_sensor_left;
-		driveStraightTime = 0.4 + (0.8 * ldist);
+		driveStraightTime = (1.2 * ldist);
 		cornerBeginAngle = laserDetector->getAngleToWall();
 
-
-		float curveSeconds = (3 * (cornerBeginAngle / PI / 2)) * 5.8;
+		float curveSeconds = 1.0 + (cornerBeginAngle / PI / 2) * 9.0;
 		driveCurveTime = driveStraightTime + .6 + curveSeconds;
 
 		ROS_INFO("CurveCompleted: cornerBeginAngle: [%f]", (cornerBeginAngle  * 180 / PI));
@@ -110,8 +109,13 @@ void RundkursController::driveCurve(){
 	if(curveTimer < driveStraightTime) {
     	cmd.motor_level = 10;
     	cmd.steering_level = 0;
+	} else if(curveTimer > driveCurveTime - 1.0 && curveTimer < driveCurveTime && laserDetector->getAngleToWallInDeg() < 95.0){
+    	ROS_INFO("Kurvenfahrt beendet");
+    	cmd.motor_level = 10;
+    	cmd.steering_level = 0;
+  		drivingCurve = false;
 	} else if(curveTimer < driveCurveTime){
-    	cmd.motor_level = 5;
+    	cmd.motor_level = 7;
     	cmd.steering_level = 30;
 	} else {
     	cmd.motor_level = 10;
@@ -179,7 +183,7 @@ void RundkursController::simpleController(){
 	if(drivingCurve){
 		this->driveCurve();
 		if(		laserDetector->isNextToWall()
-				&& (curveBegin + RundkursController_MIN_CURVE_SECONDS) < ros::Time::now().toSec()
+				&& (curveBegin + RundkursController_MAX_CURVE_SECONDS) < ros::Time::now().toSec()
 				&& (laserDetector->getAngleToWall() * 180 / PI) < 100.0){
 			drivingCurve = false;
 		}
