@@ -1,6 +1,11 @@
 #ifndef _RundkursController_H_
 #define _RundkursController_H_
 
+
+#define PI 3.14159265
+
+#define RundkursController_MIN_CURVE_SECONDS 2.5
+
 /*
 	If LaserScan is uninitialized, it's range[0] is -1.0
 	If SensorData is uninitialized, it's range_sensor_left is -1.0
@@ -8,6 +13,7 @@
 
 
 #include "autu_control/AutoController.h"
+#include "autu_control/laserDetector.h"
 
 #include <iostream>
 #include <exception>
@@ -26,7 +32,9 @@ class RundkursController : public AutoController  {
    		~RundkursController();
     	void run();
    private:
+   		void driveCurve();
    		void driveStraight();
+   		void stop();
    		void getCurrentLaserScan(const sensor_msgs::LaserScan::ConstPtr& );
    		void getCurrentSensorData(const pses_basis::SensorData::ConstPtr& );
    		void simpleController();
@@ -36,6 +44,9 @@ class RundkursController : public AutoController  {
    		ros::Subscriber sensor_sub;
    		sensor_msgs::LaserScan *currentLaserScan;
    		pses_basis::SensorData *currentSensorData;
+   		LaserDetector *laserDetector;
+   		bool drivingCurve;
+   		double curveBegin;
 };
 
 RundkursController::RundkursController(ros::NodeHandle * n): n(n){
@@ -59,13 +70,58 @@ RundkursController::RundkursController(ros::NodeHandle * n): n(n){
 	// Initialize SensorData
 	currentSensorData = new pses_basis::SensorData;
 	currentSensorData->range_sensor_left = -1.0;
+
+	laserDetector = new LaserDetector(currentLaserScan);
+
+	drivingCurve = false;
 }
 
 RundkursController::~RundkursController()
 {
 	ROS_INFO("Destroying RundkursController");
+	this->stop();
 	laser_sub.shutdown();
 	sensor_sub.shutdown();
+}
+
+void RundkursController::driveCurve(){
+	command_data cmd;
+
+	static float driveStraightTime;
+	static float driveCurveTime;
+	static float cornerBeginAngle;
+
+	float curveTimer = ros::Time::now().toSec() - curveBegin;
+
+	if(curveTimer < 0.3){
+		float ldist = currentSensorData->range_sensor_left;
+		driveStraightTime = 0.4 + (0.8 * ldist);
+		cornerBeginAngle = laserDetector->getAngleToWall();
+
+
+		float curveSeconds = (3 * (cornerBeginAngle / PI / 2)) * 5.8;
+		driveCurveTime = driveStraightTime + .6 + curveSeconds;
+
+		ROS_INFO("CurveCompleted: cornerBeginAngle: [%f]", (cornerBeginAngle  * 180 / PI));
+		ROS_INFO("CurveCompleted: driveStraightTime: [%f]", driveStraightTime);
+		ROS_INFO("CurveCompleted: driveCurveTime: [%f]", driveCurveTime);	
+	}
+
+	if(curveTimer < driveStraightTime) {
+    	cmd.motor_level = 10;
+    	cmd.steering_level = 0;
+	} else if(curveTimer < driveCurveTime){
+    	cmd.motor_level = 5;
+    	cmd.steering_level = 30;
+	} else {
+    	cmd.motor_level = 10;
+    	cmd.steering_level = 0;
+  		drivingCurve = false;
+	}
+
+	cmd.header.stamp = ros::Time::now();
+	command_pub.publish(cmd);
+	ros::spinOnce();
 }
 
 void RundkursController::driveStraight(){
@@ -102,6 +158,15 @@ void RundkursController::driveStraight(){
 	ros::spinOnce();
 }
 
+void RundkursController::stop(){
+	command_data cmd;
+	cmd.motor_level = 0;
+	cmd.steering_level = 0;
+	cmd.header.stamp = ros::Time::now();
+	command_pub.publish(cmd);
+	ros::spinOnce();
+}
+
 void RundkursController::getCurrentLaserScan(const sensor_msgs::LaserScan::ConstPtr& msg){
 	*currentLaserScan = *msg;
 }
@@ -111,17 +176,31 @@ void RundkursController::getCurrentSensorData(const pses_basis::SensorData::Cons
 }
 
 void RundkursController::simpleController(){
-  this->driveStraight();
+	if(drivingCurve){
+		this->driveCurve();
+		if(		laserDetector->isNextToWall()
+				&& (curveBegin + RundkursController_MIN_CURVE_SECONDS) < ros::Time::now().toSec()
+				&& (laserDetector->getAngleToWall() * 180 / PI) < 100.0){
+			drivingCurve = false;
+		}
+	} else {
+		this->driveStraight();
+		if(laserDetector->isNextToCorner()){
+			ROS_INFO("************ Corner ***************");
+			drivingCurve = true;
+			curveBegin = ros::Time::now().toSec();
+			ROS_INFO("Seconds: [%f]", curveBegin);
+		}
+	}
+	//ROS_INFO("Angle to wall in deg: [%f]", laserDetector->getAngleToWall() * 180 / PI);
 }
 
 void RundkursController::run() {
 	if(currentLaserScan->ranges[0] == -1.0 || currentSensorData->range_sensor_left == -1.0){
-		ROS_INFO("Uninitialized!");
+		ROS_INFO("Sensors Uninitialized!");
 		return;
 	}
 	//If everything is initialized, run Controller
 	this->simpleController();
 }
-
-
 #endif
