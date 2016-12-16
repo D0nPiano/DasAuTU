@@ -1,5 +1,6 @@
 <!-- Starts up everything needed to run the example listener/talker nodes. -->
 <launch>
+  <include file="$(find robot_localization)/launch/dual_ekf_navsat_example.launch" />
   <include file="$(find pses_simulation)/launch/simulation.launch" />
   <!-- The C++ talker node will publish a custom message. -->
 <!--  <node pkg="autu_control" type="talker" name="talker">
@@ -11,9 +12,9 @@
   </node>
 -->
   <!-- The C++ listener node subscribes to the custom message that either talker is publishing. -->
- <node pkg="autu_control" type="listener" name="listener" output="screen">
+ <!--<node pkg="autu_control" type="listener" name="listener" output="screen">
     <remap from="example" to="chatter"/>
   </node>
-
+-->
   <node pkg="autu_control" type="kalman" name="kalman" output="screen"/>
 </launch>
