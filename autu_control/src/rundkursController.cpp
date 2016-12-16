@@ -48,10 +48,10 @@ void RundkursController::driveCurve(){
 
 	if(curveTimer < 0.3){
 		float ldist = currentSensorData->range_sensor_left;
-		driveStraightTime = 0.3 + (1.5 * ldist);
+		driveStraightTime = 0.5 + (1.9 * ldist);
 		cornerBeginAngle = laserDetector->getAngleToWall();
 
-		float curveSeconds = 1.5 + (cornerBeginAngle / PI / 2) * 9.0;
+		float curveSeconds = 1.3 + (cornerBeginAngle / PI / 2) * 9.0;
 		driveCurveTime = driveStraightTime + .6 + curveSeconds;
 
 		//ROS_INFO("CurveCompleted: cornerBeginAngle: [%f]", (cornerBeginAngle  * 180 / PI));
