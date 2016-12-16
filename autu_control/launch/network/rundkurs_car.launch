@@ -38,7 +38,7 @@
    <node pkg="tf" type="static_transform_publisher" name="kinect2_base_link"
 args="$(arg optical_rotate) kinect2_base_link kinect2_link 100" /> 
 
-<node pkg="autu_control" type="rundkursController" name="rundkursController" output="screen"/>
+<node pkg="autu_control" type="main" name="main" output="screen"/>
 <node name="depthimage_to_laserscan" pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" >
 	<remap from="image" to="/kinect2/$(arg resolution)/image_depth_rect"/>
         <param name="output_frame_id" value="scan"/>

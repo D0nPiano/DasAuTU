@@ -88,6 +88,11 @@ void RundkursController::driveStraight(){
 	ldist += laserDetector->getDistanceToWall();
 	ldist = ldist / 2.0;
 
+	/* TODO: Get corner, set 
+			drivingCurve = true;
+			curveBegin = ros::Time::now().toSec();
+			*/
+
 	float solldist = 0.6;
 	float steerfact = -2;
 	static float e0 = 0;
