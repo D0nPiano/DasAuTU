@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+<include file="$(find autu_control)/launch/odom_improve/basis.launch" /> 
+
+    <node pkg="gmapping" type="slam_gmapping" name="gmapping_thing" output="screen" >
+    <remap from="scan" to="/kinect_scan" />
+    <remap from="base_link" to="base_link" />
+    <remap from="odom" to="/odom" /> 
+  </node>
+
+    
+</launch>
