@@ -1,3 +1,5 @@
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
 cmake_minimum_required(VERSION 2.8.3)
 project(autu_control)
 
@@ -7,7 +9,17 @@ project(autu_control)
 find_package(catkin REQUIRED COMPONENTS
   pses_basis
   roscpp
+  cv_bridge
 )
+
+find_package(OpenCV 2 REQUIRED)
+find_package(Qt5Widgets)
+find_package(Qt5Core)
+find_package(Qt5Gui)
+
+set( QT_USE_QTGUI TRUE )
+set( QT_USE_QTOPENGL TRUE )
+set( QT_USE_QTXML TRUE )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -137,6 +149,14 @@ add_executable(main src/main.cpp)
 target_link_libraries(main ${catkin_LIBRARIES})
 target_link_libraries(main rundkursController)
 target_link_libraries(main laserDetector)
+
+## Autu Dashboard
+QT5_WRAP_UI(UIS_HDRS include/autu_control/Dashboard.ui)
+add_library(autu_dashboard_ui include/autu_control/Dashboard.cpp ${UIS_HDRS})
+add_dependencies(autu_dashboard_ui ${PROJECT_NAME}_gencpp)
+add_executable(autu_dashboard src/autu_dashboard.cpp)
+target_link_libraries(autu_dashboard_ui Qt5::Widgets Qt5::Core Qt5::Gui ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(autu_dashboard ${catkin_LIBRARIES} autu_dashboard_ui)
 
 #add_dependencies(main ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 

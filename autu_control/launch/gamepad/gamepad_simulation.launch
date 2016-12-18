@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Starts up everything needed to run the example listener/talker nodes. -->
+<launch>
+  <include file="$(find pses_simulation)/launch/simulation.launch">
+  	<arg name="dashboard" value="false"/>
+  </include>
+  <!-- Dashboard for gamepad -->
+  <node pkg="autu_control" type="autu_dashboard" name="autu_dashboard" output="screen">
+    <remap from="example" to="chatter"/>
+  </node>
+</launch>
