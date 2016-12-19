@@ -151,15 +151,15 @@ target_link_libraries(main rundkursController)
 target_link_libraries(main laserDetector)
 
 ## Autu Dashboard
-QT5_WRAP_UI(UIS_HDRS include/autu_control/Dashboard.ui)
-add_library(autu_dashboard_ui include/autu_control/Dashboard.cpp ${UIS_HDRS})
+QT5_WRAP_UI(UIS_HDRS include/autu_control/gamepad/Dashboard.ui)
+add_library(autu_dashboard_ui include/autu_control/gamepad/Dashboard.cpp ${UIS_HDRS})
 add_dependencies(autu_dashboard_ui ${PROJECT_NAME}_gencpp)
-add_executable(autu_dashboard src/autu_dashboard.cpp)
+add_executable(autu_dashboard src/gamepad/autu_dashboard.cpp)
 target_link_libraries(autu_dashboard_ui Qt5::Widgets Qt5::Core Qt5::Gui ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 target_link_libraries(autu_dashboard ${catkin_LIBRARIES} autu_dashboard_ui)
 
 ## Gamepad
-add_library(ps3_controller src/ps3_controller.cpp)
+add_library(ps3_controller src/gamepad/ps3_controller.cpp)
 target_link_libraries(ps3_controller Qt5::Widgets Qt5::Core Qt5::Gui ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 #add_dependencies(main ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

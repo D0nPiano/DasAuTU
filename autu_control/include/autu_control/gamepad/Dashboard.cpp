@@ -1,5 +1,5 @@
 #include "Dashboard.h"
-#include "../../../../build/autu/autu_control/ui_Dashboard.h"
+#include "../../../../../build/autu/autu_control/ui_Dashboard.h"
 
 Dashboard::Dashboard(ros::NodeHandle* nh, QWidget *parent) :
         QMainWindow(parent), ui(new Ui::Dashboard), nh(nh)

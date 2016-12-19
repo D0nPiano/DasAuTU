@@ -1,6 +1,6 @@
 #include <ros/ros.h>
 #include <QApplication>
-#include <autu_control/Dashboard.h>
+#include <autu_control/gamepad/Dashboard.h>
 #include <signal.h>
 #include <unistd.h>
 
