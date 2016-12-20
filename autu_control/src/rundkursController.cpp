@@ -119,7 +119,7 @@ void RundkursController::driveStraight(){
 	float e = solldist - ldist;
 	//cmd.steering_level = steerfact *  p *( e+ (e-e0)*d/(t-t0));
 	ROS_INFO("parallelAngle:[%f]", parallelAngle);
-	cmd.steering_level = (solldist - (k1 * ldist + k2 * parallelAngle )) * steerfact;
+	cmd.steering_level = (solldist*16 - (k1 * ldist + k2 * parallelAngle )) * steerfact;
 
 	e0 = e;
 	t0 = t;
