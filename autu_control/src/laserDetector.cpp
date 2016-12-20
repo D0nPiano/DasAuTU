@@ -8,7 +8,7 @@
 
 LaserDetector::LaserDetector(sensor_msgs::LaserScan * laserPtr): currentLaserScan(laserPtr){
 	ROS_INFO("New LaserDetector");
-	CORNER_SENSITIVITY = 1.5;
+	CORNER_SENSITIVITY = 2.2;
 	RANGE_START = 349;
 	RANGE_DIFF = 0;
 }
@@ -51,7 +51,7 @@ float LaserDetector::getDistanceToWall(){
 
 	float beta = (beta1 + beta2 + beta3 + beta4 + beta5) / 5.0;
 	float distance = sin(beta) * currentLaserScan->ranges[RANGE_START - RANGE_DIFF];
-	ROS_INFO("Distance to Wall: [%f]", distance);
+	//ROS_INFO("Distance to Wall: [%f]", distance);
 	return distance;
 }
 

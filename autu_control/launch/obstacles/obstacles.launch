@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+<include file="$(find autu_control)/launch/obstacles/network_car.launch" /> 
+<node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager"/>
+
+  <node pkg="nodelet" type="nodelet" name="Obstacle_Detection"
+        args="load rtabmap_ros/obstacles_detection standalone_nodelet">
+    <remap from="cloud" to="/kinect2/hd/points"/>
+  </node>
+
+</launch>

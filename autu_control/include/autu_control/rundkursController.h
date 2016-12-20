@@ -38,6 +38,7 @@ class RundkursController : public AutoController  {
    		void getCurrentLaserScan(const sensor_msgs::LaserScan::ConstPtr& );
    		void getCurrentSensorData(const pses_basis::SensorData::ConstPtr& );
    		void simpleController();
+         void beginCurve();
    		ros::NodeHandle * n;
    		ros::Publisher *command_pub;
    		ros::Subscriber laser_sub;
