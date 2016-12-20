@@ -4,8 +4,10 @@
   <!-- Dashboard for gamepad -->
   <node pkg="autu_control" type="autu_dashboard" name="autu_dashboard" output="screen"/>
   <!-- Joystick driver -->
-  <node pkg="joy" type="joy_node" name="joy_node" output="screen">
+   <node pkg="joy" type="joy_node" name="joy_node" output="screen">
     <param name="dev" value="/dev/input/js0"/>
+    <param name="max_motorlevel" value="10"/>
+    <param name="max_steering" value="35"/>
   </node>
   <!-- Autu Controller main -->
   <node pkg="autu_control" type="main" name="main" output="screen"/>

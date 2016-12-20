@@ -20,6 +20,7 @@ private:
   float gaspedal;
   // joystickLeftLeftwards range is from -1.0 (right) to 1.0 (left)
   float joystickLeftLeftwards;
+  int max_motorlevel, max_steering;
 };
 
 #endif // PS3_CONTROLLER_H

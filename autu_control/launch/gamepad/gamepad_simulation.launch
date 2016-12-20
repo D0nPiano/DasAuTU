@@ -5,12 +5,12 @@
   	<arg name="dashboard" value="false"/>
   </include>
   <!-- Dashboard for gamepad -->
-  <node pkg="autu_control" type="autu_dashboard" name="autu_dashboard" output="screen">
-    <remap from="example" to="chatter"/>
-  </node>
+  <node pkg="autu_control" type="autu_dashboard" name="autu_dashboard" output="screen"/>
   <!-- Joystick driver -->
   <node pkg="joy" type="joy_node" name="joy_node" output="screen">
     <param name="dev" value="/dev/input/js0"/>
+    <param name="max_motorlevel" value="20"/>
+    <param name="max_steering" value="40"/>
   </node>
   <!-- Autu Controller main -->
   <node pkg="autu_control" type="main" name="main" output="screen"/>
