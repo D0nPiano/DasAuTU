@@ -15,8 +15,11 @@ public:
 private:
   ros::NodeHandle *n;
   ros::Publisher *command_pub;
-  ros::Subscriber joystick_pub;
-  float r2, joystickLeftLeftwards;
+  ros::Subscriber joystick_sub;
+  // gaspedal range is from -1.0 (max backward) to 1.0 (max forward)
+  float gaspedal;
+  // joystickLeftLeftwards range is from -1.0 (right) to 1.0 (left)
+  float joystickLeftLeftwards;
 };
 
 #endif // PS3_CONTROLLER_H
