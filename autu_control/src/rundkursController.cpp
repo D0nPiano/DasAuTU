@@ -86,6 +86,7 @@ void RundkursController::driveStraight(){
 
 	float ldist = currentSensorData->range_sensor_left;
 	float wallDist = laserDetector->getDistanceToWall();
+	float parallelAngle =  -(90 - laserDetector->getAngleToWallInDeg());
 
 	// is a curve?
 	if((wallDist - ldist) > 1.8){
@@ -112,9 +113,13 @@ void RundkursController::driveStraight(){
 	cmd.motor_level = 8;
 	float p = 16;
 	float d = 8;
+	float k1 = 16;
+	float k2 = 5;
 	double t = ros::Time::now().toSec();
 	float e = solldist - ldist;
-	cmd.steering_level = steerfact *  p *( e+ (e-e0)*d/(t-t0));
+	//cmd.steering_level = steerfact *  p *( e+ (e-e0)*d/(t-t0));
+	ROS_INFO("parallelAngle:[%f]", parallelAngle);
+	cmd.steering_level = (solldist - (k1 * ldist + k2 * parallelAngle )) * steerfact;
 
 	e0 = e;
 	t0 = t;
