@@ -9,7 +9,7 @@
 #include <pses_basis/Command.h>
 typedef pses_basis::Command command_data;
 
-#define RUNTIMER_DELTA .01
+#define RUNTIMER_DELTA .03
 
 void getMode(const std_msgs::String::ConstPtr &msg, std::string *mode, bool *modeChanged) {
   *mode = msg->data;
@@ -38,10 +38,10 @@ void runTimerCallback(const ros::TimerEvent&, AutoController **rndCtrl, std::str
   }
 
   // ---- Notbremse --------
-  if(*frontRange < 0.2){
+  if(*frontRange > 0.1 && *frontRange < 0.4){
     ROS_INFO("NOTBREMSE");
     command_data cmd;
-    cmd.motor_level = -5;
+    cmd.motor_level = -1;
     cmd.steering_level = 0;
     cmd.header.stamp = ros::Time::now();
     command_pub->publish(cmd);
