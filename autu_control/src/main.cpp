@@ -54,8 +54,7 @@ int main(int argc, char **argv) {
   ros::NodeHandle n;
   float frontRange;
 
-  ros::Publisher command_pub =
-      n.advertise<command_data>("pses_basis/command", 1000);
+  ros::Publisher command_pub = n.advertise<command_data>("autu/command", 1000);
 
   AutoController *rndCtrl = new RemoteController(&n, &command_pub);
 

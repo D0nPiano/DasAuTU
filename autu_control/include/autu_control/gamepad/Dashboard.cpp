@@ -5,7 +5,7 @@ Dashboard::Dashboard(ros::NodeHandle *nh, QWidget *parent)
     : QMainWindow(parent), ui(new Ui::Dashboard), nh(nh) {
   ui->setupUi(this);
   modeControl = nh->advertise<string_msg>("pses_basis/mode_control", 10);
-  robotCommand = nh->advertise<command_data>("pses_basis/command", 10);
+  robotCommand = nh->advertise<command_data>("autu/command", 10);
   robotOdometry = nh->subscribe<odometry_data>(
       "odom", 10, boost::bind(odometryCallback, _1, ui));
   robotSensors = nh->subscribe<sensor_data>(

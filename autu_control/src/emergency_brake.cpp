@@ -1,7 +1,7 @@
 #include "autu_control/emergency_brake.h"
 
 EmergencyBrake::EmergencyBrake(ros::NodeHandle *n) : maxMotorLevel(13) {
-  command_pub = n->advertise<pses_basis::Command>("autu/command", 10);
+  command_pub = n->advertise<pses_basis::Command>("pses_basis/command", 10);
 }
 
 void EmergencyBrake::gridMapCallback(
@@ -26,9 +26,8 @@ int main(int argc, char **argv) {
   ROS_INFO("Emergency Brake launched");
 
   ros::Subscriber command_sub = n.subscribe<pses_basis::Command>(
-      "pses_basis/command", 10,
-      std::bind(&EmergencyBrake::commandCallback, emergencyBrake,
-                std::placeholders::_1));
+      "autu/command", 10, std::bind(&EmergencyBrake::commandCallback,
+                                    emergencyBrake, std::placeholders::_1));
 
   ros::spin();
   return 0;
