@@ -42,18 +42,6 @@ void runTimerCallback(const ros::TimerEvent &, AutoController **rndCtrl,
     }
   }
 
-  // ---- Notbremse --------
-  if (*frontRange > 0.1 && *frontRange < 0.4) {
-    ROS_INFO("NOTBREMSE");
-    command_data cmd;
-    cmd.motor_level = -1;
-    cmd.steering_level = 0;
-    cmd.header.stamp = ros::Time::now();
-    command_pub->publish(cmd);
-    ros::spinOnce();
-    return;
-  }
-
   // ----- Call to Controller -----
   (*rndCtrl)->run();
 }

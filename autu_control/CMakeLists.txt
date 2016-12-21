@@ -157,6 +157,11 @@ target_link_libraries(autu_dashboard ${catkin_LIBRARIES} autu_dashboard_ui)
 add_library(ps3_controller src/gamepad/ps3_controller.cpp)
 target_link_libraries(ps3_controller ${catkin_LIBRARIES})
 
+## Emergency Brake
+add_executable(emergency_brake src/emergency_brake.cpp)
+target_link_libraries(emergency_brake ${catkin_LIBRARIES})
+
+## Main
 add_executable(main src/main.cpp)
 target_link_libraries(main ${catkin_LIBRARIES})
 target_link_libraries(main rundkursController)
