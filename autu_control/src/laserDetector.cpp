@@ -22,8 +22,8 @@ void LaserDetector::initialize(){
 	float viewangle = currentLaserScan->angle_max - currentLaserScan->angle_min;
 	int steps = (int) (viewangle / currentLaserScan->angle_increment);
 
-	RANGE_START = steps - 1;
 	RANGE_DIFF = (int) steps / 30.0;
+	RANGE_START = steps - 2 * RANGE_DIFF;
 
 	ROS_INFO("RANGE_START: [%d]", RANGE_START);
 	ROS_INFO("RANGE_DIFF: [%d]", RANGE_DIFF);

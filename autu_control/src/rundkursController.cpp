@@ -48,10 +48,10 @@ void RundkursController::driveCurve(){
 
 	if(curveTimer < 0.3){
 		float ldist = currentSensorData->range_sensor_left;
-		driveStraightTime = 0.3 + (1.5 * ldist);
+		driveStraightTime = 0.5 + (1.9 * ldist);
 		cornerBeginAngle = laserDetector->getAngleToWall();
 
-		float curveSeconds = 1.0 + (cornerBeginAngle / PI / 2) * 9.0;
+		float curveSeconds = 1.3 + (cornerBeginAngle / PI / 2) * 9.0;
 		driveCurveTime = driveStraightTime + .6 + curveSeconds;
 
 		//ROS_INFO("CurveCompleted: cornerBeginAngle: [%f]", (cornerBeginAngle  * 180 / PI));
@@ -85,24 +85,33 @@ void RundkursController::driveStraight(){
 	command_data cmd;
 
 	float ldist = currentSensorData->range_sensor_left;
-	ldist += laserDetector->getDistanceToWall();
-	ldist = ldist / 2.0;
+	float wallDist = laserDetector->getDistanceToWall();
+
+	// is a curve?
+	if((wallDist - ldist) > 1.8){
+		ROS_INFO("CORNER?");
+		drivingCurve = true;
+		curveBegin = ros::Time::now().toSec();
+		return;
+	}
+
+	ldist = ldist + wallDist / 2.0;
 
 	/* TODO: Get corner, set 
 			drivingCurve = true;
 			curveBegin = ros::Time::now().toSec();
 			*/
 
-	float solldist = 0.6;
+	float solldist = 0.9;
 	float steerfact = -2;
 	static float e0 = 0;
 	static double t0 = 0;
 
 	// P-Regler, tb = 62s
 
-	cmd.motor_level = 20;
-	float p = 18;
-	float d = 10;
+	cmd.motor_level = 8;
+	float p = 16;
+	float d = 8;
 	double t = ros::Time::now().toSec();
 	float e = solldist - ldist;
 	cmd.steering_level = steerfact *  p *( e+ (e-e0)*d/(t-t0));
