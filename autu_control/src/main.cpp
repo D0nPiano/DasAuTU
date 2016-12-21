@@ -1,44 +1,49 @@
-#include "autu_control/rundkursController.h"
-#include "autu_control/remoteController.h"
 #include "autu_control/AutoController.h"
+#include "autu_control/gamepad/ps3_controller.h"
+#include "autu_control/remoteController.h"
+#include "autu_control/rundkursController.h"
 
+#include "pses_basis/SensorData.h"
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include <iostream>
-#include "pses_basis/SensorData.h"
 #include <pses_basis/Command.h>
 typedef pses_basis::Command command_data;
 
 #define RUNTIMER_DELTA .03
 
-void getMode(const std_msgs::String::ConstPtr &msg, std::string *mode, bool *modeChanged) {
+void getMode(const std_msgs::String::ConstPtr &msg, std::string *mode,
+             bool *modeChanged) {
   *mode = msg->data;
   *modeChanged = true;
 }
 
-void getFrontRange(const pses_basis::SensorData::ConstPtr&  msg, float * frontRange){
+void getFrontRange(const pses_basis::SensorData::ConstPtr &msg,
+                   float *frontRange) {
   *frontRange = msg->range_sensor_front;
 }
 
-
-void runTimerCallback(const ros::TimerEvent&, AutoController **rndCtrl, std::string *mode, bool *modeChanged,
-          ros::NodeHandle *n, float * frontRange, ros::Publisher *command_pub){
+void runTimerCallback(const ros::TimerEvent &, AutoController **rndCtrl,
+                      std::string *mode, bool *modeChanged, ros::NodeHandle *n,
+                      float *frontRange, ros::Publisher *command_pub) {
 
   // ----- Mode Changer -----
-  if(*modeChanged){
+  if (*modeChanged) {
     ROS_INFO("Mode CHANGED");
     *modeChanged = false;
 
-    delete(*rndCtrl);
-    if(!mode->compare("Follow Wall")){
+    delete (*rndCtrl);
+    if (!mode->compare("Follow Wall")) {
       *rndCtrl = new RundkursController(n, command_pub);
+    } else if (!mode->compare("Gamepad")) {
+      *rndCtrl = new PS3_Controller(n, command_pub);
     } else {
       *rndCtrl = new RemoteController(n, command_pub);
     }
   }
 
   // ---- Notbremse --------
-  if(*frontRange > 0.1 && *frontRange < 0.4){
+  if (*frontRange > 0.1 && *frontRange < 0.4) {
     ROS_INFO("NOTBREMSE");
     command_data cmd;
     cmd.motor_level = -1;
@@ -50,9 +55,7 @@ void runTimerCallback(const ros::TimerEvent&, AutoController **rndCtrl, std::str
   }
 
   // ----- Call to Controller -----
-  if(mode->compare("Remote Control")){
-      (*rndCtrl)->run();
-  }
+  (*rndCtrl)->run();
 }
 
 int main(int argc, char **argv) {
@@ -63,13 +66,15 @@ int main(int argc, char **argv) {
   ros::NodeHandle n;
   float frontRange;
 
-  ros::Publisher command_pub = n.advertise<command_data>("pses_basis/command", 1000);
+  ros::Publisher command_pub =
+      n.advertise<command_data>("pses_basis/command", 1000);
 
   AutoController *rndCtrl = new RemoteController(&n, &command_pub);
 
-
-  ros::Timer runTimer = n.createTimer(ros::Duration(RUNTIMER_DELTA),
-    std::bind(runTimerCallback, std::placeholders::_1, &rndCtrl, &mode, &modeChanged, &n, &frontRange, &command_pub));
+  ros::Timer runTimer = n.createTimer(
+      ros::Duration(RUNTIMER_DELTA),
+      std::bind(runTimerCallback, std::placeholders::_1, &rndCtrl, &mode,
+                &modeChanged, &n, &frontRange, &command_pub));
 
   ros::Subscriber submode = n.subscribe<std_msgs::String>(
       "pses_basis/mode_control", 1000,
