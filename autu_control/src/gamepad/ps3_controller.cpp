@@ -6,6 +6,9 @@
 #define PS3_AXIS_BUTTON_REAR_RIGHT_2 13
 #define PS3_AXIS_STICK_LEFT_LEFTWARDS 0
 
+// in seconds
+#define GAMEPAD_TIMEOUT 0.3
+
 PS3_Controller::PS3_Controller(ros::NodeHandle *n, ros::Publisher *command_pub)
     : n(n), command_pub(command_pub), gaspedal(0), joystickLeftLeftwards(0),
       max_motorlevel(10), max_steering(35) {
@@ -33,14 +36,21 @@ void PS3_Controller::handleJoystick(const sensor_msgs::Joy::ConstPtr &msg) {
 
   // joystickLeftLeftwards range is from -1.0 (right) to 1.0 (left)
   joystickLeftLeftwards = msg->axes[PS3_AXIS_STICK_LEFT_LEFTWARDS];
+
+  lastUpdateFromGamepad = ros::Time::now().toSec();
 }
 void PS3_Controller::run() {
+  const ros::Time now = ros::Time::now();
   pses_basis::Command cmd;
 
-  cmd.motor_level = max_motorlevel * gaspedal;
-  cmd.steering_level = max_steering * joystickLeftLeftwards;
+  if (now.toSec() - lastUpdateFromGamepad > GAMEPAD_TIMEOUT) {
+    cmd.motor_level = 0;
+  } else {
+    cmd.motor_level = max_motorlevel * gaspedal;
+    cmd.steering_level = max_steering * joystickLeftLeftwards;
+  }
 
-  cmd.header.stamp = ros::Time::now();
+  cmd.header.stamp = now;
   command_pub->publish(cmd);
   ros::spinOnce();
 }

@@ -21,6 +21,8 @@ private:
   // joystickLeftLeftwards range is from -1.0 (right) to 1.0 (left)
   float joystickLeftLeftwards;
   int max_motorlevel, max_steering;
+  // the timestamp from the last message received from the gamepad in seconds
+  double lastUpdateFromGamepad;
 };
 
 #endif // PS3_CONTROLLER_H
