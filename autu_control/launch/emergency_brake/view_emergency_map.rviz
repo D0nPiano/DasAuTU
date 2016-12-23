@@ -288,7 +288,7 @@ Visualization Manager:
         base_laser:
           Value: false
         base_link:
-          Value: true
+          Value: false
         front_left_steering:
           Value: false
         front_left_wheel:
@@ -298,11 +298,11 @@ Visualization Manager:
         front_right_wheel:
           Value: false
         front_sensor:
-          Value: false
+          Value: true
         left_sensor:
           Value: false
         map:
-          Value: false
+          Value: true
         odom:
           Value: false
         rear_left_wheel:
@@ -434,7 +434,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 5.65723
+      Distance: 4.75349
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -467,5 +467,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1197
-  X: 653
+  X: 643
   Y: 14

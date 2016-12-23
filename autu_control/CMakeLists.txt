@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   pses_basis
   roscpp
   cv_bridge
+  tf
 )
 
 find_package(OpenCV 2 REQUIRED)

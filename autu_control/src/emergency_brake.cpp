@@ -1,5 +1,7 @@
 #include "autu_control/emergency_brake.h"
 
+#define DURATION 1.0
+
 EmergencyBrake::EmergencyBrake(ros::NodeHandle *n)
     : maxMotorLevel(999), gridId(0), carX(0), carY(0) {
   command_pub = n->advertise<pses_basis::Command>("pses_basis/command", 10);
@@ -7,7 +9,7 @@ EmergencyBrake::EmergencyBrake(ros::NodeHandle *n)
   map_pub = n->advertise<nav_msgs::OccupancyGrid>("autu/emergency_map", 10);
 
   timer = n->createTimer(
-      ros::Duration(1.0),
+      ros::Duration(DURATION),
       std::bind(&EmergencyBrake::timerCallback, this, std::placeholders::_1));
 
   command_sub = n->subscribe<pses_basis::Command>(
@@ -51,19 +53,39 @@ void EmergencyBrake::speedCallback(const pses_basis::CarInfoConstPtr &msg) {
 }
 
 void EmergencyBrake::odomCallback(const nav_msgs::OdometryConstPtr &msg) {
-  carX = msg->pose.pose.position.x;
-  carY = msg->pose.pose.position.y;
+  //  carX = msg->pose.pose.position.x;
+  //  carY = msg->pose.pose.position.y;
 }
 
 void EmergencyBrake::timerCallback(const ros::TimerEvent &) {
   ROS_INFO("Timer Callback");
   if (grid != nullptr) {
+
+    geometry_msgs::PoseStamped out;
+    tf::StampedTransform transform;
+    try {
+      auto now = ros::Time::now();
+      tfListener.waitForTransform("/front_sensor", "/map", now,
+                                  ros::Duration(DURATION / 2));
+      tfListener.lookupTransform("/front_sensor", "/map", now, transform);
+
+      geometry_msgs::PoseStamped in;
+      in.pose.orientation.w = 1;
+      in.header.frame_id = "/front_sensor";
+
+      tfListener.transformPose("/map", in, out);
+      ROS_INFO("vec.x: %f out.x: %f", in.pose.position.x, out.pose.position.x);
+    } catch (tf::TransformException &ex) {
+      ROS_ERROR("%s", ex.what());
+      return;
+    }
+
     nav_msgs::OccupancyGrid debugGrid = *grid;
     //
-    int x =
-        (carX - debugGrid.info.origin.position.x) / debugGrid.info.resolution;
-    int y =
-        (carY - debugGrid.info.origin.position.y) / debugGrid.info.resolution;
+    int x = (out.pose.position.x - debugGrid.info.origin.position.x) /
+            debugGrid.info.resolution;
+    int y = (out.pose.position.y - debugGrid.info.origin.position.y) /
+            debugGrid.info.resolution;
     // check array bounds
 
     /*debugGrid.header.seq = gridId++;

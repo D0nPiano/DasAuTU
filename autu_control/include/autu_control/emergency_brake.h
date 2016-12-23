@@ -6,6 +6,7 @@
 #include "nav_msgs/OccupancyGrid.h"
 #include "nav_msgs/Odometry.h"
 #include "ros/ros.h"
+#include <tf/transform_listener.h>
 
 #include "pses_basis/CarInfo.h"
 #include "pses_basis/Command.h"
@@ -31,6 +32,7 @@ private:
   int16_t maxMotorLevel;
   float currentSpeed;
   nav_msgs::OccupancyGridConstPtr grid;
+  tf::TransformListener tfListener;
   uint32_t gridId;
   double carX, carY;
 };
