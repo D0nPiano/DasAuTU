@@ -61,7 +61,8 @@ void EmergencyBrake::timerCallback(const ros::TimerEvent &) {
   ROS_INFO("Timer Callback");
   if (grid != nullptr) {
 
-    geometry_msgs::PoseStamped out;
+    geometry_msgs::PointStamped frontSensor;
+    geometry_msgs::Vector3Stamped direction;
     tf::StampedTransform transform;
     try {
       auto now = ros::Time::now();
@@ -69,22 +70,24 @@ void EmergencyBrake::timerCallback(const ros::TimerEvent &) {
                                   ros::Duration(DURATION / 2));
       tfListener.lookupTransform("/front_sensor", "/map", now, transform);
 
-      geometry_msgs::PoseStamped in;
-      in.pose.orientation.w = 1;
-      in.header.frame_id = "/front_sensor";
+      geometry_msgs::PointStamped frontSensorIn;
+      frontSensorIn.header.frame_id = "/front_sensor";
+      tfListener.transformPoint("/map", frontSensorIn, frontSensor);
 
-      tfListener.transformPose("/map", in, out);
-      ROS_INFO("vec.x: %f out.x: %f", in.pose.position.x, out.pose.position.x);
+      geometry_msgs::Vector3Stamped directionIn;
+      directionIn.vector.x = 1;
+      directionIn.header.frame_id = "/front_sensor";
+      tfListener.transformVector("/map", directionIn, direction);
     } catch (tf::TransformException &ex) {
       ROS_ERROR("%s", ex.what());
       return;
     }
-
+    // TODO remove
     nav_msgs::OccupancyGrid debugGrid = *grid;
     //
-    int x = (out.pose.position.x - debugGrid.info.origin.position.x) /
+    int x = (frontSensor.point.x - debugGrid.info.origin.position.x) /
             debugGrid.info.resolution;
-    int y = (out.pose.position.y - debugGrid.info.origin.position.y) /
+    int y = (frontSensor.point.y - debugGrid.info.origin.position.y) /
             debugGrid.info.resolution;
     // check array bounds
 
