@@ -125,86 +125,18 @@ Visualization Manager:
     - Alpha: 1
       Class: rviz/RobotModel
       Collision Enabled: false
-      Enabled: true
+      Enabled: false
       Links:
         All Links Enabled: true
         Expand Joint Details: false
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        base_footprint:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        base_laser:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        front_left_steering:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        front_left_wheel:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        front_right_steering:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        front_right_wheel:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        front_sensor:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        left_sensor:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        rear_left_wheel:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        rear_right_wheel:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        right_sensor:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        scan:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        steering_servo:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
       Name: RobotModel
       Robot Description: robot_description
       TF Prefix: ""
       Update Interval: 0
-      Value: true
+      Value: false
       Visual Enabled: true
     - Alpha: 1
       Axes Length: 1
@@ -502,22 +434,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 44.2746
+      Distance: 5.65723
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 12.268
-        Y: 0.328274
-        Z: 7.69714
+        X: 0.189028
+        Y: 0.121175
+        Z: 0.204929
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 1.2048
+      Pitch: 0.659275
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.22671
+      Yaw: 4.18859
     Saved: ~
 Window Geometry:
   Displays:
@@ -535,5 +467,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1197
-  X: 663
+  X: 653
   Y: 14

@@ -31,11 +31,7 @@ EmergencyBrake::~EmergencyBrake() { command_sub.shutdown(); }
 
 void EmergencyBrake::gridMapCallback(
     const nav_msgs::OccupancyGridConstPtr &msg) {
-  grid = *msg;
-  //  for (int x = 0; x < mapInfo.width; ++x)
-  // for (int y = 0; y < mapInfo.height; ++y)
-  // grid.data[x * mapInfo.height + 2000] = 100;
-  // map_pub.publish(grid);
+  grid = msg;
 }
 
 void EmergencyBrake::commandCallback(const pses_basis::CommandConstPtr &cmd) {
@@ -61,25 +57,29 @@ void EmergencyBrake::odomCallback(const nav_msgs::OdometryConstPtr &msg) {
 
 void EmergencyBrake::timerCallback(const ros::TimerEvent &) {
   ROS_INFO("Timer Callback");
-  int x = (carX - grid.info.origin.position.x) / grid.info.resolution;
-  int y = (carY - grid.info.origin.position.y) / grid.info.resolution;
-  // check array bounds
-  ROS_INFO("x: %d y: %d", x, y);
-  //  grid.data[y * grid.info.width + x] = 100;
+  if (grid != nullptr) {
+    nav_msgs::OccupancyGrid debugGrid = *grid;
+    //
+    int x =
+        (carX - debugGrid.info.origin.position.x) / debugGrid.info.resolution;
+    int y =
+        (carY - debugGrid.info.origin.position.y) / debugGrid.info.resolution;
+    // check array bounds
 
-  nav_msgs::OccupancyGrid debugGrid = grid;
-  /*debugGrid.header.seq = gridId++;
-  debugGrid.header.stamp = ros::Time::now();
-  debugGrid.header.frame_id = "map";
-  debugGrid.info.resolution = 0.05;
-  debugGrid.info.height = 50;
-  debugGrid.info.width = 100;
-  debugGrid.info.origin.orientation.w = 1;*/
-  // for (uint32_t i = 0; i < debugGrid.info.width * debugGrid.info.height; ++i)
-  const int pos = y * debugGrid.info.width + x;
-  if (pos < debugGrid.data.size())
-    debugGrid.data[pos] = 100;
-  map_pub.publish(debugGrid);
+    /*debugGrid.header.seq = gridId++;
+    debugGrid.header.stamp = ros::Time::now();
+    debugGrid.header.frame_id = "map";
+    debugGrid.info.resolution = 0.05;
+    debugGrid.info.height = 50;
+    debugGrid.info.width = 100;
+    debugGrid.info.origin.orientation.w = 1;*/
+    // for (uint32_t i = 0; i < debugGrid.info.width * debugGrid.info.height;
+    // ++i)
+    const int pos = y * debugGrid.info.width + x;
+    if (pos < debugGrid.data.size())
+      debugGrid.data[pos] = 100;
+    map_pub.publish(debugGrid);
+  }
 }
 
 int main(int argc, char **argv) {

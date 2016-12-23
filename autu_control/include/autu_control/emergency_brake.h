@@ -30,7 +30,7 @@ private:
   ros::Timer timer;
   int16_t maxMotorLevel;
   float currentSpeed;
-  nav_msgs::OccupancyGrid grid;
+  nav_msgs::OccupancyGridConstPtr grid;
   uint32_t gridId;
   double carX, carY;
 };
