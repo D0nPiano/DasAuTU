@@ -19,6 +19,8 @@ public:
   void commandCallback(const pses_basis::CommandConstPtr &cmd);
   void speedCallback(const pses_basis::CarInfoConstPtr &msg);
   void odomCallback(const nav_msgs::OdometryConstPtr &msg);
+  void occupyCell(nav_msgs::OccupancyGrid &gridmap,
+                  const geometry_msgs::Point &point);
   void timerCallback(const ros::TimerEvent &);
 
 private:

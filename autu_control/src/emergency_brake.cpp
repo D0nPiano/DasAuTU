@@ -57,8 +57,19 @@ void EmergencyBrake::odomCallback(const nav_msgs::OdometryConstPtr &msg) {
   //  carY = msg->pose.pose.position.y;
 }
 
+void EmergencyBrake::occupyCell(nav_msgs::OccupancyGrid &gridmap,
+                                const geometry_msgs::Point &point) {
+  int x = (point.x - gridmap.info.origin.position.x) / gridmap.info.resolution;
+  int y = (point.y - gridmap.info.origin.position.y) / gridmap.info.resolution;
+  if (0 < x && x < gridmap.info.width)
+    if (0 < y && y < gridmap.info.height) {
+      const int pos = y * gridmap.info.width + x;
+      if (pos < gridmap.data.size())
+        gridmap.data[pos] = 100;
+    }
+}
+
 void EmergencyBrake::timerCallback(const ros::TimerEvent &) {
-  ROS_INFO("Timer Callback");
   if (grid != nullptr) {
 
     geometry_msgs::PointStamped frontSensor;
@@ -83,26 +94,26 @@ void EmergencyBrake::timerCallback(const ros::TimerEvent &) {
       return;
     }
     // TODO remove
-    nav_msgs::OccupancyGrid debugGrid = *grid;
-    //
-    int x = (frontSensor.point.x - debugGrid.info.origin.position.x) /
-            debugGrid.info.resolution;
-    int y = (frontSensor.point.y - debugGrid.info.origin.position.y) /
-            debugGrid.info.resolution;
-    // check array bounds
+    nav_msgs::OccupancyGrid debugGrid;
 
-    /*debugGrid.header.seq = gridId++;
+    debugGrid.header.seq = gridId++;
     debugGrid.header.stamp = ros::Time::now();
-    debugGrid.header.frame_id = "map";
-    debugGrid.info.resolution = 0.05;
-    debugGrid.info.height = 50;
-    debugGrid.info.width = 100;
-    debugGrid.info.origin.orientation.w = 1;*/
-    // for (uint32_t i = 0; i < debugGrid.info.width * debugGrid.info.height;
-    // ++i)
-    const int pos = y * debugGrid.info.width + x;
-    if (pos < debugGrid.data.size())
-      debugGrid.data[pos] = 100;
+    debugGrid.header.frame_id = grid->header.frame_id;
+
+    debugGrid.info.height = 2 / grid->info.resolution;
+    debugGrid.info.width = 2 / grid->info.resolution;
+    debugGrid.info.resolution = grid->info.resolution;
+    debugGrid.info.origin.orientation.w = 1;
+
+    const uint32_t dataSize = debugGrid.info.width * debugGrid.info.height;
+    for (uint32_t i = 0; i < dataSize; ++i)
+      debugGrid.data.push_back(-1);
+
+    debugGrid.info.origin.position = frontSensor.point;
+    debugGrid.info.origin.position.x -= 1;
+    debugGrid.info.origin.position.y -= 1;
+
+    occupyCell(debugGrid, frontSensor.point);
     map_pub.publish(debugGrid);
   }
 }
