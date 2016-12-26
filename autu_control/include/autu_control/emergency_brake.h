@@ -6,6 +6,7 @@
 #include "nav_msgs/OccupancyGrid.h"
 #include "nav_msgs/Odometry.h"
 #include "ros/ros.h"
+#include "sensor_msgs/LaserScan.h"
 #include <tf/transform_listener.h>
 
 #include "pses_basis/CarInfo.h"
@@ -21,6 +22,7 @@ public:
   void odomCallback(const nav_msgs::OdometryConstPtr &msg);
   void occupyCell(nav_msgs::OccupancyGrid &gridmap,
                   const geometry_msgs::Point &point);
+  void laserscanCallback(const sensor_msgs::LaserScanConstPtr &msg);
   void timerCallback(const ros::TimerEvent &);
 
 private:
@@ -30,6 +32,7 @@ private:
   ros::Subscriber speed_sub;
   ros::Subscriber map_sub;
   ros::Subscriber odom_sub;
+  ros::Subscriber laserscan_sub;
   ros::Timer timer;
   int16_t maxMotorLevel;
   float currentSpeed;
@@ -37,6 +40,7 @@ private:
   tf::TransformListener tfListener;
   uint32_t gridId;
   double carX, carY;
+  float carWidth;
 };
 
 #endif // EMERGENCYBRAKE_H

@@ -1,9 +1,11 @@
 #include "autu_control/emergency_brake.h"
+#include <limits>
+#include <math.h>
 
 #define DURATION 1.0
 
 EmergencyBrake::EmergencyBrake(ros::NodeHandle *n)
-    : maxMotorLevel(999), gridId(0), carX(0), carY(0) {
+    : maxMotorLevel(999), gridId(0), carX(0), carY(0), carWidth(0.2) {
   command_pub = n->advertise<pses_basis::Command>("pses_basis/command", 10);
 
   map_pub = n->advertise<nav_msgs::OccupancyGrid>("autu/emergency_map", 10);
@@ -19,6 +21,10 @@ EmergencyBrake::EmergencyBrake(ros::NodeHandle *n)
   speed_sub = n->subscribe<pses_basis::CarInfo>(
       "pses_basis/car_info", 10,
       std::bind(&EmergencyBrake::speedCallback, this, std::placeholders::_1));
+
+  laserscan_sub = n->subscribe<sensor_msgs::LaserScan>(
+      "/scan", 10, std::bind(&EmergencyBrake::laserscanCallback, this,
+                             std::placeholders::_1));
 
   map_sub = n->subscribe<nav_msgs::OccupancyGrid>(
       "autu/gridmap", 10,
@@ -69,8 +75,31 @@ void EmergencyBrake::occupyCell(nav_msgs::OccupancyGrid &gridmap,
     }
 }
 
+void EmergencyBrake::laserscanCallback(
+    const sensor_msgs::LaserScanConstPtr &msg) {
+  float d_min = std::numeric_limits<float>::max();
+  for (size_t i = 0; i < msg->ranges.size(); ++i) {
+    const float r = msg->ranges[i];
+    if (msg->range_min <= r && r <= msg->range_max) {
+      // alpha in radians and always positive
+      const float alpha = std::abs(i * msg->angle_increment + msg->angle_min);
+      const float sin_alpha = std::sin(alpha);
+      const float b = carWidth / 2.0;
+      const float r_max = b / sin_alpha;
+      if (r < r_max) {
+        // distance to obstacle
+        const float d = r * std::cos(alpha);
+        if (d < d_min)
+          d_min = d;
+      }
+    }
+  }
+  ROS_INFO("dist: %f", d_min);
+}
+
 void EmergencyBrake::timerCallback(const ros::TimerEvent &) {
-  if (grid != nullptr) {
+
+  /*if (grid != nullptr) {
 
     geometry_msgs::PointStamped frontSensor;
     geometry_msgs::Vector3Stamped direction;
@@ -115,7 +144,7 @@ void EmergencyBrake::timerCallback(const ros::TimerEvent &) {
 
     occupyCell(debugGrid, frontSensor.point);
     map_pub.publish(debugGrid);
-  }
+}*/
 }
 
 int main(int argc, char **argv) {
