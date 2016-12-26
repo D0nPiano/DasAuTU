@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+<!-- Dashboard for gamepad -->
+  <node pkg="autu_control" type="autu_dashboard" name="autu_dashboard" output="screen"/>
+  <!-- Joystick driver -->
+   <node pkg="joy" type="joy_node" name="joy_node" output="screen">
+    <param name="dev" value="/dev/input/js0"/>
+    <param name="max_motorlevel" value="10"/>
+    <param name="max_steering" value="42"/>
+  </node>
+  <!-- Autu Controller main -->
+  <node pkg="autu_control" type="main" name="main" output="screen">
+    <remap from="autu/command" to="pses_basis/command"/>
+  </node>
+
+
+   <!-- Which image resolution to process in rtabmap: sd, qhd, hd -->
+   <arg name="resolution" default="qhd" />
+   
+
+  <arg name="rviz_cfg"                default="-d $(find rtabmap_ros)/launch/config/rgbd.rviz" />
+
+   <!-- Fixed frame id, you may set "base_link" or "base_footprint" if they are published -->
+   <arg name="frame_id" default="kinect2_base_link"/>
+   
+    <arg name="strategy" default="0" />
+   <arg name="feature" default="6" />
+   <arg name="nn" default="3" />
+   <arg name="max_depth" default="10.0" />
+   <arg name="min_inliers" default="20" />
+   <arg name="inlier_distance" default="0.02" />
+   <arg name="local_map" default="1000" />
+   <arg name="gftt_max_corners" default="1000" />
+   <arg name="gftt_min_distance" default="7" />
+
+
+  
+    
+  
+  
+  <!-- Visualization RVIZ -->
+  <node pkg="rviz" type="rviz" name="rviz" args="$(arg rviz_cfg)"/>
+  <!-- sync cloud with odometry and voxelize the point cloud (for fast visualization in rviz) -->
+  <node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager" output="screen"/>
+  <node pkg="nodelet" type="nodelet" name="data_odom_sync" args="load rtabmap_ros/data_odom_sync standalone_nodelet">
+    <remap from="rgb/image_in"       to="/kinect2/$(arg resolution)/image_color_rect"/>
+    <remap from="depth/image_in"     to="/kinect2/$(arg resolution)/image_depth_rect"/>
+    <remap from="rgb/camera_info_in" to="/kinect2/$(arg resolution)/camera_info"/>
+
+    <remap from="odom_in"             to="rtabmap/odom"/>
+
+    <param name="approx_sync" type="bool" value="true"/>
+    
+    <remap from="rgb/image_out"       to="data_odom_sync/image"/>
+    <remap from="depth/image_out"     to="data_odom_sync/depth"/>
+    <remap from="rgb/camera_info_out" to="data_odom_sync/camera_info"/>
+    <remap from="odom_out"            to="odom_sync"/>
+  </node>
+  <node pkg="nodelet" type="nodelet" name="points_xyzrgb" args="load rtabmap_ros/point_cloud_xyzrgb standalone_nodelet">
+    <remap from="rgb/image"       to="data_odom_sync/image"/>
+    <remap from="depth/image"     to="data_odom_sync/depth"/>
+    <remap from="rgb/camera_info" to="data_odom_sync/camera_info"/>
+    <remap from="cloud"           to="voxel_cloud" />
+
+    <param name="voxel_size" type="double" value="0.01"/>
+  </node>
+
+</launch>

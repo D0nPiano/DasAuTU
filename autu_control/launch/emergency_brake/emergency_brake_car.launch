@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+  <!-- Start Laserscan and PSES_Basis -->
+  <include file="$(find autu_control)/launch/rundkurs/rundkurs_basis.launch"/>
+  <!-- Emergency Brake -->
+  <node pkg="autu_control" type="emergency_brake" name="emergency_brake" output="screen"/>
+  <!-- Autu Controller main -->
+  <node pkg="autu_control" type="main" name="main" output="screen"/>
+</launch>
