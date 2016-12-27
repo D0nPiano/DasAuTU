@@ -61,13 +61,13 @@ void EmergencyBrake::updateDistanceToObstacle() {
 
     for (size_t i = 0; i < laserscan->ranges.size(); ++i) {
       const float r = laserscan->ranges[i];
-      if (laserscan->range_min <= r && r <= laserscan->range_max) {
+      if (laserscan->range_min < r && r < laserscan->range_max) {
         // alpha in radians and always positive
         const float alpha =
             std::abs(i * laserscan->angle_increment + laserscan->angle_min);
+        const float sin_alpha = std::sin(alpha);
         const float b = carWidth / 2.0;
-        const float r_max = b / std::sin(alpha);
-        if (r < r_max) {
+        if (sin_alpha != 0.0 && r < b / sin_alpha) {
           // distance to obstacle
           const float d = r * std::cos(alpha);
           if (d < d_min)
