@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+  <!-- Start Laserscan and PSES_Basis -->
+  <include file="$(find autu_control)/launch/rundkurs/rundkurs_basis.launch"/>
+  <!-- Emergency Brake -->
+  <node pkg="autu_control" type="emergency_brake" name="emergency_brake" output="screen">
+  	<!-- deceleration in m/s² -->
+  	<param name="deceleration" value="0.9"/>
+  	<!-- safety_distance in m -->
+  	<param name="safety_distance" value="0.1"/>
+  </node>
+  <!-- Autu Controller main -->
+  <node pkg="autu_control" type="main" name="main" output="screen"/>
+</launch>

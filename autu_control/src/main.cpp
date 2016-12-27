@@ -42,18 +42,6 @@ void runTimerCallback(const ros::TimerEvent &, AutoController **rndCtrl,
     }
   }
 
-  // ---- Notbremse --------
-  if (*frontRange > 0.1 && *frontRange < 0.4) {
-    ROS_INFO("NOTBREMSE");
-    command_data cmd;
-    cmd.motor_level = -1;
-    cmd.steering_level = 0;
-    cmd.header.stamp = ros::Time::now();
-    command_pub->publish(cmd);
-    ros::spinOnce();
-    return;
-  }
-
   // ----- Call to Controller -----
   (*rndCtrl)->run();
 }
@@ -66,8 +54,7 @@ int main(int argc, char **argv) {
   ros::NodeHandle n;
   float frontRange;
 
-  ros::Publisher command_pub =
-      n.advertise<command_data>("pses_basis/command", 1000);
+  ros::Publisher command_pub = n.advertise<command_data>("autu/command", 1000);
 
   AutoController *rndCtrl = new RemoteController(&n, &command_pub);
 

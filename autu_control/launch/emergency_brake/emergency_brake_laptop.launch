@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+  <!-- Dashboard for gamepad -->
+  <node pkg="autu_control" type="autu_dashboard" name="autu_dashboard" output="screen"/>
+  <!-- Joystick driver -->
+  <node pkg="joy" type="joy_node" name="joy_node" output="screen">
+    <param name="dev" value="/dev/input/js0"/>
+    <param name="max_motorlevel" value="20"/>
+    <param name="max_steering" value="40"/>
+  </node>
+  <!-- RVIZ -->
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find autu_control)/launch/emergency_brake/laserscan_car.rviz"/>
+</launch>

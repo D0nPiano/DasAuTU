@@ -3,6 +3,9 @@ set(CMAKE_AUTOUIC ON)
 cmake_minimum_required(VERSION 2.8.3)
 project(autu_control)
 
+# Enable Compiler Warnings
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra" )
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -10,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   pses_basis
   roscpp
   cv_bridge
+  tf
 )
 
 find_package(OpenCV 2 REQUIRED)
@@ -157,6 +161,11 @@ target_link_libraries(autu_dashboard ${catkin_LIBRARIES} autu_dashboard_ui)
 add_library(ps3_controller src/gamepad/ps3_controller.cpp)
 target_link_libraries(ps3_controller ${catkin_LIBRARIES})
 
+## Emergency Brake
+add_executable(emergency_brake src/emergency_brake.cpp)
+target_link_libraries(emergency_brake ${catkin_LIBRARIES})
+
+## Main
 add_executable(main src/main.cpp)
 target_link_libraries(main ${catkin_LIBRARIES})
 target_link_libraries(main rundkursController)
