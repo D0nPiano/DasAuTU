@@ -4,8 +4,16 @@
 
 #define DURATION 0.1
 
+#define DRIVE 0
+#define STOP 1
+
 EmergencyBrake::EmergencyBrake(ros::NodeHandle *n)
-    : maxMotorLevel(999), carWidth(0.2), distanceToObstacle(10.0) {
+    : maxMotorLevel(999), us_front(2), carWidth(0.2), distanceToObstacle(10.0),
+      state(DRIVE) {
+
+  n->param<float>("deceleration", deceleration, 0.9);
+  n->param<float>("safety_distance", safetyDistance, 0.1);
+
   command_pub = n->advertise<pses_basis::Command>("pses_basis/command", 10);
 
   timer = n->createTimer(
@@ -20,14 +28,18 @@ EmergencyBrake::EmergencyBrake(ros::NodeHandle *n)
       "pses_basis/car_info", 10,
       std::bind(&EmergencyBrake::speedCallback, this, std::placeholders::_1));
 
+  sensor_sub = n->subscribe<pses_basis::SensorData>(
+      "pses_basis/sensor_data", 1,
+      std::bind(&EmergencyBrake::sensorDataCallback, this,
+                std::placeholders::_1));
+
   laserscan_sub = n->subscribe<sensor_msgs::LaserScan>(
       "/scan", 10, std::bind(&EmergencyBrake::laserscanCallback, this,
                              std::placeholders::_1));
 
-  /*  odom_sub = n->subscribe<nav_msgs::Odometry>(
-        "/odom", 10,
-        std::bind(&EmergencyBrake::odomCallback, this,
-     std::placeholders::_1));*/
+  odom_sub = n->subscribe<nav_msgs::Odometry>(
+      "/odom", 1,
+      std::bind(&EmergencyBrake::odomCallback, this, std::placeholders::_1));
 }
 
 EmergencyBrake::~EmergencyBrake() {
@@ -50,7 +62,14 @@ void EmergencyBrake::commandCallback(const pses_basis::CommandConstPtr &cmd) {
 }
 
 void EmergencyBrake::speedCallback(const pses_basis::CarInfoConstPtr &msg) {
-  currentSpeed = msg->speed;
+  // currentSpeed = msg->speed;
+}
+
+void EmergencyBrake::sensorDataCallback(
+    const pses_basis::SensorDataConstPtr &msg) {
+  us_front = msg->range_sensor_front;
+  if (!std::isnan(msg->hall_sensor_dt_full) && msg->hall_sensor_dt_full != 0)
+    currentSpeed = 0.2 / msg->hall_sensor_dt_full;
 }
 
 void EmergencyBrake::odomCallback(const nav_msgs::OdometryConstPtr &msg) {}
@@ -76,10 +95,17 @@ void EmergencyBrake::updateDistanceToObstacle() {
       }
     }
 
-    if (d_min > laserscan->range_max)
+    // camera isn't at the car's front
+    d_min -= 0.1;
+    if (d_min < 0)
+      d_min = 0;
+    else if (d_min > laserscan->range_max)
       d_min = laserscan->range_max;
 
-    distanceToObstacle = d_min;
+    if (us_front < 0.5 && 0 < us_front && us_front < d_min)
+      distanceToObstacle = us_front;
+    else
+      distanceToObstacle = d_min;
   }
 }
 
@@ -90,8 +116,37 @@ void EmergencyBrake::laserscanCallback(
 
 void EmergencyBrake::timerCallback(const ros::TimerEvent &) {
   updateDistanceToObstacle();
-  maxMotorLevel = 10 * std::sqrt(2 * distanceToObstacle);
-  ROS_INFO("dist: %f maxLevel: %d", distanceToObstacle, maxMotorLevel);
+  const float maxSpeed =
+      std::sqrt(2 * deceleration * (distanceToObstacle + safetyDistance));
+  uint8_t nextState = DRIVE;
+  switch (state) {
+  case DRIVE:
+    if (currentSpeed > maxSpeed) {
+      maxMotorLevel = 0;
+
+      pses_basis::Command stopCmd;
+      stopCmd.header.stamp = ros::Time::now();
+      stopCmd.motor_level = 0;
+      command_pub.publish(stopCmd);
+
+      nextState = STOP;
+    }
+    break;
+  case STOP:
+    if (currentSpeed < 0.8 * maxSpeed) {
+      // maxMotorLevel = 999;
+      // nextState = DRIVE;
+    }
+    break;
+  default:
+    break;
+  }
+  state = nextState;
+
+  if (maxMotorLevel <= 3)
+    maxMotorLevel = 0;
+  ROS_INFO("usf: %f dist: %f cur_speed: %f max_speed: %f maxLevel: %d",
+           us_front, distanceToObstacle, currentSpeed, maxSpeed, maxMotorLevel);
 }
 
 int main(int argc, char **argv) {
