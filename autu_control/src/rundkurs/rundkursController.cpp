@@ -6,29 +6,29 @@
 
 RundkursController::RundkursController(ros::NodeHandle *n,
                                        ros::Publisher *command_pub)
-    : n(n), command_pub(command_pub) {
+    : n(n), command_pub(command_pub), drivingCurve(false) {
   ROS_INFO("New RundkursController");
 
   laser_sub = n->subscribe<sensor_msgs::LaserScan>(
-      "/scan", 1000, &RundkursController::getCurrentLaserScan, this);
+      "/scan", 10, &RundkursController::getCurrentLaserScan, this);
 
   sensor_sub = n->subscribe<pses_basis::SensorData>(
-      "pses_basis/sensor_data", 1000, &RundkursController::getCurrentSensorData,
+      "pses_basis/sensor_data", 10, &RundkursController::getCurrentSensorData,
       this);
 
   // Initialite LaserScan
-  currentLaserScan = new sensor_msgs::LaserScan;
+  sensor_msgs::LaserScan *initLaserscan = new sensor_msgs::LaserScan;
   std::vector<float> tmpRanges;
   tmpRanges.push_back(-1.0);
-  currentLaserScan->ranges = tmpRanges;
+  initLaserscan->ranges = tmpRanges;
+  currentLaserScan = boost::shared_ptr<sensor_msgs::LaserScan>(initLaserscan);
 
   // Initialize SensorData
   currentSensorData = new pses_basis::SensorData;
   currentSensorData->range_sensor_left = -1.0;
 
-  laserDetector = new LaserDetector(currentLaserScan);
-
-  drivingCurve = false;
+  laserDetector =
+      std::unique_ptr<LaserDetector>(new LaserDetector(currentLaserScan));
 }
 
 RundkursController::~RundkursController() {

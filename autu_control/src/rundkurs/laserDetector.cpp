@@ -6,7 +6,7 @@
 #define PI 3.14159265
 #define ANGLE_OFFSET 0.0
 
-LaserDetector::LaserDetector(sensor_msgs::LaserScan *laserPtr)
+LaserDetector::LaserDetector(const sensor_msgs::LaserScanPtr &laserPtr)
     : currentLaserScan(laserPtr) {
   ROS_INFO("New LaserDetector");
   CORNER_SENSITIVITY = 2.2;

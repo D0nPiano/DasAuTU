@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Starts up everything needed to run the example listener/talker nodes. -->
 <launch>
-  <include file="$(find pses_simulation)/launch/simulation.launch" />
-  <!-- The C++ listener node subscribes to the custom message that either talker is publishing. -->
+  <include file="$(find pses_simulation)/launch/simulation.launch"/>
   <node pkg="autu_control" type="main" name="main" output="screen">
-    <remap from="example" to="chatter"/>
+    <remap from="autu/command" to="pses_basis/command"/>
   </node>
 </launch>
