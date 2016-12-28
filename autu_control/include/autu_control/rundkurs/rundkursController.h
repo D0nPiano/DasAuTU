@@ -13,7 +13,7 @@
 
 
 #include "autu_control/AutoController.h"
-#include "autu_control/laserDetector.h"
+#include "autu_control/rundkurs/laserDetector.h"
 
 #include <iostream>
 #include <exception>
