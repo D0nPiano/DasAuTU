@@ -135,7 +135,7 @@ include_directories(
 )
 
 ## Declare a C++ library
-add_library(rundkursController src/rundkurs/rundkursController.cpp)
+add_library(rundkursController src/rundkurs/rundkursController.cpp src/rundkurs/pidregler.cpp)
 add_library(laserDetector src/rundkurs/laserDetector.cpp)
 
 ## Add cmake target dependencies of the library

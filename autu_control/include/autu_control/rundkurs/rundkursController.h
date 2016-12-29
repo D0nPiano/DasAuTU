@@ -12,6 +12,7 @@
 
 #include "autu_control/AutoController.h"
 #include "autu_control/rundkurs/laserDetector.h"
+#include "autu_control/rundkurs/pidregler.h"
 
 #include "std_msgs/String.h"
 #include <exception>
@@ -33,7 +34,6 @@ public:
 
 private:
   void driveCurve();
-  void driveStraight();
   void stop();
   void getCurrentLaserScan(const sensor_msgs::LaserScan::ConstPtr &);
   void getCurrentSensorData(const pses_basis::SensorData::ConstPtr &);
@@ -49,6 +49,7 @@ private:
   double curveBegin;
   bool initialized;
   uint8_t drivingState;
+  PIDRegler pidRegler;
 };
 
 #endif
