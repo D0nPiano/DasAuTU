@@ -16,19 +16,7 @@ RundkursController::RundkursController(ros::NodeHandle *n,
       "pses_basis/sensor_data", 10, &RundkursController::getCurrentSensorData,
       this);
 
-  // Initialite LaserScan
-  sensor_msgs::LaserScan *initLaserscan = new sensor_msgs::LaserScan;
-  std::vector<float> tmpRanges;
-  tmpRanges.push_back(-1.0);
-  initLaserscan->ranges = tmpRanges;
-  currentLaserScan = boost::shared_ptr<sensor_msgs::LaserScan>(initLaserscan);
-
-  // Initialize SensorData
-  currentSensorData = new pses_basis::SensorData;
-  currentSensorData->range_sensor_left = -1.0;
-
-  laserDetector =
-      std::unique_ptr<LaserDetector>(new LaserDetector(currentLaserScan));
+  laserDetector = std::unique_ptr<LaserDetector>(new LaserDetector());
 }
 
 RundkursController::~RundkursController() {
@@ -160,12 +148,13 @@ void RundkursController::stop() {
 
 void RundkursController::getCurrentLaserScan(
     const sensor_msgs::LaserScan::ConstPtr &msg) {
-  *currentLaserScan = *msg;
+  currentLaserScan = msg;
+  laserDetector->setCurrentLaserScan(msg);
 }
 
 void RundkursController::getCurrentSensorData(
     const pses_basis::SensorData::ConstPtr &msg) {
-  *currentSensorData = *msg;
+  currentSensorData = msg;
 }
 
 void RundkursController::simpleController() {
@@ -191,7 +180,8 @@ void RundkursController::simpleController() {
 
 void RundkursController::run() {
   if (!initialized) {
-    if (currentLaserScan->ranges[0] == -1.0 ||
+    if (currentLaserScan == nullptr || currentSensorData == nullptr ||
+        currentLaserScan->ranges[0] == -1.0 ||
         currentSensorData->range_sensor_left == -1.0) {
       ROS_INFO("Sensors Uninitialized!");
       return;

@@ -6,8 +6,7 @@
 #define PI 3.14159265
 #define ANGLE_OFFSET 0.0
 
-LaserDetector::LaserDetector(const sensor_msgs::LaserScanPtr &laserPtr)
-    : currentLaserScan(laserPtr) {
+LaserDetector::LaserDetector() {
   ROS_INFO("New LaserDetector");
   CORNER_SENSITIVITY = 2.2;
   RANGE_START = 349;
@@ -99,6 +98,11 @@ float LaserDetector::calculateBeta(int angleBegin, float &alpha) {
   // float angleToWall = PI - beta - epsilon;
   // ROS_INFO("Angle to wall in deg: [%f]", angleToWall * 180 / PI);
   return beta;
+}
+
+void LaserDetector::setCurrentLaserScan(
+    const sensor_msgs::LaserScanConstPtr &value) {
+  currentLaserScan = value;
 }
 
 float LaserDetector::getAngleToWall() {

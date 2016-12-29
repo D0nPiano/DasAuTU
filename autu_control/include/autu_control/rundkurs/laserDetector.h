@@ -8,7 +8,7 @@
 
 class LaserDetector {
 public:
-  LaserDetector(const sensor_msgs::LaserScanPtr &);
+  LaserDetector();
   ~LaserDetector();
   void initialize();
   bool isNextToCorner();
@@ -17,6 +17,8 @@ public:
   float getAngleToWallInDeg();
   float getDistanceToCorner();
   float getDistanceToWall();
+
+  void setCurrentLaserScan(const sensor_msgs::LaserScanConstPtr &value);
 
 private:
   float calculateBeta(int angleBegin, float &alpha);

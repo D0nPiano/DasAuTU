@@ -43,8 +43,8 @@ private:
   ros::Publisher *command_pub;
   ros::Subscriber laser_sub;
   ros::Subscriber sensor_sub;
-  sensor_msgs::LaserScanPtr currentLaserScan;
-  pses_basis::SensorData *currentSensorData;
+  sensor_msgs::LaserScanConstPtr currentLaserScan;
+  pses_basis::SensorDataConstPtr currentSensorData;
   std::unique_ptr<LaserDetector> laserDetector;
   bool drivingCurve;
   double curveBegin;
