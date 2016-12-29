@@ -46,9 +46,9 @@ private:
   sensor_msgs::LaserScanConstPtr currentLaserScan;
   pses_basis::SensorDataConstPtr currentSensorData;
   std::unique_ptr<LaserDetector> laserDetector;
-  bool drivingCurve;
   double curveBegin;
   bool initialized;
+  uint8_t drivingState;
 };
 
 #endif

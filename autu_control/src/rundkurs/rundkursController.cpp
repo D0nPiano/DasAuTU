@@ -4,9 +4,12 @@
 #include "autu_control/rundkurs/rundkursController.h"
 #include "ros/ros.h"
 
+#define STRAIGHT 0
+#define CURVE 1
+
 RundkursController::RundkursController(ros::NodeHandle *n,
                                        ros::Publisher *command_pub)
-    : n(n), command_pub(command_pub), drivingCurve(false) {
+    : n(n), command_pub(command_pub), drivingState(STRAIGHT) {
   ROS_INFO("New RundkursController");
 
   laser_sub = n->subscribe<sensor_msgs::LaserScan>(
@@ -30,7 +33,6 @@ void RundkursController::beginCurve() {
   int currentTime = ros::Time::now().toSec();
   if (currentTime - curveBegin > 6) {
     ROS_INFO("Beginning Curve");
-    drivingCurve = true;
     curveBegin = ros::Time::now().toSec();
   } else {
     ROS_INFO("Curve was not too long ago...");
@@ -69,14 +71,12 @@ void RundkursController::driveCurve() {
     ROS_INFO("Kurvenfahrt beendet");
     cmd.motor_level = 10;
     cmd.steering_level = 0;
-    drivingCurve = false;
   } else if (curveTimer < driveCurveTime) {
     cmd.motor_level = 7;
     cmd.steering_level = 30;
   } else {
     cmd.motor_level = 10;
     cmd.steering_level = 0;
-    drivingCurve = false;
   }
 
   cmd.header.stamp = ros::Time::now();
@@ -158,21 +158,26 @@ void RundkursController::getCurrentSensorData(
 }
 
 void RundkursController::simpleController() {
-  if (drivingCurve) {
-    this->driveCurve();
-    if (laserDetector->isNextToWall() &&
-        (curveBegin + RundkursController_MAX_CURVE_SECONDS) <
-            ros::Time::now().toSec() &&
-        (laserDetector->getAngleToWall() * 180 / PI) < 100.0) {
-      drivingCurve = false;
-    }
-  } else {
+  switch (drivingState) {
+  case STRAIGHT:
     this->driveStraight();
     if (laserDetector->isNextToCorner()) {
       ROS_INFO("************ Corner ***************");
       beginCurve();
       ROS_INFO("Seconds: [%f]", curveBegin);
+      drivingState = CURVE;
     }
+    break;
+  case CURVE:
+    this->driveCurve();
+    if (laserDetector->isNextToWall() &&
+        (curveBegin + RundkursController_MAX_CURVE_SECONDS) <
+            ros::Time::now().toSec() &&
+        (laserDetector->getAngleToWall() * 180 / PI) < 100.0)
+      drivingState = STRAIGHT;
+    break;
+  default:
+    break;
   }
   // ROS_INFO("Angle to wall in deg: [%f]", laserDetector->getAngleToWall() *
   // 180 / PI);
