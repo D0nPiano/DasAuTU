@@ -22,6 +22,7 @@ private:
   float steerfact, steerfactAbs;
   ros::Publisher command_pub;
   geometry_msgs::Pose rotationCenter;
+  ros::Publisher debug_pub;
 };
 
 #endif // CURVEDRIVER2_H

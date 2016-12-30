@@ -12,6 +12,9 @@
 CurveDriver2::CurveDriver2(ros::NodeHandle &nh)
     : e0(0), t0(0), radius(1), steerfactAbs(2) {
   command_pub = nh.advertise<pses_basis::Command>("autu/command", 1);
+
+  // debug_pub =
+  // nh.advertise<>("autu/debug/rotation_center", 1);
 }
 
 void CurveDriver2::reset() {}
@@ -70,4 +73,8 @@ void CurveDriver2::curveInit(float radius, bool left,
     initialSteering = -initialSteering;
     steerfact = steerfactAbs;
   }
+  ROS_INFO("RotationCenter x: %f y: %f", rotationCenter.position.x,
+           rotationCenter.position.y);
+
+  // debug_pub.publish(rotationCenter);
 }

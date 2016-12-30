@@ -61,12 +61,12 @@ void RundkursController::odomCallback(const nav_msgs::OdometryConstPtr &msg) {
 void RundkursController::simpleController() {
   switch (drivingState) {
   case STRAIGHT:
-    if (laserDetector->isNextToCorner()) {
-      ROS_INFO("************ Corner ***************");
-      curveDriver.reset();
-      curveDriver.curveInit(1.0, true, odomData);
-      drivingState = CURVE;
-    }
+    // if (laserDetector->isNextToCorner()) {
+    ROS_INFO("************ Corner ***************");
+    curveDriver.reset();
+    curveDriver.curveInit(0.8, true, odomData);
+    drivingState = CURVE;
+    // }
     break;
   case CURVE:
     if (curveDriver.isAroundTheCorner() && pidRegler.isReady())
@@ -96,7 +96,7 @@ void RundkursController::simpleController() {
 void RundkursController::run() {
   if (!initialized) {
     if (currentLaserScan == nullptr || currentSensorData == nullptr ||
-        currentLaserScan->ranges[0] == -1.0 ||
+        odomData == nullptr || currentLaserScan->ranges[0] == -1.0 ||
         currentSensorData->range_sensor_left == -1.0) {
       ROS_INFO("Sensors Uninitialized!");
       return;

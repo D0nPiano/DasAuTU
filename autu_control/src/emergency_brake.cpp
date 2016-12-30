@@ -148,8 +148,9 @@ void EmergencyBrake::timerCallback(const ros::TimerEvent &) {
 
   // if (maxMotorLevel <= 3)
   // maxMotorLevel = 0;
-  ROS_INFO("state: %d dist: %f cur_speed: %f max_speed: %f maxLevel: %d", state,
-           distanceToObstacle, currentSpeed, maxSpeed, maxMotorLevel);
+  //  ROS_INFO("state: %d dist: %f cur_speed: %f max_speed: %f maxLevel: %d",
+  //  state,
+  //         distanceToObstacle, currentSpeed, maxSpeed, maxMotorLevel);
 }
 
 int main(int argc, char **argv) {
