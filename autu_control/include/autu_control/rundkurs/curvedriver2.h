@@ -19,6 +19,7 @@ private:
   double t0;
   float radius;
   int16_t initialSteering;
+  float steerfact, steerfactAbs;
   ros::Publisher command_pub;
   geometry_msgs::Pose rotationCenter;
 };

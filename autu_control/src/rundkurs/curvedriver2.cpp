@@ -9,7 +9,8 @@
 #define MAX_STEERING_LEVEL 40.0
 #define WHEELBASE 0.28
 
-CurveDriver2::CurveDriver2(ros::NodeHandle &nh) : e0(0), t0(0), radius(1) {
+CurveDriver2::CurveDriver2(ros::NodeHandle &nh)
+    : e0(0), t0(0), radius(1), steerfactAbs(2) {
   command_pub = nh.advertise<pses_basis::Command>("autu/command", 1);
 }
 
@@ -23,16 +24,13 @@ void CurveDriver2::drive(const nav_msgs::OdometryConstPtr &odom) {
 
   pses_basis::Command cmd;
 
-  float solldist = radius;
-  float steerfact = -2;
-
   // P-Regler, tb = 62s
 
   cmd.motor_level = 8;
   float p = 16;
   float d = 8;
   double t = ros::Time::now().toSec();
-  float e = solldist - currentRadius;
+  float e = radius - currentRadius;
   cmd.steering_level =
       initialSteering + steerfact * p * (e + (e - e0) * d / (t - t0));
 
@@ -59,10 +57,17 @@ void CurveDriver2::curveInit(float radius, bool left,
     rotationCenter.position.y += radius;
   else
     rotationCenter.position.y -= radius;
-  const float alpha = M_PI / 2 - std::atan(radius / WHEELBASE);
-  initialSteering = alpha / MAX_STEERING_ANGLE * MAX_STEERING_LEVEL;
 
-  initialSteering = 2 * 15.642;
-  if (!left)
+  // alpha in radians
+  const float alpha = M_PI / 2 - std::atan(radius / WHEELBASE);
+  initialSteering =
+      alpha * 180 / M_PI / MAX_STEERING_ANGLE * MAX_STEERING_LEVEL;
+
+  // initialSteering = 2 * 15.642;
+  if (left)
+    steerfact = -steerfactAbs;
+  else {
     initialSteering = -initialSteering;
+    steerfact = steerfactAbs;
+  }
 }
