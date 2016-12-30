@@ -3,14 +3,13 @@
 
 #define PI 3.14159265
 
-#define RundkursController_MAX_CURVE_SECONDS 8.0
-
 /*
         If LaserScan is uninitialized, its range[0] is -1.0
         If SensorData is uninitialized, its range_sensor_left is -1.0
 */
 
 #include "autu_control/AutoController.h"
+#include "autu_control/rundkurs/curvedriver.h"
 #include "autu_control/rundkurs/laserDetector.h"
 #include "autu_control/rundkurs/pidregler.h"
 
@@ -33,12 +32,10 @@ public:
   void run();
 
 private:
-  void driveCurve();
   void stop();
   void getCurrentLaserScan(const sensor_msgs::LaserScan::ConstPtr &);
   void getCurrentSensorData(const pses_basis::SensorData::ConstPtr &);
   void simpleController();
-  void beginCurve();
   ros::NodeHandle *n;
   ros::Publisher *command_pub;
   ros::Subscriber laser_sub;
@@ -46,10 +43,10 @@ private:
   sensor_msgs::LaserScanConstPtr currentLaserScan;
   pses_basis::SensorDataConstPtr currentSensorData;
   std::unique_ptr<LaserDetector> laserDetector;
-  double curveBegin;
   bool initialized;
   uint8_t drivingState;
   PIDRegler pidRegler;
+  CurveDriver curveDriver;
 };
 
 #endif

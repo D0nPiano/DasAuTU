@@ -26,7 +26,7 @@ void LaserDetector::initialize() {
   ROS_INFO("RANGE_DIFF: [%d]", RANGE_DIFF);
 }
 
-bool LaserDetector::isNextToCorner() {
+bool LaserDetector::isNextToCorner() const {
   float laserDiffFront =
       currentLaserScan->ranges[RANGE_START - RANGE_DIFF * 2] -
       currentLaserScan->ranges[RANGE_START - RANGE_DIFF];
@@ -40,9 +40,9 @@ bool LaserDetector::isNextToCorner() {
   return retVal;
 }
 
-float LaserDetector::getDistanceToWall() {
-  float angle_range =
-      currentLaserScan->angle_max - currentLaserScan->angle_min; // 70 deg
+float LaserDetector::getDistanceToWall() const {
+  //  float angle_range =
+  //    currentLaserScan->angle_max - currentLaserScan->angle_min; // 70 deg
   float alpha =
       RANGE_DIFF *
       currentLaserScan
@@ -65,14 +65,14 @@ float LaserDetector::getDistanceToWall() {
   return distance;
 }
 
-float LaserDetector::getDistanceToCorner() {
+float LaserDetector::getDistanceToCorner() const {
   float distance = currentLaserScan->ranges[RANGE_START];
   distance = distance * getAngleToWall();
   ROS_INFO("Distance to Corner: [%f]", distance);
   return distance;
 }
 
-bool LaserDetector::isNextToWall() {
+bool LaserDetector::isNextToWall() const {
   if (this->isNextToCorner())
     return false;
 
@@ -88,7 +88,7 @@ bool LaserDetector::isNextToWall() {
   return retVal;
 }
 
-float LaserDetector::calculateBeta(int angleBegin, float &alpha) {
+float LaserDetector::calculateBeta(int angleBegin, float &alpha) const {
 
   float b = currentLaserScan->ranges[angleBegin];
   float c = currentLaserScan->ranges[angleBegin - RANGE_DIFF];
@@ -105,7 +105,7 @@ void LaserDetector::setCurrentLaserScan(
   currentLaserScan = value;
 }
 
-float LaserDetector::getAngleToWall() {
+float LaserDetector::getAngleToWall() const {
   float angle_range =
       currentLaserScan->angle_max - currentLaserScan->angle_min; // 70 deg
   float alpha =
@@ -133,7 +133,7 @@ float LaserDetector::getAngleToWall() {
   return angleToWall;
 }
 
-float LaserDetector::getAngleToWallInDeg() {
+float LaserDetector::getAngleToWallInDeg() const {
   float angleToWall = this->getAngleToWall();
   return (angleToWall * 180.0 / PI);
 }

@@ -11,17 +11,17 @@ public:
   LaserDetector();
   ~LaserDetector();
   void initialize();
-  bool isNextToCorner();
-  bool isNextToWall();
-  float getAngleToWall();
-  float getAngleToWallInDeg();
-  float getDistanceToCorner();
-  float getDistanceToWall();
+  bool isNextToCorner() const;
+  bool isNextToWall() const;
+  float getAngleToWall() const;
+  float getAngleToWallInDeg() const;
+  float getDistanceToCorner() const;
+  float getDistanceToWall() const;
 
   void setCurrentLaserScan(const sensor_msgs::LaserScanConstPtr &value);
 
 private:
-  float calculateBeta(int angleBegin, float &alpha);
+  float calculateBeta(int angleBegin, float &alpha) const;
   sensor_msgs::LaserScanConstPtr currentLaserScan;
   int RANGE_START;
   int RANGE_DIFF;

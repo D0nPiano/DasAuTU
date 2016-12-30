@@ -1,4 +1,7 @@
 #include "autu_control/rundkurs/pidregler.h"
+
+#include <math.h>
+
 #include "pses_basis/Command.h"
 
 PIDRegler::PIDRegler(ros::NodeHandle &nh) : e0(0), t0(0) {
@@ -46,4 +49,13 @@ void PIDRegler::drive(float ldist, float wallDist) {
   cmd.header.stamp = ros::Time::now();
   command_pub.publish(cmd);
   ros::spinOnce();
+}
+
+bool PIDRegler::isReady() {
+  return laserDetector->isNextToWall() &&
+         (laserDetector->getAngleToWall() * 180 / M_PI) < 100.0;
+}
+
+void PIDRegler::setLaserDetector(const LaserDetector &detector) {
+  laserDetector = &detector;
 }
