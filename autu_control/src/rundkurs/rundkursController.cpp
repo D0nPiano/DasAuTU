@@ -20,6 +20,9 @@ RundkursController::RundkursController(ros::NodeHandle *n,
       "pses_basis/sensor_data", 10, &RundkursController::getCurrentSensorData,
       this);
 
+  odom_sub = n->subscribe<nav_msgs::Odometry>(
+      "/odom", 1, &RundkursController::odomCallback, this);
+
   laserDetector = std::unique_ptr<LaserDetector>(new LaserDetector());
   pidRegler.setLaserDetector(*laserDetector);
 }
@@ -51,12 +54,17 @@ void RundkursController::getCurrentSensorData(
   currentSensorData = msg;
 }
 
+void RundkursController::odomCallback(const nav_msgs::OdometryConstPtr &msg) {
+  odomData = msg;
+}
+
 void RundkursController::simpleController() {
   switch (drivingState) {
   case STRAIGHT:
     if (laserDetector->isNextToCorner()) {
       ROS_INFO("************ Corner ***************");
       curveDriver.reset();
+      curveDriver.curveInit(1.0, false, odomData);
       drivingState = CURVE;
     }
     break;
@@ -74,8 +82,9 @@ void RundkursController::simpleController() {
                     laserDetector->getDistanceToWall());
     break;
   case CURVE:
-    curveDriver.drive(currentSensorData->range_sensor_left,
-                      laserDetector->getAngleToWall());
+    // curveDriver.drive(currentSensorData->range_sensor_left,
+    //                  laserDetector->getAngleToWall());
+    curveDriver.drive(odomData);
     break;
   default:
     break;
