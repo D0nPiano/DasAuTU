@@ -64,7 +64,7 @@ void RundkursController::simpleController() {
     // if (laserDetector->isNextToCorner()) {
     ROS_INFO("************ Corner ***************");
     curveDriver.reset();
-    curveDriver.curveInit(0.8, true, odomData);
+    curveDriver.curveInit(1.0, false, odomData);
     drivingState = CURVE;
     // }
     break;

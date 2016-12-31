@@ -4,6 +4,7 @@
 #include "ros/ros.h"
 
 #include "nav_msgs/Odometry.h"
+#include <tf/transform_listener.h>
 
 class CurveDriver2 {
 public:
@@ -22,7 +23,8 @@ private:
   float steerfact, steerfactAbs;
   ros::Publisher command_pub;
   geometry_msgs::Pose rotationCenter;
-  ros::Publisher debug_pub;
+  tf::TransformListener transformListener;
+  tf::StampedTransform transform;
 };
 
 #endif // CURVEDRIVER2_H
