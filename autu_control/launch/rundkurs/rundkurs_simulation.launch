@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <launch>
-  <include file="$(find pses_simulation)/launch/simulation.launch"/>
+  <include file="$(find pses_simulation)/launch/simulation.launch">
+  	<arg name="rviz" value="false"/>
+  </include>
   <node pkg="autu_control" type="main" name="main" output="screen">
     <remap from="autu/command" to="pses_basis/command"/>
   </node>
+
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find autu_control)/launch/rundkurs/simulation.rviz"/>
 </launch>

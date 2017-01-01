@@ -6,6 +6,7 @@
 
 #define STRAIGHT 0
 #define CURVE 1
+#define BEFORE_CURVE 2
 
 RundkursController::RundkursController(ros::NodeHandle *n,
                                        ros::Publisher *command_pub)
@@ -59,18 +60,28 @@ void RundkursController::odomCallback(const nav_msgs::OdometryConstPtr &msg) {
 }
 
 void RundkursController::simpleController() {
+  curveDriver.setLaserscan(currentLaserScan);
   switch (drivingState) {
   case STRAIGHT:
-    // if (laserDetector->isNextToCorner()) {
-    ROS_INFO("************ Corner ***************");
-    curveDriver.reset();
-    curveDriver.curveInit(1.0, false, odomData);
-    drivingState = CURVE;
-    // }
+    if (curveDriver.isNextToCorner(true, cornerX)) {
+      ROS_INFO("************ Next To Corner ***************");
+      cornerX += odomData->pose.pose.position.x;
+      curveDriver.reset();
+      drivingState = BEFORE_CURVE;
+    }
+    break;
+  case BEFORE_CURVE:
+    if (odomData->pose.pose.position.x > cornerX - 0.2) {
+      ROS_INFO("************ Corner ***************");
+      curveDriver.curveInit(1.2, true);
+      drivingState = CURVE;
+    }
     break;
   case CURVE:
-    if (curveDriver.isAroundTheCorner() && pidRegler.isReady())
+    if (curveDriver.isAroundTheCorner()) { //&& pidRegler.isReady()){
+      pidRegler.reset();
       drivingState = STRAIGHT;
+    }
     break;
   default:
     break;
@@ -78,6 +89,10 @@ void RundkursController::simpleController() {
 
   switch (drivingState) {
   case STRAIGHT:
+    pidRegler.drive(currentSensorData->range_sensor_left,
+                    laserDetector->getDistanceToWall());
+    break;
+  case BEFORE_CURVE:
     pidRegler.drive(currentSensorData->range_sensor_left,
                     laserDetector->getDistanceToWall());
     break;

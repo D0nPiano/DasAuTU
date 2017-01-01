@@ -8,6 +8,7 @@
 class PIDRegler {
 public:
   PIDRegler(ros::NodeHandle &nh);
+  void reset();
   void drive(float ldist, float wallDist);
   bool isReady();
 

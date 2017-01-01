@@ -8,6 +8,11 @@ PIDRegler::PIDRegler(ros::NodeHandle &nh) : e0(0), t0(0) {
   command_pub = nh.advertise<pses_basis::Command>("autu/command", 1);
 }
 
+void PIDRegler::reset() {
+  e0 = 0;
+  t0 = 0;
+}
+
 void PIDRegler::drive(float ldist, float wallDist) {
   pses_basis::Command cmd;
 

@@ -1,6 +1,8 @@
 #include "autu_control/rundkurs/curvedriver2.h"
 
-#include <math.h>
+#include <cmath>
+#include <limits>
+#include <vector>
 
 #include "pses_basis/Command.h"
 
@@ -8,6 +10,8 @@
 #define MAX_STEERING_ANGLE 20.0
 #define MAX_STEERING_LEVEL 40.0
 #define WHEELBASE 0.28
+
+using std::pair;
 
 CurveDriver2::CurveDriver2(ros::NodeHandle &nh)
     : e0(0), t0(0), radius(1), steerfactAbs(2) {
@@ -51,15 +55,14 @@ void CurveDriver2::drive(const nav_msgs::OdometryConstPtr &odom) {
 
 bool CurveDriver2::isAroundTheCorner() const { return false; }
 
-void CurveDriver2::curveInit(float radius, bool left,
-                             const nav_msgs::OdometryConstPtr &odom) {
+void CurveDriver2::curveInit(float radius, bool left) {
   this->radius = radius;
   const std::string targetFrame(left ? "/rear_left_wheel"
                                      : "/rear_right_wheel");
-  rotationCenter.position = odom->pose.pose.position;
+
   try {
     transformListener.waitForTransform(targetFrame, "/odom", ros::Time(0),
-                                       ros::Duration(10.0));
+                                       ros::Duration(0.1));
     transformListener.lookupTransform(targetFrame, "/odom", ros::Time(0),
                                       transform);
 
@@ -73,22 +76,12 @@ void CurveDriver2::curveInit(float radius, bool left,
     pointICC.header.frame_id = targetFrame;
     pointICC.header.stamp = ros::Time(0);
     transformListener.transformPoint("/odom", pointICC, pointOdom);
-    rotationCenter.position.x += pointOdom.point.x;
-    rotationCenter.position.y += pointOdom.point.y;
+    rotationCenter.position.x = pointOdom.point.x;
+    rotationCenter.position.y = pointOdom.point.y;
   } catch (tf::TransformException ex) {
     ROS_ERROR("%s", ex.what());
     return;
   }
-
-  ROS_INFO("odomPoint x: %f y: %f", odom->pose.pose.position.x,
-           odom->pose.pose.position.y);
-  ROS_INFO("wheelPoint x: %f y: %f", rotationCenter.position.x,
-           rotationCenter.position.y);
-
-  /*  if (left)
-      rotationCenter.position.y += radius;
-    else
-      rotationCenter.position.y -= radius;*/
 
   // alpha in radians
   const float alpha = M_PI / 2 - std::atan(radius / WHEELBASE);
@@ -101,4 +94,33 @@ void CurveDriver2::curveInit(float radius, bool left,
     initialSteering = -initialSteering;
     steerfact = steerfactAbs;
   }
+}
+
+bool CurveDriver2::isNextToCorner(bool left, float &cornerX) {
+  float last_r = std::numeric_limits<float>::max();
+  if (laserscan == nullptr)
+    return false;
+  else if (left) {
+    size_t i;
+    for (i = laserscan->ranges.size() - 1; i > laserscan->ranges.size() / 2;
+         --i) {
+      const float r = laserscan->ranges[i];
+      if (laserscan->range_min < r && r < laserscan->range_max) {
+        if (r - last_r > 1.0)
+          break;
+        else
+          last_r = r;
+      }
+    }
+    const float alpha =
+        std::abs(laserscan->angle_max - (i + 1) * laserscan->angle_increment);
+    corner.x = last_r * std::cos(alpha);
+    corner.y = last_r * std::sin(alpha);
+  }
+  cornerX = corner.x;
+  return corner.x < 1.2;
+}
+
+void CurveDriver2::setLaserscan(const sensor_msgs::LaserScanConstPtr &scan) {
+  laserscan = scan;
 }
