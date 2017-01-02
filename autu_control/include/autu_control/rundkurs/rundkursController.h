@@ -52,7 +52,6 @@ private:
   PIDRegler pidRegler;
   CurveDriver2 curveDriver;
   nav_msgs::OdometryConstPtr odomData;
-  float cornerX;
 };
 
 #endif

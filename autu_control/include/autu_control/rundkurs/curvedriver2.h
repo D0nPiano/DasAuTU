@@ -13,7 +13,7 @@ public:
   void drive();
   bool isAroundTheCorner() const;
   void curveInit(float radius, bool left);
-  bool isNextToCorner(bool left, float &cornerX);
+  bool isNextToCorner(bool left);
   bool isAtCurveBegin(bool left) const;
   void setLaserscan(const sensor_msgs::LaserScanConstPtr &scan);
   void setOdom(const nav_msgs::OdometryConstPtr &msg);

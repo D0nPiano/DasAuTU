@@ -62,11 +62,12 @@ void RundkursController::odomCallback(const nav_msgs::OdometryConstPtr &msg) {
 void RundkursController::simpleController() {
   curveDriver.setLaserscan(currentLaserScan);
   curveDriver.setOdom(odomData);
+  ROS_INFO("Distance to Wall: %f", laserDetector->getDistanceToWall());
+  return;
   switch (drivingState) {
   case STRAIGHT:
-    if (curveDriver.isNextToCorner(true, cornerX)) {
+    if (curveDriver.isNextToCorner(true)) {
       ROS_INFO("************ Next To Corner ***************");
-      cornerX += odomData->pose.pose.position.x;
       curveDriver.reset();
       drivingState = BEFORE_CURVE;
     }

@@ -107,7 +107,7 @@ void CurveDriver2::curveInit(float radius, bool left) {
   }
 }
 
-bool CurveDriver2::isNextToCorner(bool left, float &cornerX) {
+bool CurveDriver2::isNextToCorner(bool left) {
   float last_r = std::numeric_limits<float>::max();
   if (laserscan == nullptr)
     return false;
@@ -124,11 +124,10 @@ bool CurveDriver2::isNextToCorner(bool left, float &cornerX) {
       }
     }
     const float alpha =
-        std::abs(laserscan->angle_max - (i + 1) * laserscan->angle_increment);
+        std::abs(laserscan->angle_min + (i + 1) * laserscan->angle_increment);
     corner.x = last_r * std::cos(alpha);
     corner.y = last_r * std::sin(alpha);
   }
-  cornerX = corner.x;
   cornerSeen = odom->pose.pose;
   return corner.x < 1.2;
 }
