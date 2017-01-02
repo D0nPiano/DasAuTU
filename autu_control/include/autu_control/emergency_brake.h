@@ -36,6 +36,7 @@ private:
   float deceleration, safetyDistance;
   sensor_msgs::LaserScanConstPtr laserscan;
   uint8_t state;
+  int16_t lastSteering;
 };
 
 #endif // EMERGENCYBRAKE_H

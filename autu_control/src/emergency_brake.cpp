@@ -2,7 +2,8 @@
 #include <limits>
 #include <math.h>
 
-#define DURATION 0.1
+#define DURATION 0.05
+#define DRIVEN_DISTANCE_PER_TICK 0.0251327412 // RAD_PER_TICK * WHEEL_RADIUS
 
 #define DRIVE 0
 #define STOP 1
@@ -10,7 +11,7 @@
 EmergencyBrake::EmergencyBrake(ros::NodeHandle *n)
     : maxMotorLevel(999), speedCarInfo(0), speedTimestamp(0), us_front(2),
       carWidth(0.2), distanceToObstacle(10.0), deceleration(0.9),
-      safetyDistance(0.1), state(DRIVE) {
+      safetyDistance(0.1), state(DRIVE), lastSteering(0) {
 
   n->getParam("/emergency_brake/deceleration", deceleration);
   n->getParam("/emergency_brake/safety_distance", safetyDistance);
@@ -57,6 +58,9 @@ void EmergencyBrake::commandCallback(const pses_basis::CommandConstPtr &cmd) {
   if (replacement.motor_level > maxMotorLevel)
     replacement.motor_level = maxMotorLevel;
 
+  // remember steering level
+  lastSteering = replacement.steering_level;
+
   // publish new command on output topic
   command_pub.publish(replacement);
 }
@@ -64,9 +68,14 @@ void EmergencyBrake::commandCallback(const pses_basis::CommandConstPtr &cmd) {
 void EmergencyBrake::sensorDataCallback(
     const pses_basis::SensorDataConstPtr &msg) {
   us_front = msg->range_sensor_front;
-  if (!std::isnan(msg->hall_sensor_dt_full) && msg->hall_sensor_dt_full != 0) {
-    currentSpeed = 0.2 / msg->hall_sensor_dt_full;
-    speedTimestamp = msg->header.stamp.toSec();
+  /* if (!std::isnan(msg->hall_sensor_dt_full) && msg->hall_sensor_dt_full != 0)
+   {
+     currentSpeed = 0.2 / msg->hall_sensor_dt_full;
+     speedTimestamp = msg->header.stamp.toSec();
+   }*/
+  if (!std::isnan(msg->hall_sensor_dt)) {
+    currentSpeed = DRIVEN_DISTANCE_PER_TICK / msg->hall_sensor_dt;
+    ROS_INFO("Current Speed: %f", currentSpeed);
   }
 }
 
@@ -115,37 +124,41 @@ void EmergencyBrake::laserscanCallback(
 }
 
 void EmergencyBrake::timerCallback(const ros::TimerEvent &) {
-  if (ros::Time::now().toSec() - speedTimestamp > 3)
-    currentSpeed = 0;
+  // if (ros::Time::now().toSec() - speedTimestamp > 3)
+  // currentSpeed = 0;
   updateDistanceToObstacle();
   const float maxSpeed = std::sqrt(2 * deceleration * distanceToObstacle);
-  uint8_t nextState = DRIVE;
   switch (state) {
   case DRIVE:
-    maxMotorLevel = 999;
     if (currentSpeed > maxSpeed) {
-      maxMotorLevel = 0;
-
       pses_basis::Command stopCmd;
       stopCmd.header.stamp = ros::Time::now();
       stopCmd.motor_level = 0;
+      stopCmd.steering_level = lastSteering;
       command_pub.publish(stopCmd);
 
-      nextState = STOP;
+      state = STOP;
     }
     break;
   case STOP:
-    maxMotorLevel = 0;
     if (currentSpeed < 0.5 * maxSpeed) {
-      maxMotorLevel = 999;
-      nextState = DRIVE;
+      state = DRIVE;
     }
     break;
   default:
     break;
   }
-  state = nextState;
 
+  switch (state) {
+  case DRIVE:
+    maxMotorLevel = 999;
+    break;
+  case STOP:
+    maxMotorLevel = 0;
+    break;
+  default:
+    break;
+  }
   // if (maxMotorLevel <= 3)
   // maxMotorLevel = 0;
   //  ROS_INFO("state: %d dist: %f cur_speed: %f max_speed: %f maxLevel: %d",
