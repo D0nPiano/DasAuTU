@@ -10,12 +10,13 @@ class CurveDriver2 {
 public:
   CurveDriver2(ros::NodeHandle &nh);
   void reset();
-  void drive(const nav_msgs::OdometryConstPtr &odom);
+  void drive();
   bool isAroundTheCorner() const;
   void curveInit(float radius, bool left);
   bool isNextToCorner(bool left, float &cornerX);
-
+  bool isAtCurveBegin(bool left) const;
   void setLaserscan(const sensor_msgs::LaserScanConstPtr &scan);
+  void setOdom(const nav_msgs::OdometryConstPtr &msg);
 
 private:
   float e0;
@@ -24,10 +25,12 @@ private:
   int16_t initialSteering;
   float steerfact, steerfactAbs;
   ros::Publisher command_pub;
+  geometry_msgs::Pose curveBegin;
   geometry_msgs::Pose rotationCenter;
   tf::TransformListener transformListener;
   tf::StampedTransform transform;
   sensor_msgs::LaserScanConstPtr laserscan;
+  nav_msgs::OdometryConstPtr odom;
   struct Point {
     float x;
     float y;

@@ -23,7 +23,7 @@ void CurveDriver2::reset() {
   t0 = 0;
 }
 
-void CurveDriver2::drive(const nav_msgs::OdometryConstPtr &odom) {
+void CurveDriver2::drive() {
   const float xDif = rotationCenter.position.x - odom->pose.pose.position.x;
   const float yDif = rotationCenter.position.y - odom->pose.pose.position.y;
   // actual distance
@@ -53,10 +53,20 @@ void CurveDriver2::drive(const nav_msgs::OdometryConstPtr &odom) {
   command_pub.publish(cmd);
 }
 
-bool CurveDriver2::isAroundTheCorner() const { return false; }
+bool CurveDriver2::isAroundTheCorner() const {
+  tf::Vector3 start, current;
+  start.setX(curveBegin.position.x - rotationCenter.position.x);
+  start.setY(curveBegin.position.y - rotationCenter.position.y);
+
+  current.setX(odom->pose.pose.position.x - rotationCenter.position.x);
+  current.setY(odom->pose.pose.position.y - rotationCenter.position.y);
+
+  return start.angle(current) > M_PI_2;
+}
 
 void CurveDriver2::curveInit(float radius, bool left) {
   this->radius = radius;
+  curveBegin = odom->pose.pose;
   const std::string targetFrame(left ? "/rear_left_wheel"
                                      : "/rear_right_wheel");
 
@@ -121,6 +131,16 @@ bool CurveDriver2::isNextToCorner(bool left, float &cornerX) {
   return corner.x < 1.2;
 }
 
+bool CurveDriver2::isAtCurveBegin(bool left) const {
+  // odomData->pose.pose.position.x > cornerX - 0.2
+
+  return false;
+}
+
 void CurveDriver2::setLaserscan(const sensor_msgs::LaserScanConstPtr &scan) {
   laserscan = scan;
+}
+
+void CurveDriver2::setOdom(const nav_msgs::OdometryConstPtr &msg) {
+  odom = msg;
 }

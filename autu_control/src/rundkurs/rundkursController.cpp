@@ -61,6 +61,7 @@ void RundkursController::odomCallback(const nav_msgs::OdometryConstPtr &msg) {
 
 void RundkursController::simpleController() {
   curveDriver.setLaserscan(currentLaserScan);
+  curveDriver.setOdom(odomData);
   switch (drivingState) {
   case STRAIGHT:
     if (curveDriver.isNextToCorner(true, cornerX)) {
@@ -99,7 +100,7 @@ void RundkursController::simpleController() {
   case CURVE:
     // curveDriver.drive(currentSensorData->range_sensor_left,
     //                  laserDetector->getAngleToWall());
-    curveDriver.drive(odomData);
+    curveDriver.drive();
     break;
   default:
     break;
