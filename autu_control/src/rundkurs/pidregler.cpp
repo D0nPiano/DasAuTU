@@ -13,12 +13,12 @@ void PIDRegler::reset() {
   t0 = 0;
 }
 
-void PIDRegler::drive(float ldist, float wallDist) {
+void PIDRegler::drive(float ldist) {
   pses_basis::Command cmd;
 
   // float parallelAngle =  -(90 - laserDetector->getAngleToWallInDeg());
 
-  ldist = ldist + wallDist / 2.0;
+  // ldist = ldist + wallDist / 2.0;
 
   /* TODO: Get corner, set
                   drivingCurve = true;

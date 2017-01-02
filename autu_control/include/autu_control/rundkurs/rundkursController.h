@@ -12,6 +12,7 @@
 #include "autu_control/rundkurs/curvedriver.h"
 #include "autu_control/rundkurs/curvedriver2.h"
 #include "autu_control/rundkurs/laserDetector.h"
+#include "autu_control/rundkurs/laser_utilities.h"
 #include "autu_control/rundkurs/pidregler.h"
 
 #include "std_msgs/String.h"
@@ -38,12 +39,14 @@ private:
   void getCurrentLaserScan(const sensor_msgs::LaserScan::ConstPtr &);
   void getCurrentSensorData(const pses_basis::SensorData::ConstPtr &);
   void odomCallback(const nav_msgs::OdometryConstPtr &msg);
+  float getDistanceToWall();
   void simpleController();
   ros::NodeHandle *n;
   ros::Publisher *command_pub;
   ros::Subscriber laser_sub;
   ros::Subscriber sensor_sub;
   ros::Subscriber odom_sub;
+  LaserUtil laserUtil;
   sensor_msgs::LaserScanConstPtr currentLaserScan;
   pses_basis::SensorDataConstPtr currentSensorData;
   std::unique_ptr<LaserDetector> laserDetector;

@@ -7,6 +7,7 @@ Panels:
         - /Global Options1
         - /Grid1
         - /RotationCenter1
+        - /Path1/Status1
       Splitter Ratio: 0.5
     Tree Height: 772
   - Class: rviz/Selection
@@ -223,6 +224,28 @@ Visualization Manager:
       Shaft Radius: 0.05
       Shape: Arrow
       Topic: autu/debug/rotation_center
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Buffer Length: 1
+      Class: rviz/Path
+      Color: 255; 85; 255
+      Enabled: true
+      Head Diameter: 0.3
+      Head Length: 0.2
+      Length: 0.3
+      Line Style: Lines
+      Line Width: 0.03
+      Name: Path
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Style: None
+      Radius: 0.03
+      Shaft Diameter: 0.1
+      Shaft Length: 0.1
+      Topic: /autu/wall
       Unreliable: false
       Value: true
   Enabled: true

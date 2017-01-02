@@ -9,7 +9,7 @@ class PIDRegler {
 public:
   PIDRegler(ros::NodeHandle &nh);
   void reset();
-  void drive(float ldist, float wallDist);
+  void drive(float ldist);
   bool isReady();
 
   void setLaserDetector(const LaserDetector &detector);

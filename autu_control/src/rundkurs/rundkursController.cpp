@@ -10,8 +10,8 @@
 
 RundkursController::RundkursController(ros::NodeHandle *n,
                                        ros::Publisher *command_pub)
-    : n(n), command_pub(command_pub), drivingState(STRAIGHT), pidRegler(*n),
-      curveDriver(*n) {
+    : n(n), command_pub(command_pub), laserUtil(*n), drivingState(STRAIGHT),
+      pidRegler(*n), curveDriver(*n) {
   ROS_INFO("New RundkursController");
 
   laser_sub = n->subscribe<sensor_msgs::LaserScan>(
@@ -59,11 +59,19 @@ void RundkursController::odomCallback(const nav_msgs::OdometryConstPtr &msg) {
   odomData = msg;
 }
 
+float RundkursController::getDistanceToWall() {
+  const float laserDist = laserUtil.getDistanceToWall(currentLaserScan, true);
+  if (laserDist == -1 || laserDist > 5)
+    return currentSensorData->range_sensor_left;
+  else
+    return (laserDist + currentSensorData->range_sensor_left) / 2;
+}
+
 void RundkursController::simpleController() {
   curveDriver.setLaserscan(currentLaserScan);
   curveDriver.setOdom(odomData);
-  ROS_INFO("Distance to Wall: %f", laserDetector->getDistanceToWall());
-  return;
+  // ROS_INFO("Distance to Wall: %f",
+  //          laserUtil.getDistanceToWall(currentLaserScan, true));
   switch (drivingState) {
   case STRAIGHT:
     if (curveDriver.isNextToCorner(true)) {
@@ -91,12 +99,14 @@ void RundkursController::simpleController() {
 
   switch (drivingState) {
   case STRAIGHT:
-    pidRegler.drive(currentSensorData->range_sensor_left,
-                    laserDetector->getDistanceToWall());
+    // pidRegler.drive(currentSensorData->range_sensor_left,
+    //              laserDetector->getDistanceToWall());
+    pidRegler.drive(getDistanceToWall());
     break;
   case BEFORE_CURVE:
-    pidRegler.drive(currentSensorData->range_sensor_left,
-                    laserDetector->getDistanceToWall());
+    pidRegler.drive((currentSensorData->range_sensor_left +
+                     laserDetector->getDistanceToWall()) /
+                    2);
     break;
   case CURVE:
     // curveDriver.drive(currentSensorData->range_sensor_left,

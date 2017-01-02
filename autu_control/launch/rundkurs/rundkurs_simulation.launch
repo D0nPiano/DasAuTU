@@ -2,7 +2,18 @@
 <launch>
   <include file="$(find pses_simulation)/launch/simulation.launch">
   	<arg name="rviz" value="false"/>
+  	<arg name="dashboard" value="false"/>
   </include>
+
+  <!-- Dashboard for gamepad -->
+  <node pkg="autu_control" type="autu_dashboard" name="autu_dashboard" output="screen"/>
+  <!-- Joystick driver -->
+  <node pkg="joy" type="joy_node" name="joy_node" output="screen">
+   	<param name="dev" value="/dev/input/js0"/>
+   	<param name="max_motorlevel" value="20"/>
+   	<param name="max_steering" value="35"/>
+  </node>
+
   <node pkg="autu_control" type="main" name="main" output="screen">
     <remap from="autu/command" to="pses_basis/command"/>
   </node>
