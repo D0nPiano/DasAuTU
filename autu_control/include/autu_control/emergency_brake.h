@@ -21,11 +21,13 @@ public:
 private:
   void updateDistanceToObstacle();
   ros::Publisher command_pub;
+  // ros::Publisher debug_pub;
   ros::Subscriber command_sub;
   ros::Subscriber sensor_sub;
   ros::Subscriber laserscan_sub;
   ros::Subscriber carinfo_sub;
   ros::Timer timer;
+  float duration;
   int16_t maxMotorLevel;
   float currentSpeed;
   float speedCarInfo;

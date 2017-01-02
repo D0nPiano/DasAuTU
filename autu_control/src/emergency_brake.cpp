@@ -2,7 +2,8 @@
 #include <limits>
 #include <math.h>
 
-#define DURATION 0.05
+#include "std_msgs/Float32.h"
+
 #define DRIVEN_DISTANCE_PER_TICK 0.0251327412 // RAD_PER_TICK * WHEEL_RADIUS
 
 #define DRIVE 0
@@ -15,11 +16,14 @@ EmergencyBrake::EmergencyBrake(ros::NodeHandle *n)
 
   n->getParam("/emergency_brake/deceleration", deceleration);
   n->getParam("/emergency_brake/safety_distance", safetyDistance);
+  duration = n->param<float>("/emergency_brake/duration", 0.01);
 
-  command_pub = n->advertise<pses_basis::Command>("pses_basis/command", 10);
+  command_pub = n->advertise<pses_basis::Command>("pses_basis/command", 3);
+
+  // debug_pub = n->advertise<std_msgs::Float32>("autu/speed", 3);
 
   timer = n->createTimer(
-      ros::Duration(DURATION),
+      ros::Duration(duration),
       std::bind(&EmergencyBrake::timerCallback, this, std::placeholders::_1));
 
   command_sub = n->subscribe<pses_basis::Command>(
@@ -68,14 +72,12 @@ void EmergencyBrake::commandCallback(const pses_basis::CommandConstPtr &cmd) {
 void EmergencyBrake::sensorDataCallback(
     const pses_basis::SensorDataConstPtr &msg) {
   us_front = msg->range_sensor_front;
-  /* if (!std::isnan(msg->hall_sensor_dt_full) && msg->hall_sensor_dt_full != 0)
-   {
-     currentSpeed = 0.2 / msg->hall_sensor_dt_full;
-     speedTimestamp = msg->header.stamp.toSec();
-   }*/
   if (!std::isnan(msg->hall_sensor_dt)) {
     currentSpeed = DRIVEN_DISTANCE_PER_TICK / msg->hall_sensor_dt;
-    ROS_INFO("Current Speed: %f", currentSpeed);
+    /*ROS_INFO("Current Speed: %f", currentSpeed);
+    std_msgs::Float32 msg;
+    msg.data = currentSpeed;
+    debug_pub.publish(msg);*/
   }
 }
 
