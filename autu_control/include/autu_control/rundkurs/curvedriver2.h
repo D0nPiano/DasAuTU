@@ -25,6 +25,7 @@ private:
   int16_t initialSteering;
   float steerfact, steerfactAbs;
   ros::Publisher command_pub;
+  geometry_msgs::Pose cornerSeen;
   geometry_msgs::Pose curveBegin;
   geometry_msgs::Pose rotationCenter;
   tf::TransformListener transformListener;

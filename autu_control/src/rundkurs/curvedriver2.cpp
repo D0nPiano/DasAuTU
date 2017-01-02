@@ -12,6 +12,7 @@
 #define WHEELBASE 0.28
 
 using std::pair;
+using std::sqrt;
 
 CurveDriver2::CurveDriver2(ros::NodeHandle &nh)
     : e0(0), t0(0), radius(1), steerfactAbs(2) {
@@ -27,7 +28,7 @@ void CurveDriver2::drive() {
   const float xDif = rotationCenter.position.x - odom->pose.pose.position.x;
   const float yDif = rotationCenter.position.y - odom->pose.pose.position.y;
   // actual distance
-  const float currentRadius = std::sqrt(xDif * xDif + yDif * yDif);
+  const float currentRadius = sqrt(xDif * xDif + yDif * yDif);
 
   pses_basis::Command cmd;
 
@@ -128,13 +129,18 @@ bool CurveDriver2::isNextToCorner(bool left, float &cornerX) {
     corner.y = last_r * std::sin(alpha);
   }
   cornerX = corner.x;
+  cornerSeen = odom->pose.pose;
   return corner.x < 1.2;
 }
 
 bool CurveDriver2::isAtCurveBegin(bool left) const {
-  // odomData->pose.pose.position.x > cornerX - 0.2
+  const float xDif = cornerSeen.position.x - odom->pose.pose.position.x;
+  const float yDif = cornerSeen.position.y - odom->pose.pose.position.y;
 
-  return false;
+  // actual distance
+  const float distance = sqrt(xDif * xDif + yDif * yDif);
+
+  return distance > 1.2;
 }
 
 void CurveDriver2::setLaserscan(const sensor_msgs::LaserScanConstPtr &scan) {

@@ -72,7 +72,7 @@ void RundkursController::simpleController() {
     }
     break;
   case BEFORE_CURVE:
-    if (odomData->pose.pose.position.x > cornerX - 0.2) {
+    if (curveDriver.isAtCurveBegin(true)) {
       ROS_INFO("************ Corner ***************");
       curveDriver.curveInit(1.2, true);
       drivingState = CURVE;
