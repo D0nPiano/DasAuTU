@@ -129,7 +129,7 @@ bool CurveDriver2::isNextToCorner(bool left) {
     corner.y = last_r * std::sin(alpha);
   }
   cornerSeen = odom->pose.pose;
-  return corner.x < 1.2;
+  return corner.x < 2.0;
 }
 
 bool CurveDriver2::isAtCurveBegin(bool left) const {

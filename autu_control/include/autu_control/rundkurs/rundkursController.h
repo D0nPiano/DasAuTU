@@ -13,6 +13,7 @@
 #include "autu_control/rundkurs/curvedriver2.h"
 #include "autu_control/rundkurs/laserDetector.h"
 #include "autu_control/rundkurs/laser_utilities.h"
+#include "autu_control/rundkurs/lowpass.h"
 #include "autu_control/rundkurs/pidregler.h"
 
 #include "std_msgs/String.h"
@@ -47,6 +48,7 @@ private:
   ros::Subscriber sensor_sub;
   ros::Subscriber odom_sub;
   LaserUtil laserUtil;
+  Lowpass lowpass;
   sensor_msgs::LaserScanConstPtr currentLaserScan;
   pses_basis::SensorDataConstPtr currentSensorData;
   std::unique_ptr<LaserDetector> laserDetector;
@@ -55,6 +57,10 @@ private:
   PIDRegler pidRegler;
   CurveDriver2 curveDriver;
   nav_msgs::OdometryConstPtr odomData;
+
+#ifndef NDEBUG
+  ros::Publisher us_raw_dbg_pub, us_lp_dbg_pub, ransac_dbg_pub;
+#endif
 };
 
 #endif

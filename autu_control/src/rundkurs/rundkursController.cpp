@@ -4,14 +4,18 @@
 #include "autu_control/rundkurs/rundkursController.h"
 #include "ros/ros.h"
 
+#ifndef NDEBUG
+#include "std_msgs/Float32.h"
+#endif
+
 #define STRAIGHT 0
 #define CURVE 1
 #define BEFORE_CURVE 2
 
 RundkursController::RundkursController(ros::NodeHandle *n,
                                        ros::Publisher *command_pub)
-    : n(n), command_pub(command_pub), laserUtil(*n), drivingState(STRAIGHT),
-      pidRegler(*n), curveDriver(*n) {
+    : n(n), command_pub(command_pub), laserUtil(*n), lowpass(10),
+      drivingState(STRAIGHT), pidRegler(*n), curveDriver(*n) {
   ROS_INFO("New RundkursController");
 
   laser_sub = n->subscribe<sensor_msgs::LaserScan>(
@@ -26,6 +30,12 @@ RundkursController::RundkursController(ros::NodeHandle *n,
 
   laserDetector = std::unique_ptr<LaserDetector>(new LaserDetector());
   pidRegler.setLaserDetector(*laserDetector);
+
+#ifndef NDEBUG
+  us_raw_dbg_pub = n->advertise<std_msgs::Float32>("autu/debug/us_raw", 1);
+  us_lp_dbg_pub = n->advertise<std_msgs::Float32>("autu/debug/us_lp", 1);
+  ransac_dbg_pub = n->advertise<std_msgs::Float32>("autu/debug/ransac", 1);
+#endif
 }
 
 RundkursController::~RundkursController() {
@@ -53,6 +63,7 @@ void RundkursController::getCurrentLaserScan(
 void RundkursController::getCurrentSensorData(
     const pses_basis::SensorData::ConstPtr &msg) {
   currentSensorData = msg;
+  lowpass.addValue(currentSensorData->range_sensor_left);
 }
 
 void RundkursController::odomCallback(const nav_msgs::OdometryConstPtr &msg) {
@@ -70,8 +81,22 @@ float RundkursController::getDistanceToWall() {
 void RundkursController::simpleController() {
   curveDriver.setLaserscan(currentLaserScan);
   curveDriver.setOdom(odomData);
-  // ROS_INFO("Distance to Wall: %f",
-  //          laserUtil.getDistanceToWall(currentLaserScan, true));
+// ROS_INFO("Distance to Wall: %f",
+//          laserUtil.getDistanceToWall(currentLaserScan, true));
+
+#ifndef NDEBUG
+  std_msgs::Float32 value;
+
+  value.data = currentSensorData->range_sensor_left;
+  us_raw_dbg_pub.publish(value);
+
+  value.data = lowpass.getAverage();
+  us_lp_dbg_pub.publish(value);
+
+  value.data = laserUtil.getDistanceToWall(currentLaserScan, true);
+  ransac_dbg_pub.publish(value);
+#endif
+
   switch (drivingState) {
   case STRAIGHT:
     if (curveDriver.isNextToCorner(true)) {
@@ -83,7 +108,7 @@ void RundkursController::simpleController() {
   case BEFORE_CURVE:
     if (curveDriver.isAtCurveBegin(true)) {
       ROS_INFO("************ Corner ***************");
-      curveDriver.curveInit(1.2, true);
+      curveDriver.curveInit(1.8, true);
       drivingState = CURVE;
     }
     break;
@@ -101,12 +126,13 @@ void RundkursController::simpleController() {
   case STRAIGHT:
     // pidRegler.drive(currentSensorData->range_sensor_left,
     //              laserDetector->getDistanceToWall());
-    pidRegler.drive(getDistanceToWall());
+    pidRegler.drive(lowpass.getAverage());
     break;
   case BEFORE_CURVE:
-    pidRegler.drive((currentSensorData->range_sensor_left +
-                     laserDetector->getDistanceToWall()) /
-                    2);
+    /* pidRegler.drive((currentSensorData->range_sensor_left +
+                      laserDetector->getDistanceToWall()) /
+                     2);*/
+    pidRegler.drive(lowpass.getAverage());
     break;
   case CURVE:
     // curveDriver.drive(currentSensorData->range_sensor_left,
