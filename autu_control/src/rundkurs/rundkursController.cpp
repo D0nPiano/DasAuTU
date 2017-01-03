@@ -93,8 +93,8 @@ void RundkursController::simpleController() {
   value.data = lowpass.getAverage();
   us_lp_dbg_pub.publish(value);
 
-  value.data = laserUtil.getDistanceToWall(currentLaserScan, true);
-  ransac_dbg_pub.publish(value);
+// value.data = laserUtil.getDistanceToWall(currentLaserScan, true);
+// ransac_dbg_pub.publish(value);
 #endif
 
   switch (drivingState) {

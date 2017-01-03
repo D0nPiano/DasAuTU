@@ -23,6 +23,7 @@ private:
   double t0;
   float radius;
   int16_t initialSteering;
+  int16_t maxMotorLevel;
   float steerfact, steerfactAbs;
   ros::Publisher command_pub;
   geometry_msgs::Pose cornerSeen;

@@ -17,6 +17,8 @@ using std::sqrt;
 CurveDriver2::CurveDriver2(ros::NodeHandle &nh)
     : e0(0), t0(0), radius(1), steerfactAbs(2) {
   command_pub = nh.advertise<pses_basis::Command>("autu/command", 1);
+
+  maxMotorLevel = nh.param<int>("main/curvedriver/max_motor_level", 8);
 }
 
 void CurveDriver2::reset() {
@@ -34,7 +36,7 @@ void CurveDriver2::drive() {
 
   // P-Regler, tb = 62s
 
-  cmd.motor_level = 8;
+  cmd.motor_level = maxMotorLevel;
   float p = 16;
   float d = 8;
   double t = ros::Time::now().toSec();
