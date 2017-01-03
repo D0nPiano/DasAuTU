@@ -3,8 +3,11 @@ set(CMAKE_AUTOUIC ON)
 cmake_minimum_required(VERSION 2.8.3)
 project(autu_control)
 
-# Enable Compiler Warnings
+## Enable Compiler Warnings
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra" )
+
+## Enable Debugging Mode
+# set(CMAKE_BUILD_TYPE Debug)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -135,7 +138,7 @@ include_directories(
 )
 
 ## Declare a C++ library
-add_library(rundkursController src/rundkurs/rundkursController.cpp src/rundkurs/pidregler.cpp src/rundkurs/curvedriver.cpp src/rundkurs/curvedriver2.cpp src/rundkurs/laser_utilities.cpp)
+add_library(rundkursController src/rundkurs/rundkursController.cpp src/rundkurs/pidregler.cpp src/rundkurs/curvedriver.cpp src/rundkurs/curvedriver2.cpp src/rundkurs/laser_utilities.cpp src/rundkurs/lowpass.cpp)
 add_library(laserDetector src/rundkurs/laserDetector.cpp)
 
 ## Add cmake target dependencies of the library
