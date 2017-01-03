@@ -8,6 +8,8 @@ PIDRegler::PIDRegler(ros::NodeHandle &nh) : e0(0), t0(0) {
   command_pub = nh.advertise<pses_basis::Command>("autu/command", 1);
 
   maxMotorLevel = nh.param<int>("main/pidregler/max_motor_level", 8);
+  p = nh.param<float>("main/pidregler/p", 16.0f);
+  d = nh.param<float>("main/pidregler/d", 8.0f);
 }
 
 void PIDRegler::reset() {
@@ -33,8 +35,6 @@ void PIDRegler::drive(float ldist) {
   // P-Regler, tb = 62s
 
   cmd.motor_level = maxMotorLevel;
-  float p = 16;
-  float d = 8;
   // TODO k1 & k2 are unused
   // float k1 = 16;
   // float k2 = 5;
