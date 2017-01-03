@@ -17,6 +17,7 @@ public:
 private:
   float e0;
   double t0;
+  int16_t maxMotorLevel;
   const LaserDetector *laserDetector;
   ros::Publisher command_pub;
 };
