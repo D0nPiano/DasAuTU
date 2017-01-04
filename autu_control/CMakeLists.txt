@@ -161,6 +161,10 @@ add_executable(autu_dashboard src/gamepad/autu_dashboard.cpp)
 target_link_libraries(autu_dashboard_ui Qt5::Widgets Qt5::Core Qt5::Gui ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 target_link_libraries(autu_dashboard ${catkin_LIBRARIES} autu_dashboard_ui)
 
+## Parking 
+add_library(parking_controller src/parking/parking_controller.cpp)
+target_link_libraries(parking_controller ${catkin_LIBRARIES})
+
 ## Gamepad
 add_library(ps3_controller src/gamepad/ps3_controller.cpp)
 target_link_libraries(ps3_controller ${catkin_LIBRARIES})
@@ -175,6 +179,7 @@ target_link_libraries(main ${catkin_LIBRARIES})
 target_link_libraries(main rundkursController)
 target_link_libraries(main laserDetector)
 target_link_libraries(main ps3_controller)
+target_link_libraries(main parking_controller)
 
 #add_dependencies(main ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
