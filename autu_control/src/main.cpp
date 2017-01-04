@@ -1,7 +1,7 @@
 #include "autu_control/AutoController.h"
 #include "autu_control/gamepad/ps3_controller.h"
 #include "autu_control/remoteController.h"
-#include "autu_control/rundkursController.h"
+#include "autu_control/rundkurs/rundkursController.h"
 
 #include "pses_basis/SensorData.h"
 #include "ros/ros.h"
