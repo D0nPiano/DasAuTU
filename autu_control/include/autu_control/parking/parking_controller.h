@@ -19,6 +19,7 @@ private:
   uint8_t state;
   int16_t velocity;
   int16_t maxSteering;
+  float maxAngle;
 };
 
 #endif // PARKINGCONTROLLER_H

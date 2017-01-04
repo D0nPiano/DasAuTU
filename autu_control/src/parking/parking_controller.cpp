@@ -22,6 +22,8 @@ ParkingController::ParkingController(ros::NodeHandle &nh)
   velocity = nh.param<int>("main/parking/velocity", 5);
 
   maxSteering = nh.param<int>("main/parking/max_steering", 42);
+
+  maxAngle = nh.param<float>("main/parking/max_angle", M_PI_4);
 }
 
 void ParkingController::odomCallback(const nav_msgs::OdometryConstPtr &msg) {
@@ -40,7 +42,7 @@ void ParkingController::run() {
   case TURN_RIGHT:
     tf::quaternionMsgToTF(curveBegin.orientation, begin);
     tf::quaternionMsgToTF(odom->pose.pose.orientation, current);
-    if (2 * begin.angle(current) > M_PI_4)
+    if (2 * begin.angle(current) > maxAngle)
       state = STRAIGHT;
     break;
   case STRAIGHT:
@@ -50,7 +52,7 @@ void ParkingController::run() {
   case TURN_LEFT:
     tf::quaternionMsgToTF(curveBegin.orientation, begin);
     tf::quaternionMsgToTF(odom->pose.pose.orientation, current);
-    if (2 * begin.angle(current) > M_PI_4)
+    if (2 * begin.angle(current) > maxAngle)
       state = STOP;
     break;
   default:
