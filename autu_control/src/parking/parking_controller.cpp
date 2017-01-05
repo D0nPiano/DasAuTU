@@ -13,11 +13,14 @@
 #define STOP 4
 
 ParkingController::ParkingController(ros::NodeHandle &nh)
-    : state(TURN_RIGHT_INIT) {
+    : laserUtil(nh), state(TURN_RIGHT_INIT) {
   command_pub = nh.advertise<pses_basis::Command>("autu/command", 1);
 
   odom_sub = nh.subscribe<nav_msgs::Odometry>(
       "/odom", 1, &ParkingController::odomCallback, this);
+
+  laser_sub = nh.subscribe<sensor_msgs::LaserScan>(
+      "/scan", 1, &ParkingController::laserscanCallback, this);
 
   velocity = nh.param<int>("main/parking/velocity", 5);
 
@@ -30,7 +33,21 @@ void ParkingController::odomCallback(const nav_msgs::OdometryConstPtr &msg) {
   odom = msg;
 }
 
+void ParkingController::laserscanCallback(
+    const sensor_msgs::LaserScanConstPtr &msg) {
+  laserscan = msg;
+}
+
 void ParkingController::run() {
+#ifndef NDEBUG
+  static bool first = true;
+  if (first && laserscan != nullptr) {
+    first = false;
+    laserUtil.findCorner(laserscan);
+  }
+  return;
+#endif
+
   tf::Quaternion begin, current;
   if (odom == nullptr)
     return;
