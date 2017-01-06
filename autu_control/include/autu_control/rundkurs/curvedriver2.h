@@ -19,12 +19,16 @@ public:
   void setOdom(const nav_msgs::OdometryConstPtr &msg);
 
 private:
+  void updateScanOffset(float speed);
   float e0;
   double t0;
   float radius;
   int16_t initialSteering;
   int16_t maxMotorLevel;
   float steerfact, steerfactAbs;
+  float distance_to_corner;
+  float scanOffset;
+  double scanOffsetStamp;
   ros::Publisher command_pub;
   geometry_msgs::Pose cornerSeen;
   geometry_msgs::Pose curveBegin;

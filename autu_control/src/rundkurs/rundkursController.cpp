@@ -36,6 +36,8 @@ RundkursController::RundkursController(ros::NodeHandle *n,
 
   pd_maxMotorLevel = pidRegler.getMaxMotorLevel();
 
+  curveRadius = n->param<float>("main/curvedriver/curve_radius", 1.8f);
+
 #ifndef NDEBUG
   us_raw_dbg_pub = n->advertise<std_msgs::Float32>("autu/debug/us_raw", 1);
   us_lp_dbg_pub = n->advertise<std_msgs::Float32>("autu/debug/us_lp", 1);
@@ -113,12 +115,13 @@ void RundkursController::simpleController() {
       ROS_INFO("************ Next To Corner ***************");
       curveDriver.reset();
       drivingState = BEFORE_CURVE;
+      drivingState = 42;
     }
     break;
   case BEFORE_CURVE:
     if (curveDriver.isAtCurveBegin(true)) {
       ROS_INFO("************ Corner ***************");
-      curveDriver.curveInit(1.8, true);
+      curveDriver.curveInit(curveRadius, true);
       drivingState = CURVE;
     }
     break;
@@ -140,6 +143,13 @@ void RundkursController::simpleController() {
     pidRegler.drive(lowpass.getAverage(), true);
     break;
   case BEFORE_CURVE:
+    /* pidRegler.drive((currentSensorData->range_sensor_left +
+                      laserDetector->getDistanceToWall()) /
+                     2);*/
+    pidRegler.setMaxMotorLevel(1);
+    pidRegler.drive(lowpass.getAverage(), true);
+    break;
+  case 42:
     /* pidRegler.drive((currentSensorData->range_sensor_left +
                       laserDetector->getDistanceToWall()) /
                      2);*/
