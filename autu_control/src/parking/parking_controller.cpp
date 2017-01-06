@@ -27,7 +27,8 @@ ParkingController::ParkingController(ros::NodeHandle &nh)
   laser_sub = nh.subscribe<sensor_msgs::LaserScan>(
       "/scan", 1, &ParkingController::laserscanCallback, this);
 
-  velocity = nh.param<int>("main/parking/velocity", 5);
+  velocity_forward = nh.param<int>("main/parking/velocity_forward", 5);
+  velocity_backward = nh.param<int>("main/parking/velocity_backward", 5);
 
   maxSteering = nh.param<int>("main/parking/max_steering", 42);
 
@@ -40,7 +41,8 @@ ParkingController::ParkingController(ros::NodeHandle &nh)
   b = nh.param<float>("main/parking/b", 0.32f);
   w = nh.param<float>("main/parking/w", 0.2f);
 
-  pidRegler = PIDRegler(nh, regulator_p, regulator_d, velocity, (a + w) / 2);
+  pidRegler =
+      PIDRegler(nh, regulator_p, regulator_d, velocity_forward, (a + w) / 2);
 }
 
 void ParkingController::odomCallback(const nav_msgs::OdometryConstPtr &msg) {
@@ -98,7 +100,7 @@ void ParkingController::run() {
     pidRegler.drive(odom->pose.pose.position.y - corner.position.y, false);
     break;
   case TURN_RIGHT:
-    cmd.motor_level = -velocity;
+    cmd.motor_level = -velocity_backward;
     cmd.steering_level = -maxSteering;
     command_pub.publish(cmd);
     break;
@@ -108,7 +110,7 @@ void ParkingController::run() {
     command_pub.publish(cmd);
     break;
   case TURN_LEFT:
-    cmd.motor_level = -velocity;
+    cmd.motor_level = -velocity_backward;
     cmd.steering_level = maxSteering;
     command_pub.publish(cmd);
     break;

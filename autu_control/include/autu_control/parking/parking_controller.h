@@ -27,7 +27,7 @@ private:
   LaserUtil laserUtil;
   PIDRegler pidRegler;
   uint8_t state;
-  int16_t velocity;
+  int16_t velocity_forward, velocity_backward;
   int16_t maxSteering;
   float maxAngle;
   float regulator_d, regulator_p;
