@@ -109,7 +109,7 @@ void CurveDriver2::curveInit(float radius, bool left) {
   }
 }
 
-bool CurveDriver2::isNextToCorner(bool left) {
+bool CurveDriver2::isNextToCorner(bool left, float speed) {
   float last_r = std::numeric_limits<float>::max();
   if (laserscan == nullptr)
     return false;
@@ -131,7 +131,12 @@ bool CurveDriver2::isNextToCorner(bool left) {
     corner.y = last_r * std::sin(alpha);
   }
   cornerSeen = odom->pose.pose;
-  return corner.x < 2.0;
+
+  const float vc = maxMotorLevel / 10.0f;
+  const float dif = vc - speed;
+  const float distance_to_corner = 0.8f + dif * dif / -2 + speed * (speed - vc);
+  ROS_INFO("distance to corner: %f", distance_to_corner);
+  return corner.x < distance_to_corner;
 }
 
 bool CurveDriver2::isAtCurveBegin(bool left) const {

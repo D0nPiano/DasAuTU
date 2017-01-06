@@ -24,6 +24,7 @@
 #include "nav_msgs/Odometry.h"
 #include <sensor_msgs/LaserScan.h>
 
+#include "pses_basis/CarInfo.h"
 #include "pses_basis/SensorData.h"
 #include "ros/ros.h"
 #include <pses_basis/Command.h>
@@ -40,6 +41,7 @@ private:
   void getCurrentLaserScan(const sensor_msgs::LaserScan::ConstPtr &);
   void getCurrentSensorData(const pses_basis::SensorData::ConstPtr &);
   void odomCallback(const nav_msgs::OdometryConstPtr &msg);
+  void carinfoCallback(const pses_basis::CarInfoConstPtr &msg);
   float getDistanceToWall();
   void simpleController();
   ros::NodeHandle *n;
@@ -47,14 +49,17 @@ private:
   ros::Subscriber laser_sub;
   ros::Subscriber sensor_sub;
   ros::Subscriber odom_sub;
+  ros::Subscriber carinfo_sub;
   LaserUtil laserUtil;
   Lowpass lowpass;
   sensor_msgs::LaserScanConstPtr currentLaserScan;
   pses_basis::SensorDataConstPtr currentSensorData;
+  pses_basis::CarInfoConstPtr currentCarInfo;
   std::unique_ptr<LaserDetector> laserDetector;
   bool initialized;
   uint8_t drivingState;
   PIDRegler pidRegler;
+  uint16_t pd_maxMotorLevel;
   CurveDriver2 curveDriver;
   nav_msgs::OdometryConstPtr odomData;
 
