@@ -10,6 +10,14 @@ PIDRegler::PIDRegler(ros::NodeHandle &nh) : e0(0), t0(0) {
   maxMotorLevel = nh.param<int>("main/pidregler/max_motor_level", 8);
   p = nh.param<float>("main/pidregler/p", 16.0f);
   d = nh.param<float>("main/pidregler/d", 8.0f);
+  solldist = nh.param<float>("main/pidregler/solldist", 0.9f);
+}
+
+PIDRegler::PIDRegler(ros::NodeHandle &nh, float p, float d, int maxMotorLevel,
+                     float solldist)
+    : e0(0), t0(0), maxMotorLevel(maxMotorLevel), p(p), d(d),
+      solldist(solldist) {
+  command_pub = nh.advertise<pses_basis::Command>("autu/command", 1);
 }
 
 void PIDRegler::reset() {
@@ -17,7 +25,7 @@ void PIDRegler::reset() {
   t0 = 0;
 }
 
-void PIDRegler::drive(float ldist) {
+void PIDRegler::drive(float ldist, bool left) {
   pses_basis::Command cmd;
 
   // float parallelAngle =  -(90 - laserDetector->getAngleToWallInDeg());
@@ -29,8 +37,7 @@ void PIDRegler::drive(float ldist) {
                   curveBegin = ros::Time::now().toSec();
                   */
 
-  float solldist = 0.9;
-  float steerfact = -2;
+  float steerfact = left ? -2.0f : 2.0f;
 
   // P-Regler, tb = 62s
 

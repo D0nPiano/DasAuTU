@@ -1,8 +1,10 @@
 #ifndef PARKINGCONTROLLER_H
 #define PARKINGCONTROLLER_H
 
+#include "Eigen/Dense"
 #include "autu_control/AutoController.h"
 #include "autu_control/rundkurs/laser_utilities.h"
+#include "autu_control/rundkurs/pidregler.h"
 #include "nav_msgs/Odometry.h"
 #include "ros/ros.h"
 #include "sensor_msgs/LaserScan.h"
@@ -21,11 +23,15 @@ private:
   nav_msgs::OdometryConstPtr odom;
   sensor_msgs::LaserScanConstPtr laserscan;
   geometry_msgs::Pose curveBegin;
+  geometry_msgs::Pose corner;
   LaserUtil laserUtil;
+  PIDRegler pidRegler;
   uint8_t state;
   int16_t velocity;
   int16_t maxSteering;
   float maxAngle;
+  float regulator_d, regulator_p;
+  float a, b, w;
 };
 
 #endif // PARKINGCONTROLLER_H

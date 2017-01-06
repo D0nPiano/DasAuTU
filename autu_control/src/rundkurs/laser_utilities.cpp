@@ -90,14 +90,11 @@ Corner LaserUtil::findCorner(
       }
     }
     error /= also_inliers.size();
-    if (also_inliers.size() > d) {
-      ROS_INFO("data.size: %d Also inliers: %d", data.size(),
-               also_inliers.size());
+    if (also_inliers.size() > d)
       if (error < besterr) {
         besterr = error;
         bestfit = maybe_model;
       }
-    }
   }
   return bestfit;
 }

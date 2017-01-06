@@ -7,9 +7,12 @@
 
 class PIDRegler {
 public:
+  PIDRegler() {}
   PIDRegler(ros::NodeHandle &nh);
+  PIDRegler(ros::NodeHandle &nh, float p, float d, int maxMotorLevel,
+            float solldist);
   void reset();
-  void drive(float ldist);
+  void drive(float ldist, bool left);
   bool isReady();
 
   void setLaserDetector(const LaserDetector &detector);
@@ -20,6 +23,7 @@ private:
   int16_t maxMotorLevel;
   float p;
   float d;
+  float solldist;
   const LaserDetector *laserDetector;
   ros::Publisher command_pub;
 };

@@ -126,13 +126,13 @@ void RundkursController::simpleController() {
   case STRAIGHT:
     // pidRegler.drive(currentSensorData->range_sensor_left,
     //              laserDetector->getDistanceToWall());
-    pidRegler.drive(lowpass.getAverage());
+    pidRegler.drive(lowpass.getAverage(), true);
     break;
   case BEFORE_CURVE:
     /* pidRegler.drive((currentSensorData->range_sensor_left +
                       laserDetector->getDistanceToWall()) /
                      2);*/
-    pidRegler.drive(lowpass.getAverage());
+    pidRegler.drive(lowpass.getAverage(), true);
     break;
   case CURVE:
     // curveDriver.drive(currentSensorData->range_sensor_left,
