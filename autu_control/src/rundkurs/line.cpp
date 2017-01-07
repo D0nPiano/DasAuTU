@@ -18,3 +18,12 @@ nav_msgs::Path Line::toPathMsg() const {
   msg.header.frame_id = "base_laser";
   return msg;
 }
+
+bool Line::hasPointInCommon(const Line &other) {
+  return origin == other.origin || origin == other.end || end == other.origin ||
+         end == other.end;
+}
+
+Eigen::Vector2f Line::getOrigin() const { return origin; }
+
+Eigen::Vector2f Line::getEnd() const { return end; }

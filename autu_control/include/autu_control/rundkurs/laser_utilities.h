@@ -29,9 +29,6 @@ private:
   std::vector<Line> findCornerRLFRec(
       const std::vector<Eigen::Vector2f,
                         Eigen::aligned_allocator<Eigen::Vector2f>> &points);
-  Corner findCorner(
-      const std::vector<Eigen::Vector2f,
-                        Eigen::aligned_allocator<Eigen::Vector2f>> &points);
   std::vector<Eigen::Vector2f, Eigen::aligned_allocator<Eigen::Vector2f>>
   filterScan(const sensor_msgs::LaserScanConstPtr &scan);
 

@@ -8,6 +8,10 @@ class Line {
 public:
   Line(const Eigen::Vector2f &first, const Eigen::Vector2f &last);
   nav_msgs::Path toPathMsg() const;
+  bool hasPointInCommon(const Line &other);
+
+  Eigen::Vector2f getOrigin() const;
+  Eigen::Vector2f getEnd() const;
 
 private:
   Eigen::Vector2f origin;

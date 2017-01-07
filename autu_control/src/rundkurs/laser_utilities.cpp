@@ -12,7 +12,6 @@
 #define MAX_WALL_DIST 1.3f
 
 using std::sqrt;
-using std::min;
 using std::fmin;
 using std::fmax;
 using std::cos;
@@ -42,64 +41,13 @@ Vector2f LaserUtil::findCorner(const sensor_msgs::LaserScanConstPtr &scan) {
 #ifndef NDEBUG
   {
     Corner corner = findCornerRLF(filterScan(scan));
-    // corner1_pub.publish(corner.toPath1());
-    // corner2_pub.publish(corner.toPath2());
-    return corner.getOrigin();
+    corner1_pub.publish(corner.toPathMsg1());
+    corner2_pub.publish(corner.toPathMsg2());
+    return corner.getB();
   }
 #else
-    return findCornerRLF(filterScan(scan)).getOrigin();
+    return findCornerRLF(filterScan(scan)).getB();
 #endif
-}
-
-Corner LaserUtil::findCorner(
-    const vector<Vector2f, aligned_allocator<Vector2f>> &points) {
-  vector<Vector2f, aligned_allocator<Vector2f>> data =
-      points;  // a set of observed data points
-  int k = 250; // the maximum number of iterations allowed in the algorithm
-  float t =
-      0.1f; // a threshold value for determining when a data point fits a model
-  size_t d = 0.5 * data.size(); // the number of close data values required to
-                                // assert that a model fits
-                                // well to data
-  Corner bestfit;
-  double besterr = std::numeric_limits<double>::max();
-  std::srand(std::time(0));
-  for (int iter = 0; iter < k; ++iter) {
-    // determine two random points
-    int o = (rand() % (int)(data.size() + 1));
-    int dir = (rand() % (int)(data.size() + 1));
-    Vector2f p1 = data[o];
-    while (dir == o)
-      dir = (rand() % (int)(data.size() + 1));
-    Vector2f p2 = data[dir];
-
-    Vector2f origin;
-    // origin.x
-    origin[0] = fmin(p1[0], p2[0]);
-    // origin.y
-    origin[1] = fmax(p1[1], p2[1]);
-
-    Corner maybe_model(origin, p1 - origin,
-                       p2 - origin); // model parameters fitted to maybeinliers
-    std::vector<Eigen::Vector2f, Eigen::aligned_allocator<Eigen::Vector2f>>
-        also_inliers; // empty set
-
-    double error = 0;
-    for (const Vector2f &point : data) {
-      const float dist = maybe_model.distance(point);
-      if (dist < t) {
-        also_inliers.push_back(point);
-        error += dist;
-      }
-    }
-    error /= also_inliers.size();
-    if (also_inliers.size() > d)
-      if (error < besterr) {
-        besterr = error;
-        bestfit = maybe_model;
-      }
-  }
-  return bestfit;
 }
 
 ParametrizedLine<float, 2> LaserUtil::findLine(
@@ -150,21 +98,27 @@ ParametrizedLine<float, 2> LaserUtil::findLine(
 }
 
 Corner LaserUtil::findCornerRLF(
-    const std::vector<Eigen::Vector2f,
-                      Eigen::aligned_allocator<Eigen::Vector2f>> &points) {
-  Corner corner;
-
+    const vector<Vector2f, aligned_allocator<Vector2f>> &points) {
   const vector<Line> &lines = findCornerRLFRec(points);
-  ROS_INFO("Lines.size: %lu", lines.size());
-  corner1_pub.publish(lines.front().toPathMsg());
-  corner2_pub.publish(lines.back().toPathMsg());
 
-  return corner;
+#ifndef NDEBUG
+  ROS_INFO("Lines detected: %lu", lines.size());
+#endif
+
+  if (lines.size() >= 2) {
+    Line lastLine = lines.back();
+    for (auto iter = lines.rbegin() + 1; iter != lines.rend(); ++iter)
+      if (lastLine.hasPointInCommon(*iter))
+        return Corner(lastLine, *iter);
+      else
+        lastLine = *iter;
+  }
+  // No corner detected
+  return Corner();
 }
 
-std::vector<Line> LaserUtil::findCornerRLFRec(
-    const std::vector<Eigen::Vector2f,
-                      Eigen::aligned_allocator<Eigen::Vector2f>> &points) {
+vector<Line> LaserUtil::findCornerRLFRec(
+    const vector<Vector2f, aligned_allocator<Vector2f>> &points) {
   vector<Line> lines;
   if (points.size() < 6)
     return lines;
@@ -215,8 +169,8 @@ float LaserUtil::getDistanceToWall(const sensor_msgs::LaserScanConstPtr &scan,
     return -1;
   else {
     const float r_max =
-        min(scan->range_max, sqrt(MAX_WALL_DIST * MAX_WALL_DIST +
-                                  MAX_WALL_SCOPE * MAX_WALL_SCOPE));
+        fmin(scan->range_max, sqrt(MAX_WALL_DIST * MAX_WALL_DIST +
+                                   MAX_WALL_SCOPE * MAX_WALL_SCOPE));
     size_t i;
     std::vector<Eigen::Vector2f, Eigen::aligned_allocator<Eigen::Vector2f>>
         points;
@@ -257,8 +211,8 @@ float LaserUtil::getDistanceToWall(const sensor_msgs::LaserScanConstPtr &scan,
 std::vector<Eigen::Vector2f, Eigen::aligned_allocator<Eigen::Vector2f>>
 LaserUtil::filterScan(const sensor_msgs::LaserScanConstPtr &scan) {
   const float r_max =
-      min(scan->range_max, sqrt(MAX_WALL_DIST * MAX_WALL_DIST +
-                                MAX_WALL_SCOPE * MAX_WALL_SCOPE));
+      fmin(scan->range_max, sqrt(MAX_WALL_DIST * MAX_WALL_DIST +
+                                 MAX_WALL_SCOPE * MAX_WALL_SCOPE));
   size_t i;
   std::vector<Eigen::Vector2f, Eigen::aligned_allocator<Eigen::Vector2f>>
       points;

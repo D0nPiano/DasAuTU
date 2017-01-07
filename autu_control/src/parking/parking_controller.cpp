@@ -63,8 +63,6 @@ void ParkingController::run() {
   switch (state) {
   case DETECT_CORNER:
     vec = laserUtil.findCorner(laserscan);
-    state = 42;
-    return;
 
     // corner.position.x = vec[0];
     // corner.position.y = vec[1];
