@@ -8,6 +8,8 @@
 #include "nav_msgs/Odometry.h"
 #include "ros/ros.h"
 #include "sensor_msgs/LaserScan.h"
+#include "tf/tf.h"
+#include "tf/transform_listener.h"
 
 class ParkingController : public AutoController {
 public:
@@ -23,7 +25,9 @@ private:
   nav_msgs::OdometryConstPtr odom;
   sensor_msgs::LaserScanConstPtr laserscan;
   geometry_msgs::Pose curveBegin;
-  geometry_msgs::Pose corner;
+  // geometry_msgs::Pose corner;
+  geometry_msgs::PointStamped corner;
+  tf::TransformListener transformListener;
   LaserUtil laserUtil;
   PIDRegler pidRegler;
   uint8_t state;

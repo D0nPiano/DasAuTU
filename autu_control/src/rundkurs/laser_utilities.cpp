@@ -25,6 +25,9 @@ using Eigen::ParametrizedLine;
 using Eigen::aligned_allocator;
 
 LaserUtil::LaserUtil(ros::NodeHandle &nh) {
+
+  delta_max = 0.1f;
+
   wall_pub = nh.advertise<nav_msgs::Path>("autu/wall", 1);
 #ifndef NDEBUG
   corner1_pub = nh.advertise<nav_msgs::Path>("autu/debug/corner_1", 1);
@@ -38,13 +41,13 @@ Vector2f LaserUtil::findCorner(const sensor_msgs::LaserScanConstPtr &scan) {
   else
 #ifndef NDEBUG
   {
-    Corner corner = findCorner(filterScan(scan));
-    corner1_pub.publish(corner.toPath1());
-    corner2_pub.publish(corner.toPath2());
+    Corner corner = findCornerRLF(filterScan(scan));
+    // corner1_pub.publish(corner.toPath1());
+    // corner2_pub.publish(corner.toPath2());
     return corner.getOrigin();
   }
 #else
-    return findCorner(filterScan(scan)).getOrigin();
+    return findCornerRLF(filterScan(scan)).getOrigin();
 #endif
 }
 
@@ -144,6 +147,66 @@ ParametrizedLine<float, 2> LaserUtil::findLine(
       }
   }
   return bestfit;
+}
+
+Corner LaserUtil::findCornerRLF(
+    const std::vector<Eigen::Vector2f,
+                      Eigen::aligned_allocator<Eigen::Vector2f>> &points) {
+  Corner corner;
+
+  const vector<Line> &lines = findCornerRLFRec(points);
+  ROS_INFO("Lines.size: %lu", lines.size());
+  corner1_pub.publish(lines.front().toPathMsg());
+  corner2_pub.publish(lines.back().toPathMsg());
+
+  return corner;
+}
+
+std::vector<Line> LaserUtil::findCornerRLFRec(
+    const std::vector<Eigen::Vector2f,
+                      Eigen::aligned_allocator<Eigen::Vector2f>> &points) {
+  vector<Line> lines;
+  if (points.size() < 6)
+    return lines;
+  const Vector2f &first = points.front();
+  const Vector2f &last = points.back();
+
+  // line through the first and the last point
+  ParametrizedLine<float, 2> line =
+      ParametrizedLine<float, 2>::Through(first, last);
+
+  // find the point with the biggest distance to that line
+  float max_error = 0;
+  size_t max_error_index;
+  size_t index = 0;
+  for (const Vector2f &point : points) {
+    const float distance = line.distance(point);
+    if (distance > max_error) {
+      max_error = distance;
+      max_error_index = index;
+    }
+    ++index;
+  }
+
+  if (max_error > delta_max) {
+    // split the line at the point with the maximum error
+    vector<Vector2f, aligned_allocator<Vector2f>> data;
+
+    for (size_t i = 0; i <= max_error_index; ++i)
+      data.push_back(points[i]);
+    vector<Line> result = findCornerRLFRec(data);
+    lines.insert(lines.end(), result.begin(), result.end());
+
+    data.clear();
+    for (size_t i = max_error_index; i < points.size(); ++i)
+      data.push_back(points[i]);
+    result = findCornerRLFRec(data);
+    lines.insert(lines.end(), result.begin(), result.end());
+
+  } else
+    lines.push_back(Line(first, last));
+
+  return lines;
 }
 
 float LaserUtil::getDistanceToWall(const sensor_msgs::LaserScanConstPtr &scan,
