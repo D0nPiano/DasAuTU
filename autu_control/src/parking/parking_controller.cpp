@@ -13,6 +13,7 @@
 #define STOP 4
 
 using Eigen::Vector2f;
+using Eigen::Rotation2Df;
 using std::abs;
 using std::sqrt;
 using std::sin;
@@ -53,9 +54,14 @@ ParkingController::ParkingController(ros::NodeHandle &nh)
 
   theta = acos((r - w) / r_e) - beta;
 
-  ROS_INFO("Theta: %f", theta);
+  delta = theta - alpha;
 
   pidRegler = PIDRegler(nh, regulator_p, regulator_d, velocity_forward, a / 2);
+
+#ifndef NDEBUG
+  trajectory_pub =
+      nh.advertise<nav_msgs::Path>("autu/debug/parking_trajectory", 1);
+#endif
 }
 
 void ParkingController::odomCallback(const nav_msgs::OdometryConstPtr &msg) {
@@ -79,8 +85,6 @@ void ParkingController::run() {
   case DETECT_CORNER:
     vec = laserUtil.findCorner(laserscan);
 
-    // corner.position.x = vec[0];
-    // corner.position.y = vec[1];
     try {
       tf::StampedTransform transform;
       transformListener.waitForTransform("base_laser", "/odom", ros::Time(0),
@@ -88,17 +92,27 @@ void ParkingController::run() {
       transformListener.lookupTransform("base_laser", "/odom", ros::Time(0),
                                         transform);
 
-      geometry_msgs::PointStamped cornerInBaseLaser;
+      geometry_msgs::PointStamped cornerInBaseLaser, startInBaseLaser;
+
       cornerInBaseLaser.point.x = vec[0];
       cornerInBaseLaser.point.y = vec[1];
       cornerInBaseLaser.header.frame_id = "/base_laser";
       cornerInBaseLaser.header.stamp = ros::Time(0);
       transformListener.transformPoint("/odom", cornerInBaseLaser, corner);
+
+      startInBaseLaser.point.x = vec[0] + r * sin(delta);
+      startInBaseLaser.point.y = vec[1] + r * (1 - cos(delta));
+      startInBaseLaser.header.frame_id = "/base_laser";
+      startInBaseLaser.header.stamp = ros::Time(0);
+      transformListener.transformPoint("/odom", startInBaseLaser, start);
     } catch (tf::TransformException ex) {
       ROS_ERROR("%s", ex.what());
       return;
     }
-    state = DRIVE_TO_CORNER;
+#ifndef NDEBUG
+    publishParkingTrajectory();
+#endif
+    state = 42;
     break;
   case DRIVE_TO_CORNER:
 
@@ -178,4 +192,51 @@ void ParkingController::run() {
   default:
     break;
   }
+}
+
+void ParkingController::publishParkingTrajectory() {
+  nav_msgs::Path msg;
+  geometry_msgs::PoseStamped pose;
+  msg.header.frame_id = "odom";
+
+  Vector2f start;
+  start[0] = r * sin(delta);
+  start[1] = r * (1 - cos(delta));
+
+  Vector2f startICC = start;
+  startICC[1] -= r;
+
+  pose.pose.position = corner.point;
+  pose.pose.position.x += start[0];
+  pose.pose.position.y += start[1];
+  msg.poses.push_back(pose);
+
+  const Vector2f v_r(0, r);
+
+  const int intervals = 20;
+  for (int i = 0; i <= intervals; ++i) {
+    Rotation2Df rot(theta * i / intervals);
+
+    const Vector2f vec = rot * v_r + startICC;
+
+    pose.pose.position = corner.point;
+    pose.pose.position.x += vec[0];
+    pose.pose.position.y += vec[1];
+    msg.poses.push_back(pose);
+  }
+
+  const Vector2f endICC = Rotation2Df(theta) * (2 * v_r) + startICC;
+
+  for (int i = intervals; i >= 0; --i) {
+    Rotation2Df rot(theta * i / intervals);
+
+    const Vector2f vec = rot * -v_r + endICC;
+
+    pose.pose.position = corner.point;
+    pose.pose.position.x += vec[0];
+    pose.pose.position.y += vec[1];
+    msg.poses.push_back(pose);
+  }
+
+  trajectory_pub.publish(msg);
 }

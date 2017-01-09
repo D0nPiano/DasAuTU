@@ -19,14 +19,17 @@ public:
   void run();
 
 private:
+  void publishParkingTrajectory();
   ros::Publisher command_pub;
   ros::Subscriber odom_sub;
   ros::Subscriber laser_sub;
   nav_msgs::OdometryConstPtr odom;
   sensor_msgs::LaserScanConstPtr laserscan;
   geometry_msgs::Pose curveBegin;
-  // geometry_msgs::Pose corner;
+  // corner is in frame odom
   geometry_msgs::PointStamped corner;
+  // start is in frame odom
+  geometry_msgs::PointStamped start;
   tf::TransformListener transformListener;
   LaserUtil laserUtil;
   PIDRegler pidRegler;
@@ -39,6 +42,10 @@ private:
   float r;
   float r_e;
   float alpha, beta;
+  float delta;
+#ifndef NDEBUG
+  ros::Publisher trajectory_pub;
+#endif
 };
 
 #endif // PARKINGCONTROLLER_H

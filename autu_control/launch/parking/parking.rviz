@@ -9,6 +9,7 @@ Panels:
         - /Path1
         - /Path2
         - /Path5
+        - /Parking Trajectory1
       Splitter Ratio: 0.5
     Tree Height: 772
   - Class: rviz/Selection
@@ -469,6 +470,28 @@ Visualization Manager:
       Topic: /autu/debug/corner_2
       Unreliable: false
       Value: true
+    - Alpha: 1
+      Buffer Length: 1
+      Class: rviz/Path
+      Color: 255; 85; 255
+      Enabled: true
+      Head Diameter: 0.3
+      Head Length: 0.2
+      Length: 0.3
+      Line Style: Lines
+      Line Width: 0.03
+      Name: Parking Trajectory
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Style: None
+      Radius: 0.03
+      Shaft Diameter: 0.1
+      Shaft Length: 0.1
+      Topic: /autu/debug/parking_trajectory
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -493,16 +516,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 15.3792
+      Distance: 2.22779
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 5.93974
-        Y: 0.578522
-        Z: 0.00844209
+        X: 2.69279
+        Y: -1.17446
+        Z: 0.00679119
       Name: Current View
       Near Clip Distance: 0.01
       Pitch: 1.5698
