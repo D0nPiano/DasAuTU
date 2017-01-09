@@ -15,6 +15,9 @@
 using Eigen::Vector2f;
 using std::abs;
 using std::sqrt;
+using std::sin;
+using std::acos;
+using std::asin;
 
 ParkingController::ParkingController(ros::NodeHandle &nh)
     : laserUtil(nh), state(DETECT_CORNER) {
@@ -31,7 +34,7 @@ ParkingController::ParkingController(ros::NodeHandle &nh)
 
   maxSteering = nh.param<int>("main/parking/max_steering", 42);
 
-  maxAngle = nh.param<float>("main/parking/max_angle", M_PI_4);
+  theta = nh.param<float>("main/parking/max_angle", M_PI_4);
 
   regulator_d = nh.param<float>("main/parking/regulator_d", 3);
   regulator_p = nh.param<float>("main/parking/regulator_p", 10);
@@ -39,6 +42,18 @@ ParkingController::ParkingController(ros::NodeHandle &nh)
   a = nh.param<float>("main/parking/a", 0.4f);
   b = nh.param<float>("main/parking/b", 0.32f);
   w = nh.param<float>("main/parking/w", 0.2f);
+
+  r = nh.param<float>("main/parking/minimal_radius", 1);
+
+  r_e = sqrt(r * r + b * b);
+
+  alpha = acos(1 - b * b / (4 * r * r));
+
+  beta = asin(sin(alpha) * r / r_e);
+
+  theta = acos((r - w) / r_e) - beta;
+
+  ROS_INFO("Theta: %f", theta);
 
   pidRegler = PIDRegler(nh, regulator_p, regulator_d, velocity_forward, a / 2);
 }
@@ -102,7 +117,6 @@ void ParkingController::run() {
       const float xDif = corner.point.x - wheelInOdom.point.x;
       const float yDif = corner.point.y - wheelInOdom.point.y;
       const float distance = sqrt(xDif * xDif + yDif * yDif);
-      ROS_INFO("Distance: %f", distance);
       if (distance < 0.1f)
         state = TURN_RIGHT_INIT;
     } catch (tf::TransformException ex) {
@@ -119,7 +133,7 @@ void ParkingController::run() {
   case TURN_RIGHT:
     tf::quaternionMsgToTF(curveBegin.orientation, begin);
     tf::quaternionMsgToTF(odom->pose.pose.orientation, current);
-    if (2 * begin.angle(current) > maxAngle)
+    if (2 * begin.angle(current) > theta)
       state = STRAIGHT;
     break;
   case STRAIGHT:
@@ -129,7 +143,7 @@ void ParkingController::run() {
   case TURN_LEFT:
     tf::quaternionMsgToTF(curveBegin.orientation, begin);
     tf::quaternionMsgToTF(odom->pose.pose.orientation, current);
-    if (2 * begin.angle(current) > maxAngle)
+    if (2 * begin.angle(current) > theta)
       state = STOP;
     break;
   default:

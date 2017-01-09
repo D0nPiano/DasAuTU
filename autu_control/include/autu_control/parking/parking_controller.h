@@ -33,9 +33,12 @@ private:
   uint8_t state;
   int16_t velocity_forward, velocity_backward;
   int16_t maxSteering;
-  float maxAngle;
+  float theta;
   float regulator_d, regulator_p;
   float a, b, w;
+  float r;
+  float r_e;
+  float alpha, beta;
 };
 
 #endif // PARKINGCONTROLLER_H
