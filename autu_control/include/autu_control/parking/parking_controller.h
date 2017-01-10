@@ -10,6 +10,7 @@
 #include "sensor_msgs/LaserScan.h"
 #include "tf/tf.h"
 #include "tf/transform_listener.h"
+#include <vector>
 
 class ParkingController : public AutoController {
 public:
@@ -19,6 +20,8 @@ public:
   void run();
 
 private:
+  std::vector<Eigen::Vector2f, Eigen::aligned_allocator<Eigen::Vector2f>>
+  calcTrajectory();
   void publishParkingTrajectory();
   ros::Publisher command_pub;
   ros::Subscriber odom_sub;
@@ -45,6 +48,7 @@ private:
   float delta;
 #ifndef NDEBUG
   ros::Publisher trajectory_pub;
+  ros::Publisher trajectory_odom_pub;
 #endif
 };
 

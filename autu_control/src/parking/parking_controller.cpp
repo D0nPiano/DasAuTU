@@ -14,11 +14,14 @@
 
 using Eigen::Vector2f;
 using Eigen::Rotation2Df;
+using Eigen::aligned_allocator;
 using std::abs;
 using std::sqrt;
 using std::sin;
 using std::acos;
 using std::asin;
+using std::vector;
+using geometry_msgs::PoseStamped;
 
 ParkingController::ParkingController(ros::NodeHandle &nh)
     : laserUtil(nh), state(DETECT_CORNER) {
@@ -59,6 +62,8 @@ ParkingController::ParkingController(ros::NodeHandle &nh)
 #ifndef NDEBUG
   trajectory_pub =
       nh.advertise<nav_msgs::Path>("autu/debug/parking_trajectory", 1);
+  trajectory_odom_pub =
+      nh.advertise<nav_msgs::Path>("autu/debug/parking_trajectory_odom", 1);
 #endif
 }
 
@@ -184,35 +189,22 @@ void ParkingController::run() {
   }
 }
 
-void ParkingController::publishParkingTrajectory() {
-  nav_msgs::Path msg;
-  geometry_msgs::PoseStamped pose;
-  msg.header.frame_id = "odom";
-
-  Vector2f start;
-  start[0] = r * sin(delta);
-  start[1] = r * (1 - cos(delta));
-
-  Vector2f startICC = start;
-  startICC[1] -= r;
-
-  pose.pose.position = corner.point;
-  pose.pose.position.x += start[0];
-  pose.pose.position.y += start[1];
-  msg.poses.push_back(pose);
+std::vector<Eigen::Vector2f, Eigen::aligned_allocator<Eigen::Vector2f>>
+ParkingController::calcTrajectory() {
+  vector<Vector2f, aligned_allocator<Vector2f>> vectors;
+  const Vector2f start(r * sin(delta), r * (1 - cos(delta)));
 
   const Vector2f v_r(0, r);
+
+  const Vector2f startICC = start - v_r;
+
+  vectors.push_back(start);
 
   const int intervals = 20;
   for (int i = 0; i <= intervals; ++i) {
     Rotation2Df rot(theta * i / intervals);
 
-    const Vector2f vec = rot * v_r + startICC;
-
-    pose.pose.position = corner.point;
-    pose.pose.position.x += vec[0];
-    pose.pose.position.y += vec[1];
-    msg.poses.push_back(pose);
+    vectors.push_back(rot * v_r + startICC);
   }
 
   const Vector2f endICC = Rotation2Df(theta) * (2 * v_r) + startICC;
@@ -220,13 +212,28 @@ void ParkingController::publishParkingTrajectory() {
   for (int i = intervals; i >= 0; --i) {
     Rotation2Df rot(theta * i / intervals);
 
-    const Vector2f vec = rot * -v_r + endICC;
+    vectors.push_back(rot * -v_r + endICC);
+  }
+  return vectors;
+}
 
-    pose.pose.position = corner.point;
-    pose.pose.position.x += vec[0];
-    pose.pose.position.y += vec[1];
-    msg.poses.push_back(pose);
+void ParkingController::publishParkingTrajectory() {
+  nav_msgs::Path msgWheel, msgOdom;
+  msgWheel.header.frame_id = "odom";
+  msgOdom.header.frame_id = "odom";
+
+  const auto &vectors = calcTrajectory();
+
+  for (const Vector2f &vec : vectors) {
+    PoseStamped pose;
+    pose.pose.position.x = vec[0] + corner.point.x;
+    pose.pose.position.y = vec[1] + corner.point.y;
+    msgWheel.poses.push_back(pose);
+
+    pose.pose.position.y += 0.1f;
+    msgOdom.poses.push_back(pose);
   }
 
-  trajectory_pub.publish(msg);
+  trajectory_pub.publish(msgWheel);
+  trajectory_odom_pub.publish(msgOdom);
 }

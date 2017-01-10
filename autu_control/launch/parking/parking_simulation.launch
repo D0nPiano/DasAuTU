@@ -26,6 +26,6 @@
     <param name="parking/w" value="0.2"/>
   </node>
   <node pkg="rviz" type="rviz" name="rviz" args="-d $(find autu_control)/launch/parking/parking.rviz"/>
-  <node pkg="tf" type="static_transform_publisher" name="map_broadcaster" args="0 -0.5 0 0 0 0 1 map odom 10"/>
+  <node pkg="tf" type="static_transform_publisher" name="map_broadcaster" args="1 -0.5 0 0 0 0 1 map odom 10"/>
   <node name="map_server" pkg="map_server" type="map_server" args="$(find autu_control)/map/parking_map.yaml"/>
 </launch>
