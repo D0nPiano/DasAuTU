@@ -53,11 +53,12 @@
     <param name="pidregler/d" value="3"/>
     <param name="curvedriver/max_motor_level" value="0"/>
     <param name="parking/velocity" value="8"/>
-    <param name="parking/max_steering" value="45"/>
-    <param name="parking/max_angle" value="0.35"/>
-    <param name="parking/regulator_p" value="10"/>
-    <param name="parking/regulator_d" value="3"/>
+    <param name="parking/max_steering" value="35"/>
+    <param name="parking/minimal_radius" value="1"/>
+    <param name="parking/regulator_p" value="25"/>
+    <param name="parking/regulator_d" value="8"/>
     <param name="parking/velocity_forward" value="5"/>
-    <param name="parking/velocity_backward" value="5"/>
+    <param name="parking/velocity_backward" value="8"/>
+    <param name="parking/w" value="0.3"/>
   </node>
 </launch>

@@ -35,8 +35,6 @@ ParkingController::ParkingController(ros::NodeHandle &nh)
 
   maxSteering = nh.param<int>("main/parking/max_steering", 42);
 
-  theta = nh.param<float>("main/parking/max_angle", M_PI_4);
-
   regulator_d = nh.param<float>("main/parking/regulator_d", 3);
   regulator_p = nh.param<float>("main/parking/regulator_p", 10);
 
@@ -56,7 +54,7 @@ ParkingController::ParkingController(ros::NodeHandle &nh)
 
   delta = theta - alpha;
 
-  pidRegler = PIDRegler(nh, regulator_p, regulator_d, velocity_forward, a / 2);
+  pidRegler = PIDRegler(nh, regulator_p, regulator_d, velocity_forward, 0);
 
 #ifndef NDEBUG
   trajectory_pub =
@@ -94,6 +92,7 @@ void ParkingController::run() {
 
       geometry_msgs::PointStamped cornerInBaseLaser, startInBaseLaser;
 
+      vec[1] += 0.1f;
       cornerInBaseLaser.point.x = vec[0];
       cornerInBaseLaser.point.y = vec[1];
       cornerInBaseLaser.header.frame_id = "/base_laser";
@@ -112,33 +111,29 @@ void ParkingController::run() {
 #ifndef NDEBUG
     publishParkingTrajectory();
 #endif
-    state = 42;
+    state = DRIVE_TO_CORNER;
     break;
   case DRIVE_TO_CORNER:
 
     try {
       tf::StampedTransform transform;
-      transformListener.waitForTransform("/rear_right_wheel", "/odom",
+      transformListener.waitForTransform("/odom", "/rear_right_wheel",
                                          ros::Time(0), ros::Duration(0.1));
-      transformListener.lookupTransform("/rear_right_wheel", "/odom",
+      transformListener.lookupTransform("/odom", "/rear_right_wheel",
                                         ros::Time(0), transform);
 
-      geometry_msgs::PointStamped pointRightWheel, wheelInOdom;
-      pointRightWheel.point.y = -(a - w) / 2;
-      pointRightWheel.header.frame_id = "/rear_right_wheel";
-      pointRightWheel.header.stamp = ros::Time(0);
-      transformListener.transformPoint("/odom", pointRightWheel, wheelInOdom);
-      const float xDif = corner.point.x - wheelInOdom.point.x;
-      const float yDif = corner.point.y - wheelInOdom.point.y;
-      const float distance = sqrt(xDif * xDif + yDif * yDif);
-      if (distance < 0.1f)
+      geometry_msgs::PointStamped startInRightWheel;
+      start.header.stamp = ros::Time(0);
+      transformListener.transformPoint("/rear_right_wheel", start,
+                                       startInRightWheel);
+      ROS_INFO("odom.y: %f start.y: %f dif: %f", odom->pose.pose.position.y,
+               start.point.y, odom->pose.pose.position.y - start.point.y);
+      if (startInRightWheel.point.x < 0)
         state = TURN_RIGHT_INIT;
     } catch (tf::TransformException ex) {
       ROS_ERROR("%s", ex.what());
       return;
     }
-    // if (odom->pose.pose.position.x > corner.position.x + 0.5f)
-    // state = TURN_RIGHT_INIT;
     break;
   case TURN_RIGHT_INIT:
     curveBegin = odom->pose.pose;
@@ -167,16 +162,11 @@ void ParkingController::run() {
   pses_basis::Command cmd;
   switch (state) {
   case DRIVE_TO_CORNER:
-    pidRegler.drive(odom->pose.pose.position.y - corner.point.y, false);
+    pidRegler.drive(odom->pose.pose.position.y - start.point.y, false);
     break;
   case TURN_RIGHT:
     cmd.motor_level = -velocity_backward;
     cmd.steering_level = -maxSteering;
-    command_pub.publish(cmd);
-    break;
-  case STRAIGHT:
-    cmd.motor_level = 0;
-    cmd.steering_level = 0;
     command_pub.publish(cmd);
     break;
   case TURN_LEFT:

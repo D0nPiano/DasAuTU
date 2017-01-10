@@ -8,8 +8,8 @@
 #include "geometry_msgs/Pose.h"
 #include "nav_msgs/Path.h"
 
-#define MAX_WALL_SCOPE 2.0f
-#define MAX_WALL_DIST 1.3f
+#define MAX_WALL_SCOPE 1.5f
+#define MAX_WALL_DIST 0.5f
 
 using std::sqrt;
 using std::fmin;
