@@ -38,10 +38,11 @@ private:
   PIDRegler pidRegler;
   uint8_t state;
   int16_t velocity_forward, velocity_backward;
-  int16_t maxSteering;
+  int16_t maxSteeringLeft, maxSteeringRight;
   float theta;
   float regulator_d, regulator_p;
-  float a, b, w;
+  float safety_distance;
+  float b, w;
   float r;
   float r_e;
   float alpha, beta;
