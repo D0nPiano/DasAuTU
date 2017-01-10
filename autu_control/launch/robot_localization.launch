@@ -1,0 +1,6 @@
+<launch>
+	
+	<node pkg="robot_localization" type="ekf_localization_node" name="ekf_se_odom" clear_params="true" >
+	<rosparam command="load" file="$(find autu_control)/params/robot_localization.yaml" />
+	</node>
+</launch>
