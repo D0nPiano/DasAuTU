@@ -135,15 +135,11 @@ bool CurveDriver2::isNextToCorner(bool left, float speed) {
     corner.y = last_r * std::sin(alpha);
   }
   cornerSeen = odom->pose.pose;
-  cornerSeen.position.x += scanOffset;
-
-  ROS_INFO("ScanOffset: %f Distance to corner: %f", scanOffset, corner.x);
 
   const float vc = maxMotorLevel / 10.0f;
   const float dif = vc - speed;
   distance_to_corner = dif * dif / -2 + speed * (speed - vc);
-  // ROS_INFO("distance to corner: %f", distance_to_corner);
-  return corner.x < 0.8f + 0.5f; // distance_to_corner;
+  return corner.x - 0.1f < 0.8f + distance_to_corner;
 }
 
 bool CurveDriver2::isAtCurveBegin(bool left) const {
@@ -153,7 +149,7 @@ bool CurveDriver2::isAtCurveBegin(bool left) const {
   // actual distance
   const float distance = sqrt(xDif * xDif + yDif * yDif);
 
-  return distance > 0.5f; // distance_to_corner;
+  return distance > distance_to_corner;
 }
 
 void CurveDriver2::setLaserscan(const sensor_msgs::LaserScanConstPtr &scan) {
@@ -173,7 +169,6 @@ void CurveDriver2::setOdom(const nav_msgs::OdometryConstPtr &msg) {
 void CurveDriver2::updateScanOffset(float speed) {
   const double now = ros::Time::now().toSec();
   const double timeDif = now - scanOffsetStamp;
-  // ROS_INFO("TimeDif: %f", timeDif);
   scanOffset += timeDif * speed;
   scanOffsetStamp = now;
 }

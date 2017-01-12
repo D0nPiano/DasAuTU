@@ -93,8 +93,6 @@ float RundkursController::getDistanceToWall() {
 void RundkursController::simpleController() {
   curveDriver.setLaserscan(currentLaserScan);
   curveDriver.setOdom(odomData);
-// ROS_INFO("Distance to Wall: %f",
-//          laserUtil.getDistanceToWall(currentLaserScan, true));
 
 #ifndef NDEBUG
   std_msgs::Float32 value;
@@ -115,7 +113,6 @@ void RundkursController::simpleController() {
       ROS_INFO("************ Next To Corner ***************");
       curveDriver.reset();
       drivingState = BEFORE_CURVE;
-      drivingState = 42;
     }
     break;
   case BEFORE_CURVE:
@@ -137,35 +134,19 @@ void RundkursController::simpleController() {
 
   switch (drivingState) {
   case STRAIGHT:
-    // pidRegler.drive(currentSensorData->range_sensor_left,
-    //              laserDetector->getDistanceToWall());
     pidRegler.setMaxMotorLevel(pd_maxMotorLevel);
     pidRegler.drive(lowpass.getAverage(), true);
     break;
   case BEFORE_CURVE:
-    /* pidRegler.drive((currentSensorData->range_sensor_left +
-                      laserDetector->getDistanceToWall()) /
-                     2);*/
     pidRegler.setMaxMotorLevel(1);
     pidRegler.drive(lowpass.getAverage(), true);
     break;
-  case 42:
-    /* pidRegler.drive((currentSensorData->range_sensor_left +
-                      laserDetector->getDistanceToWall()) /
-                     2);*/
-    pidRegler.setMaxMotorLevel(0);
-    pidRegler.drive(lowpass.getAverage(), true);
-    break;
   case CURVE:
-    // curveDriver.drive(currentSensorData->range_sensor_left,
-    //                  laserDetector->getAngleToWall());
     curveDriver.drive();
     break;
   default:
     break;
   }
-  // ROS_INFO("Angle to wall in deg: [%f]", laserDetector->getAngleToWall() *
-  // 180 / PI);
 }
 
 void RundkursController::run() {
