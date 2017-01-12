@@ -22,6 +22,9 @@
     <param name="pidregler/d" value="1"/>
 
     <param name="curvedriver/max_motor_level" value="10"/>
+
+    <param name="curvedriver_constant/max_motor_level" value="6"/>
+    <param name="curvedriver_constant/steering" value="20"/>
   </node>
 
   <node pkg="rviz" type="rviz" name="rviz" args="-d $(find autu_control)/launch/rundkurs/simulation.rviz"/>
