@@ -41,6 +41,7 @@ private:
   int16_t maxSteeringLeft, maxSteeringRight;
   float theta;
   float regulator_d, regulator_p;
+  float correction_x;
   float safety_distance;
   float b, w;
   float r;

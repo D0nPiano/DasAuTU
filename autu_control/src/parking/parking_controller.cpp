@@ -40,10 +40,12 @@ ParkingController::ParkingController(ros::NodeHandle &nh)
 
   regulator_d = nh.param<float>("main/parking/regulator_d", 3);
   regulator_p = nh.param<float>("main/parking/regulator_p", 10);
+  correction_x = nh.param<float>("main/parking/correction_x", 0.1f);
 
   safety_distance = nh.param<float>("main/parking/safety_distance", 0.1f);
   b = nh.param<float>("main/parking/b", 0.32f);
   w = nh.param<float>("main/parking/w", 0.2f);
+  w += safety_distance;
 
   r = nh.param<float>("main/parking/minimal_radius", 1);
 
@@ -57,7 +59,7 @@ ParkingController::ParkingController(ros::NodeHandle &nh)
 
   delta = theta - alpha;
 
-  pidRegler = PIDRegler(nh, regulator_p, regulator_d, velocity_forward, w / 2);
+  pidRegler = PIDRegler(nh, regulator_p, regulator_d, velocity_forward, 0);
 
 #ifndef NDEBUG
   trajectory_pub =
@@ -103,12 +105,14 @@ void ParkingController::run() {
       cornerInBaseLaser.header.frame_id = "/base_laser";
       cornerInBaseLaser.header.stamp = ros::Time(0);
       transformListener.transformPoint("/odom", cornerInBaseLaser, corner);
+      corner.point.z = 0;
 
       startInBaseLaser.point.x = vec[0] + r * sin(delta);
       startInBaseLaser.point.y = vec[1] + r * (1 - cos(delta));
       startInBaseLaser.header.frame_id = "/base_laser";
       startInBaseLaser.header.stamp = ros::Time(0);
       transformListener.transformPoint("/odom", startInBaseLaser, start);
+      start.point.z = 0;
     } catch (tf::TransformException ex) {
       ROS_ERROR("%s", ex.what());
       return;
@@ -131,7 +135,7 @@ void ParkingController::run() {
       start.header.stamp = ros::Time(0);
       transformListener.transformPoint("/rear_right_wheel", start,
                                        startInRightWheel);
-      if (startInRightWheel.point.x < 0)
+      if (startInRightWheel.point.x < correction_x)
         state = TURN_RIGHT_INIT;
     } catch (tf::TransformException ex) {
       ROS_ERROR("%s", ex.what());

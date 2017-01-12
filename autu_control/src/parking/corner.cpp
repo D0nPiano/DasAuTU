@@ -34,7 +34,7 @@ Corner::Corner(const Line &line1, const Line &line2) {
 nav_msgs::Path Corner::toPathMsg1() const {
   nav_msgs::Path msg;
   geometry_msgs::PoseStamped pose;
-
+  pose.pose.position.z = -0.2f;
   pose.pose.position.x = b[0];
   pose.pose.position.y = b[1];
   msg.poses.push_back(pose);
@@ -49,6 +49,7 @@ nav_msgs::Path Corner::toPathMsg1() const {
 nav_msgs::Path Corner::toPathMsg2() const {
   nav_msgs::Path msg;
   geometry_msgs::PoseStamped pose;
+  pose.pose.position.z = -0.2f;
 
   pose.pose.position.x = b[0];
   pose.pose.position.y = b[1];

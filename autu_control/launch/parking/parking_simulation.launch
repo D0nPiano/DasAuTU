@@ -24,10 +24,10 @@
     <param name="parking/velocity_forward" value="5"/>
     <param name="parking/velocity_backward" value="5"/>
     <param name="parking/w" value="0.2"/>
-    <param name="parking/safety_distance" value="0.1"/>
+    <param name="parking/safety_distance" value="0.0"/>
     <param name="parking/max_steering_left" value="40"/>
     <param name="parking/max_steering_right" value="40"/>
-    <param name="parking/minimal_radius" value="0.8"/>
+    <param name="parking/minimal_radius" value="1.0"/>
   </node>
   <node pkg="rviz" type="rviz" name="rviz" args="-d $(find autu_control)/launch/parking/parking.rviz"/>
   <node pkg="tf" type="static_transform_publisher" name="map_broadcaster" args="1 -0.55 0 0 0 0 1 map odom 10"/>
