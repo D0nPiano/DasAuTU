@@ -7,8 +7,8 @@ project(autu_control)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra" )
 
 ## Enable Debugging Mode
-# set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
+# set(CMAKE_BUILD_TYPE Release)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -139,7 +139,7 @@ include_directories(
 )
 
 ## Declare a C++ library
-add_library(rundkursController src/rundkurs/rundkursController.cpp src/rundkurs/pidregler.cpp src/rundkurs/curvedriver.cpp src/rundkurs/curvedriver2.cpp src/rundkurs/laser_utilities.cpp src/rundkurs/lowpass.cpp)
+add_library(rundkursController src/rundkurs/rundkursController.cpp src/rundkurs/pidregler.cpp src/rundkurs/curvedriver.cpp src/rundkurs/curvedriver2.cpp src/rundkurs/laser_utilities.cpp src/rundkurs/lowpass.cpp src/rundkurs/line.cpp)
 add_library(laserDetector src/rundkurs/laserDetector.cpp)
 
 ## Add cmake target dependencies of the library
@@ -161,6 +161,10 @@ add_executable(autu_dashboard src/gamepad/autu_dashboard.cpp)
 target_link_libraries(autu_dashboard_ui Qt5::Widgets Qt5::Core Qt5::Gui ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 target_link_libraries(autu_dashboard ${catkin_LIBRARIES} autu_dashboard_ui)
 
+## Parking 
+add_library(parking_controller src/parking/parking_controller.cpp src/parking/corner.cpp)
+target_link_libraries(parking_controller ${catkin_LIBRARIES})
+
 ## Gamepad
 add_library(ps3_controller src/gamepad/ps3_controller.cpp)
 target_link_libraries(ps3_controller ${catkin_LIBRARIES})
@@ -175,6 +179,7 @@ target_link_libraries(main ${catkin_LIBRARIES})
 target_link_libraries(main rundkursController)
 target_link_libraries(main laserDetector)
 target_link_libraries(main ps3_controller)
+target_link_libraries(main parking_controller)
 
 #add_dependencies(main ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
