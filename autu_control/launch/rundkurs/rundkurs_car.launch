@@ -52,6 +52,7 @@ args="$(arg optical_rotate) kinect2_base_link kinect2_link 100" />
   <param name="pidregler/d" value="3"/>
 
   <param name="curvedriver/max_motor_level" value="8"/>
+  <param name="curvedriver/curve_radius" value="2.5"/>
 
   <param name="parking/velocity" value="8"/>
   <param name="parking/max_steering" value="45"/>

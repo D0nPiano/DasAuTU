@@ -17,6 +17,10 @@ public:
 
   void setLaserDetector(const LaserDetector &detector);
 
+  void setMaxMotorLevel(const int16_t &value);
+
+  int16_t getMaxMotorLevel() const;
+
 private:
   float e0;
   double t0;

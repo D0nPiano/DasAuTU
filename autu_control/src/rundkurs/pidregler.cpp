@@ -73,3 +73,9 @@ bool PIDRegler::isReady() {
 void PIDRegler::setLaserDetector(const LaserDetector &detector) {
   laserDetector = &detector;
 }
+
+void PIDRegler::setMaxMotorLevel(const int16_t &value) {
+  maxMotorLevel = value;
+}
+
+int16_t PIDRegler::getMaxMotorLevel() const { return maxMotorLevel; }

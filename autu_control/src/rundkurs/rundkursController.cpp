@@ -28,8 +28,15 @@ RundkursController::RundkursController(ros::NodeHandle *n,
   odom_sub = n->subscribe<nav_msgs::Odometry>(
       "/odom", 1, &RundkursController::odomCallback, this);
 
+  carinfo_sub = n->subscribe<pses_basis::CarInfo>(
+      "/pses_basis/car_info", 1, &RundkursController::carinfoCallback, this);
+
   laserDetector = std::unique_ptr<LaserDetector>(new LaserDetector());
   pidRegler.setLaserDetector(*laserDetector);
+
+  pd_maxMotorLevel = pidRegler.getMaxMotorLevel();
+
+  curveRadius = n->param<float>("main/curvedriver/curve_radius", 1.8f);
 
 #ifndef NDEBUG
   us_raw_dbg_pub = n->advertise<std_msgs::Float32>("autu/debug/us_raw", 1);
@@ -70,6 +77,11 @@ void RundkursController::odomCallback(const nav_msgs::OdometryConstPtr &msg) {
   odomData = msg;
 }
 
+void RundkursController::carinfoCallback(
+    const pses_basis::CarInfoConstPtr &msg) {
+  currentCarInfo = msg;
+}
+
 float RundkursController::getDistanceToWall() {
   const float laserDist = laserUtil.getDistanceToWall(currentLaserScan, true);
   if (laserDist == -1 || laserDist > 5)
@@ -81,8 +93,6 @@ float RundkursController::getDistanceToWall() {
 void RundkursController::simpleController() {
   curveDriver.setLaserscan(currentLaserScan);
   curveDriver.setOdom(odomData);
-// ROS_INFO("Distance to Wall: %f",
-//          laserUtil.getDistanceToWall(currentLaserScan, true));
 
 #ifndef NDEBUG
   std_msgs::Float32 value;
@@ -99,7 +109,7 @@ void RundkursController::simpleController() {
 
   switch (drivingState) {
   case STRAIGHT:
-    if (curveDriver.isNextToCorner(true)) {
+    if (curveDriver.isNextToCorner(true, currentCarInfo->speed)) {
       ROS_INFO("************ Next To Corner ***************");
       curveDriver.reset();
       drivingState = BEFORE_CURVE;
@@ -108,7 +118,7 @@ void RundkursController::simpleController() {
   case BEFORE_CURVE:
     if (curveDriver.isAtCurveBegin(true)) {
       ROS_INFO("************ Corner ***************");
-      curveDriver.curveInit(1.8, true);
+      curveDriver.curveInit(curveRadius, true);
       drivingState = CURVE;
     }
     break;
@@ -124,32 +134,26 @@ void RundkursController::simpleController() {
 
   switch (drivingState) {
   case STRAIGHT:
-    // pidRegler.drive(currentSensorData->range_sensor_left,
-    //              laserDetector->getDistanceToWall());
+    pidRegler.setMaxMotorLevel(pd_maxMotorLevel);
     pidRegler.drive(lowpass.getAverage(), true);
     break;
   case BEFORE_CURVE:
-    /* pidRegler.drive((currentSensorData->range_sensor_left +
-                      laserDetector->getDistanceToWall()) /
-                     2);*/
+    pidRegler.setMaxMotorLevel(1);
     pidRegler.drive(lowpass.getAverage(), true);
     break;
   case CURVE:
-    // curveDriver.drive(currentSensorData->range_sensor_left,
-    //                  laserDetector->getAngleToWall());
     curveDriver.drive();
     break;
   default:
     break;
   }
-  // ROS_INFO("Angle to wall in deg: [%f]", laserDetector->getAngleToWall() *
-  // 180 / PI);
 }
 
 void RundkursController::run() {
   if (!initialized) {
     if (currentLaserScan == nullptr || currentSensorData == nullptr ||
-        odomData == nullptr || currentLaserScan->ranges[0] == -1.0 ||
+        odomData == nullptr || currentCarInfo == nullptr ||
+        currentLaserScan->ranges[0] == -1.0 ||
         currentSensorData->range_sensor_left == -1.0) {
       ROS_INFO("Sensors Uninitialized!");
       return;
