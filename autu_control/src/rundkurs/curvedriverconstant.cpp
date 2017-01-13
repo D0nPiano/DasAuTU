@@ -35,7 +35,7 @@ bool CurveDriverConstant::isAroundTheCorner() const {
   tf::quaternionMsgToTF(curveBegin.orientation, start);
   tf::quaternionMsgToTF(odom->pose.pose.orientation, current);
 
-  return start.angle(current) > M_PI_4;
+  return start.angle(current) > 78 * M_PI / 180.0 / 2;
 }
 
 void CurveDriverConstant::curveInit(float radius, bool left) {

@@ -18,6 +18,8 @@ public:
   Eigen::Vector2f findCorner(const sensor_msgs::LaserScanConstPtr &scan);
   float getDistanceToWall(const sensor_msgs::LaserScanConstPtr &scan,
                           bool left);
+  float getAngleToWallRLF(const sensor_msgs::LaserScanConstPtr &scan,
+                          bool left);
 
 private:
   Eigen::ParametrizedLine<float, 2> findLine(
@@ -26,11 +28,11 @@ private:
   Corner findCornerRLF(
       const std::vector<Eigen::Vector2f,
                         Eigen::aligned_allocator<Eigen::Vector2f>> &points);
-  std::vector<Line> findCornerRLFRec(
+  std::vector<Line> findLinesRLF(
       const std::vector<Eigen::Vector2f,
                         Eigen::aligned_allocator<Eigen::Vector2f>> &points);
   std::vector<Eigen::Vector2f, Eigen::aligned_allocator<Eigen::Vector2f>>
-  filterScan(const sensor_msgs::LaserScanConstPtr &scan);
+  filterScan(const sensor_msgs::LaserScanConstPtr &scan, bool left);
 
   float delta_max;
   ros::Publisher wall_pub;

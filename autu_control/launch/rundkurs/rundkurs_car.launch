@@ -47,15 +47,15 @@ args="$(arg optical_rotate) kinect2_base_link kinect2_link 100" />
 </node>
 
 <node pkg="autu_control" type="main" name="main" output="screen">
-  <param name="pidregler/max_motor_level" value="17"/>
+  <param name="pidregler/max_motor_level" value="20"/>
   <param name="pidregler/p" value="10"/>
   <param name="pidregler/d" value="3"/>
 
   <param name="curvedriver/max_motor_level" value="8"/>
   <param name="curvedriver/curve_radius" value="2.5"/>
 
-  <param name="curvedriver_constant/max_motor_level" value="9"/>
-  <param name="curvedriver_constant/steering" value="20"/>
+  <param name="curvedriver_constant/max_motor_level" value="13"/>
+  <param name="curvedriver_constant/steering" value="23"/>
 
   <param name="parking/velocity" value="8"/>
   <param name="parking/max_steering" value="45"/>

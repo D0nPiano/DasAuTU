@@ -123,7 +123,8 @@ void RundkursController::simpleController() {
     }
     break;
   case CURVE:
-    if (curveDriver.isAroundTheCorner()) { //&& pidRegler.isReady()){
+    if (curveDriver.isAroundTheCorner() &&
+        pidRegler.isReady(lowpass.getAverage())) {
       pidRegler.reset();
       drivingState = STRAIGHT;
     }

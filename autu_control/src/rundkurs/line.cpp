@@ -24,6 +24,10 @@ bool Line::hasPointInCommon(const Line &other) {
          end == other.end;
 }
 
+Eigen::ParametrizedLine<float, 2> Line::toEigenLine() const {
+  return Eigen::ParametrizedLine<float, 2>::Through(origin, end);
+}
+
 Eigen::Vector2f Line::getOrigin() const { return origin; }
 
 Eigen::Vector2f Line::getEnd() const { return end; }

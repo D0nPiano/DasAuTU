@@ -65,9 +65,10 @@ void PIDRegler::drive(float ldist, bool left) {
   ros::spinOnce();
 }
 
-bool PIDRegler::isReady() {
-  return laserDetector->isNextToWall() &&
-         (laserDetector->getAngleToWall() * 180 / M_PI) < 100.0;
+bool PIDRegler::isReady(float dist) {
+  // return laserDetector->isNextToWall() &&
+  //     (laserDetector->getAngleToWall() * 180 / M_PI) < 100.0;
+  return 0.3f < dist && dist < 1.4f;
 }
 
 void PIDRegler::setLaserDetector(const LaserDetector &detector) {
