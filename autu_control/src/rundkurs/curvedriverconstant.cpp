@@ -1,5 +1,6 @@
 #include "autu_control/rundkurs/curvedriverconstant.h"
 
+#include "Eigen/Dense"
 #include <cmath>
 #include <limits>
 #include <vector>
@@ -10,11 +11,16 @@
 
 using std::sqrt;
 
-CurveDriverConstant::CurveDriverConstant(ros::NodeHandle &nh) : scanOffset(0) {
+CurveDriverConstant::CurveDriverConstant(ros::NodeHandle &nh,
+                                         LaserUtil &laserUtil)
+    : scanOffset(0), laserUtil(laserUtil) {
   command_pub = nh.advertise<pses_basis::Command>("autu/command", 1);
 
   maxMotorLevel = nh.param<int>("main/curvedriver_constant/max_motor_level", 8);
   steering = nh.param<int>("main/curvedriver_constant/steering", 25);
+
+  corner_threshold =
+      nh.param<float>("main/curvedriver_constant/corner_threshold", 0.5f);
 }
 
 void CurveDriverConstant::reset() {}
@@ -71,15 +77,16 @@ bool CurveDriverConstant::isNextToCorner(bool left, float speed) {
   if (laserscan == nullptr)
     return false;
   updateScanOffset(speed);
+  Eigen::Vector2f vecToCorner;
   float last_r = std::numeric_limits<float>::max();
-
+  size_t cornerIndex = 0;
   if (left) {
     size_t i;
     for (i = laserscan->ranges.size() - 1; i > laserscan->ranges.size() / 2;
          --i) {
       const float r = laserscan->ranges[i];
       if (laserscan->range_min < r && r < laserscan->range_max) {
-        if (r - last_r > 1.0)
+        if (r - last_r > corner_threshold)
           break;
         else
           last_r = r;
@@ -87,17 +94,22 @@ bool CurveDriverConstant::isNextToCorner(bool left, float speed) {
     }
     if (last_r == std::numeric_limits<float>::max())
       return false;
+    cornerIndex = i + 1;
     const float alpha =
         std::abs(laserscan->angle_min + (i + 1) * laserscan->angle_increment);
     corner.x = last_r * std::cos(alpha) - scanOffset;
     corner.y = last_r * std::sin(alpha);
+    vecToCorner[0] = last_r * std::cos(alpha);
+    vecToCorner[1] = last_r * std::sin(alpha);
   }
   cornerSeen = odom->pose.pose;
 
   const float vc = maxMotorLevel / 10.0f;
   const float dif = vc - speed;
   distance_to_corner = dif * dif / -2 + speed * (speed - vc);
-  return corner.x - 0.1f < 0.8f + distance_to_corner;
+  // return corner.x - 0.1f < 0.8f + distance_to_corner &&
+  laserUtil.calcCornerSize(laserscan, vecToCorner, left);
+  return false;
 }
 
 bool CurveDriverConstant::isAtCurveBegin(bool left) const {

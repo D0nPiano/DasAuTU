@@ -15,7 +15,7 @@
 RundkursController::RundkursController(ros::NodeHandle *n,
                                        ros::Publisher *command_pub)
     : n(n), command_pub(command_pub), laserUtil(*n), lowpass(10),
-      drivingState(STRAIGHT), pidRegler(*n), curveDriver(*n) {
+      drivingState(STRAIGHT), pidRegler(*n), curveDriver(*n, laserUtil) {
   ROS_INFO("New RundkursController");
 
   laser_sub = n->subscribe<sensor_msgs::LaserScan>(
@@ -94,6 +94,13 @@ void RundkursController::simpleController() {
   curveDriver.setLaserscan(currentLaserScan);
   curveDriver.setOdom(odomData);
 
+  static ros::Time time = ros::Time::now();
+  if (ros::Time::now().toSec() - time.toSec() > 0.1) {
+    // ROS_INFO("NextToCorner: %d",
+    curveDriver.isNextToCorner(true, currentCarInfo->speed); //);
+    time = ros::Time::now();
+  }
+  return;
 #ifndef NDEBUG
   std_msgs::Float32 value;
 

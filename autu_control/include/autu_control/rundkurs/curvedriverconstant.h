@@ -1,6 +1,7 @@
 #ifndef CURVEDRIVERCONSTANT_H
 #define CURVEDRIVERCONSTANT_H
 
+#include "autu_control/rundkurs/laser_utilities.h"
 #include "nav_msgs/Odometry.h"
 #include "ros/ros.h"
 #include <sensor_msgs/LaserScan.h>
@@ -8,7 +9,7 @@
 
 class CurveDriverConstant {
 public:
-  CurveDriverConstant(ros::NodeHandle &nh);
+  CurveDriverConstant(ros::NodeHandle &nh, LaserUtil &laserUtil);
   void reset();
   void drive();
   bool isAroundTheCorner() const;
@@ -23,6 +24,7 @@ private:
 
   int16_t steering;
   int16_t maxMotorLevel;
+  float corner_threshold;
   float distance_to_corner;
   float scanOffset;
   double scanOffsetStamp;
@@ -34,6 +36,7 @@ private:
   tf::StampedTransform transform;
   sensor_msgs::LaserScanConstPtr laserscan;
   nav_msgs::OdometryConstPtr odom;
+  LaserUtil &laserUtil;
   struct Point {
     float x;
     float y;
