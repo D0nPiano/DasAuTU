@@ -93,14 +93,14 @@ float RundkursController::getDistanceToWall() {
 void RundkursController::simpleController() {
   curveDriver.setLaserscan(currentLaserScan);
   curveDriver.setOdom(odomData);
-
+/*
   static ros::Time time = ros::Time::now();
   if (ros::Time::now().toSec() - time.toSec() > 0.1) {
     // ROS_INFO("NextToCorner: %d",
     curveDriver.isNextToCorner(true, currentCarInfo->speed); //);
     time = ros::Time::now();
   }
-  return;
+  return;*/
 #ifndef NDEBUG
   std_msgs::Float32 value;
 
@@ -132,6 +132,7 @@ void RundkursController::simpleController() {
   case CURVE:
     if (curveDriver.isAroundTheCorner() &&
         pidRegler.isReady(lowpass.getAverage())) {
+      ROS_INFO("************ End of Corner ***************");
       pidRegler.reset();
       drivingState = STRAIGHT;
     }

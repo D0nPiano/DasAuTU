@@ -107,9 +107,8 @@ bool CurveDriverConstant::isNextToCorner(bool left, float speed) {
   const float vc = maxMotorLevel / 10.0f;
   const float dif = vc - speed;
   distance_to_corner = dif * dif / -2 + speed * (speed - vc);
-  // return corner.x - 0.1f < 0.8f + distance_to_corner &&
-  laserUtil.calcCornerSize(laserscan, vecToCorner, left);
-  return false;
+  return corner.x - 0.1f < 0.8f + distance_to_corner;
+  // laserUtil.calcCornerSize(laserscan, vecToCorner, left) > 1.2f;
 }
 
 bool CurveDriverConstant::isAtCurveBegin(bool left) const {

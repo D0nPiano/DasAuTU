@@ -281,8 +281,11 @@ float LaserUtil::calcCornerSize(const sensor_msgs::LaserScanConstPtr &scan,
         cornerSize = currentSize;
     }
 
-  ROS_INFO("Corner Size: %f", cornerSize);
+  ROS_INFO("Timestamp: %f Corner Size: %f", ros::Time::now().toSec(),
+           cornerSize);
 
+  if (cornerSize > 5.0f)
+    return -1;
   return cornerSize;
 }
 std::vector<Eigen::Vector2f, Eigen::aligned_allocator<Eigen::Vector2f>>
