@@ -21,6 +21,10 @@ CurveDriverConstant::CurveDriverConstant(ros::NodeHandle &nh,
 
   corner_threshold =
       nh.param<float>("main/curvedriver_constant/corner_threshold", 0.5f);
+  corner_end_angle =
+      nh.param<float>("main/curvedriver_constant/corner_end_angle", 80.0f);
+  precurve_distance =
+      nh.param<float>("main/curvedriver_constant/precurve_distance", 0.8f);
 }
 
 void CurveDriverConstant::reset() {}
@@ -36,12 +40,14 @@ void CurveDriverConstant::drive() {
   command_pub.publish(cmd);
 }
 
-bool CurveDriverConstant::isAroundTheCorner() const {
+bool CurveDriverConstant::isAroundTheCorner(
+    const sensor_msgs::LaserScanConstPtr &scan) const {
   tf::Quaternion start, current;
   tf::quaternionMsgToTF(curveBegin.orientation, start);
   tf::quaternionMsgToTF(odom->pose.pose.orientation, current);
 
-  return start.angle(current) > 78 * M_PI / 180.0 / 2;
+  return start.angle(current) > corner_end_angle * M_PI_2 / 180.0f; // &&
+  // std::abs(laserUtil.getAngleToWallRLF(scan, true)) < 10 * M_PI / 180.0;
 }
 
 void CurveDriverConstant::curveInit(float radius, bool left) {
@@ -107,7 +113,8 @@ bool CurveDriverConstant::isNextToCorner(bool left, float speed) {
   const float vc = maxMotorLevel / 10.0f;
   const float dif = vc - speed;
   distance_to_corner = dif * dif / -2 + speed * (speed - vc);
-  return corner.x - 0.1f < 0.8f + distance_to_corner;
+  // ROS_INFO("Distance to corner max: %f", distance_to_corner);
+  return corner.x - 0.1f < precurve_distance + distance_to_corner;
   // laserUtil.calcCornerSize(laserscan, vecToCorner, left) > 1.2f;
 }
 

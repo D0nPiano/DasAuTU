@@ -47,6 +47,12 @@
     <!-- safety_distance in m -->
     <param name="safety_distance" value="0.5"/>
   </node>
+  <!-- Joystick driver -->
+   <node pkg="joy" type="joy_node" name="joy_node" output="screen">
+    <param name="dev" value="/dev/input/js0"/>
+    <param name="max_motorlevel" value="16"/>
+    <param name="max_steering" value="35"/>
+  </node>
   <node pkg="autu_control" type="main" name="main" output="screen">
     <param name="pidregler/max_motor_level" value="0"/>
     <param name="pidregler/p" value="10"/>
