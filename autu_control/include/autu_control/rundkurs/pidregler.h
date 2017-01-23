@@ -13,7 +13,7 @@ public:
             float solldist);
   void reset();
   void drive(float ldist, bool left);
-  bool isReady();
+  bool isReady(float dist);
 
   void setLaserDetector(const LaserDetector &detector);
 

@@ -11,6 +11,7 @@
 #include "autu_control/AutoController.h"
 #include "autu_control/rundkurs/curvedriver.h"
 #include "autu_control/rundkurs/curvedriver2.h"
+#include "autu_control/rundkurs/curvedriverconstant.h"
 #include "autu_control/rundkurs/laserDetector.h"
 #include "autu_control/rundkurs/laser_utilities.h"
 #include "autu_control/rundkurs/lowpass.h"
@@ -60,9 +61,10 @@ private:
   uint8_t drivingState;
   PIDRegler pidRegler;
   uint16_t pd_maxMotorLevel;
-  CurveDriver2 curveDriver;
+  CurveDriverConstant curveDriver;
   nav_msgs::OdometryConstPtr odomData;
   float curveRadius;
+  double time_of_last_corner;
 
 #ifndef NDEBUG
   ros::Publisher us_raw_dbg_pub, us_lp_dbg_pub, ransac_dbg_pub;

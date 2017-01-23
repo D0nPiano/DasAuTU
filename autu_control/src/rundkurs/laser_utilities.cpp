@@ -27,10 +27,13 @@ LaserUtil::LaserUtil(ros::NodeHandle &nh) {
 
   delta_max = 0.1f;
 
-  wall_pub = nh.advertise<nav_msgs::Path>("autu/wall", 1);
 #ifndef NDEBUG
+  wall_pub = nh.advertise<nav_msgs::Path>("autu/debug/wall", 1);
   corner1_pub = nh.advertise<nav_msgs::Path>("autu/debug/corner_1", 1);
   corner2_pub = nh.advertise<nav_msgs::Path>("autu/debug/corner_2", 1);
+
+  dist_corner_to_line =
+      nh.param<float>("main/curvedriver_constant/dist_corner_to_line", 0.3f);
 #endif
 }
 
@@ -40,13 +43,13 @@ Vector2f LaserUtil::findCorner(const sensor_msgs::LaserScanConstPtr &scan) {
   else
 #ifndef NDEBUG
   {
-    Corner corner = findCornerRLF(filterScan(scan));
+    Corner corner = findCornerRLF(filterScan(scan, false));
     corner1_pub.publish(corner.toPathMsg1());
     corner2_pub.publish(corner.toPathMsg2());
     return corner.getB();
   }
 #else
-    return findCornerRLF(filterScan(scan)).getB();
+    return findCornerRLF(filterScan(scan, false)).getB();
 #endif
 }
 
@@ -99,7 +102,7 @@ ParametrizedLine<float, 2> LaserUtil::findLine(
 
 Corner LaserUtil::findCornerRLF(
     const vector<Vector2f, aligned_allocator<Vector2f>> &points) {
-  const vector<Line> &lines = findCornerRLFRec(points);
+  const vector<Line> &lines = findLinesRLF(points);
 
 #ifndef NDEBUG
   ROS_INFO("Lines detected: %lu", lines.size());
@@ -117,7 +120,7 @@ Corner LaserUtil::findCornerRLF(
   return Corner();
 }
 
-vector<Line> LaserUtil::findCornerRLFRec(
+vector<Line> LaserUtil::findLinesRLF(
     const vector<Vector2f, aligned_allocator<Vector2f>> &points) {
   vector<Line> lines;
   if (points.size() < 6)
@@ -148,13 +151,13 @@ vector<Line> LaserUtil::findCornerRLFRec(
 
     for (size_t i = 0; i <= max_error_index; ++i)
       data.push_back(points[i]);
-    vector<Line> result = findCornerRLFRec(data);
+    vector<Line> result = findLinesRLF(data);
     lines.insert(lines.end(), result.begin(), result.end());
 
     data.clear();
     for (size_t i = max_error_index; i < points.size(); ++i)
       data.push_back(points[i]);
-    result = findCornerRLFRec(data);
+    result = findLinesRLF(data);
     lines.insert(lines.end(), result.begin(), result.end());
 
   } else
@@ -188,6 +191,8 @@ float LaserUtil::getDistanceToWall(const sensor_msgs::LaserScanConstPtr &scan,
     }
     if (points.size() > 10) {
       ParametrizedLine<float, 2> wall = findLine(points);
+
+#ifndef NDEBUG
       nav_msgs::Path msg;
 
       for (int i = -10; i < 10; ++i) {
@@ -199,6 +204,7 @@ float LaserUtil::getDistanceToWall(const sensor_msgs::LaserScanConstPtr &scan,
       }
       msg.header.frame_id = "base_laser";
       wall_pub.publish(msg);
+#endif
       Vector2f leftCorner(0, 0);
       return wall.distance(leftCorner);
     } else
@@ -208,18 +214,25 @@ float LaserUtil::getDistanceToWall(const sensor_msgs::LaserScanConstPtr &scan,
   return -1;
 }
 
-std::vector<Eigen::Vector2f, Eigen::aligned_allocator<Eigen::Vector2f>>
-LaserUtil::filterScan(const sensor_msgs::LaserScanConstPtr &scan) {
-  const float r_max =
-      fmin(scan->range_max, sqrt(MAX_WALL_DIST * MAX_WALL_DIST +
-                                 MAX_WALL_SCOPE * MAX_WALL_SCOPE));
-  size_t i;
-  std::vector<Eigen::Vector2f, Eigen::aligned_allocator<Eigen::Vector2f>>
-      points;
+float LaserUtil::getAngleToWallRLF(const sensor_msgs::LaserScanConstPtr &scan,
+                                   bool left) {
+  const vector<Line> &lines = findLinesRLF(filterScan(scan, left));
+  if (lines.size() == 0)
+    return M_PI_2;
+  else {
+    const Line &wall = lines.front();
+    const Vector2f e_x(1, 0);
+    return std::acos(wall.toEigenLine().direction().dot(e_x));
+  }
+}
 
-  for (i = 0; i < scan->ranges.size() / 2; ++i) {
+float LaserUtil::calcCornerSize(const sensor_msgs::LaserScanConstPtr &scan,
+                                const Eigen::Vector2f &corner, bool left) {
+  // filter invalid values
+  vector<Vector2f, aligned_allocator<Vector2f>> points;
+  for (size_t i = 0; i < scan->ranges.size(); ++i) {
     const float r = scan->ranges[i];
-    if (scan->range_min < r && r < r_max) {
+    if (scan->range_min < r && r < scan->range_max) {
       const float alpha = scan->angle_min + i * scan->angle_increment;
       Vector2f point;
       point[0] = r * cos(alpha);
@@ -227,6 +240,86 @@ LaserUtil::filterScan(const sensor_msgs::LaserScanConstPtr &scan) {
       points.push_back(point);
     }
   }
+
+  // recognize lines
+  const vector<Line> &lines = findLinesRLF(points);
+
+  // determine which line fits best to the given corner
+  const Line *nearestLineToCorner = nullptr;
+  float min_dist = std::numeric_limits<float>::max();
+  for (const Line &line : lines) {
+    if ((line.getOrigin() - corner).norm() < dist_corner_to_line ||
+        (line.getEnd() - corner).norm() < dist_corner_to_line) {
+      const float dist = line.toEigenLine().distance(corner);
+      if (dist < min_dist) {
+        nearestLineToCorner = &line;
+        min_dist = dist;
+      }
+    }
+  }
+
+  if (nearestLineToCorner == nullptr)
+    return -1;
+
+#ifndef NDEBUG
+  wall_pub.publish(nearestLineToCorner->toPathMsg());
+#endif
+
+  // find points which are behind the corner
+  vector<Vector2f, aligned_allocator<Vector2f>> pointsAfterCorner;
+  for (const Vector2f &point : points)
+    if (point[0] > corner[0] + 0.1f)
+      pointsAfterCorner.push_back(point);
+
+  const float threshold = 0.1f;
+  float cornerSize = std::numeric_limits<float>::max();
+  const ParametrizedLine<float, 2> &line = nearestLineToCorner->toEigenLine();
+  for (const Vector2f &point : pointsAfterCorner)
+    if (line.distance(point) < threshold) {
+      const float currentSize = (point - corner).norm();
+      if (currentSize < cornerSize)
+        cornerSize = currentSize;
+    }
+
+  ROS_INFO("Timestamp: %f Corner Size: %f", ros::Time::now().toSec(),
+           cornerSize);
+
+  if (cornerSize > 5.0f)
+    return -1;
+  return cornerSize;
+}
+std::vector<Eigen::Vector2f, Eigen::aligned_allocator<Eigen::Vector2f>>
+LaserUtil::filterScan(const sensor_msgs::LaserScanConstPtr &scan, bool left) {
+  const float r_max =
+      fmin(scan->range_max, sqrt(MAX_WALL_DIST * MAX_WALL_DIST +
+                                 MAX_WALL_SCOPE * MAX_WALL_SCOPE));
+  size_t i;
+  std::vector<Eigen::Vector2f, Eigen::aligned_allocator<Eigen::Vector2f>>
+      points;
+
+  if (left)
+    for (i = scan->ranges.size() - 1; i > scan->ranges.size() / 2; --i) {
+      const float r = scan->ranges[i];
+      if (scan->range_min < r && r < r_max) {
+        const float alpha = scan->angle_min + i * scan->angle_increment;
+        Vector2f point;
+        point[0] = r * cos(alpha);
+        point[1] = r * sin(alpha);
+        points.push_back(point);
+      }
+    }
+  else
+    // right
+    for (i = 0; i < scan->ranges.size() / 2; ++i) {
+      const float r = scan->ranges[i];
+      if (scan->range_min < r && r < r_max) {
+        const float alpha = scan->angle_min + i * scan->angle_increment;
+        Vector2f point;
+        point[0] = r * cos(alpha);
+        point[1] = r * sin(alpha);
+        points.push_back(point);
+      }
+    }
 
   return points;
 }
