@@ -1,0 +1,39 @@
+#ifndef _ObstacleController_H_
+#define _ObstacleController_H_
+
+#define PI 3.14159265
+
+/*
+        If LaserScan is uninitialized, its range[0] is -1.0
+        If SensorData is uninitialized, its range_sensor_left is -1.0
+*/
+
+#include "autu_control/AutoController.h"
+
+#include "std_msgs/String.h"
+#include <exception>
+#include <iostream>
+#include <memory>
+
+#include "nav_msgs/Odometry.h"
+#include <sensor_msgs/LaserScan.h>
+
+#include "pses_basis/CarInfo.h"
+#include "pses_basis/SensorData.h"
+#include "ros/ros.h"
+#include <pses_basis/Command.h>
+typedef pses_basis::Command command_data;
+
+class ObstacleController : public AutoController {
+public:
+  ObstacleController(ros::NodeHandle *n, ros::Publisher *command_pub);
+  ~ObstacleController();
+  void run();
+private:
+	ros::NodeHandle* n;
+	void convertCommand(const geometry_msgs::Twist::ConstPtr& motionIn);
+	ros::Subscriber plan_command_sub;
+	ros::Publisher* command_pub;
+};
+
+#endif

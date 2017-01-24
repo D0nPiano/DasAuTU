@@ -45,6 +45,41 @@ args="$(arg optical_rotate) kinect2_base_link kinect2_link 100" />
   <!-- Run the map server -->
   <node name="map_server" pkg="map_server" type="map_server" args="$(find autu_control)/map/map.yaml"/>
   
+
+<!-- Emergency Brake -->
+<node pkg="autu_control" type="emergency_brake" name="emergency_brake" output="screen">
+  <!-- deceleration in m/s² -->
+  <param name="deceleration" value="0.9"/>
+  <!-- safety_distance in m -->
+  <param name="safety_distance" value="0.5"/>
+</node>
+<!-- Joystick driver -->
+   <node pkg="joy" type="joy_node" name="joy_node" output="screen">
+    <param name="dev" value="/dev/input/js0"/>
+    <param name="max_motorlevel" value="20"/>
+    <param name="max_steering" value="40"/>
+  </node>
+<node pkg="autu_control" type="main" name="main" output="screen">
+ <remap from="autu/command" to="pses_basis/command"/>
+  <param name="pidregler/max_motor_level" value="20"/>
+  <param name="pidregler/p" value="6"/>
+  <param name="pidregler/d" value="3"/>
+
+  <param name="curvedriver/max_motor_level" value="8"/>
+  <param name="curvedriver/curve_radius" value="2.5"/>
+
+  <param name="curvedriver_constant/max_motor_level" value="20"/>
+  <param name="curvedriver_constant/steering" value="31"/><!-- 23 -->
+  <param name="curvedriver_constant/precurve_distance" value="1.0"/>
+  <param name="curvedriver_constant/corner_end_angle" value="60"/>
+  <param name="curvedriver_constant/corner_threshold" value="0.4"/>
+  <param name="curvedriver_constant/dist_corner_to_line" value="0.3"/>
+
+  <param name="parking/velocity" value="8"/>
+  <param name="parking/max_steering" value="45"/>
+  <param name="parking/max_angle" value="0.35"/>
+</node>
+
   <node name="depthimage_to_laserscan" pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" >
     <remap from="image" to="/kinect2/$(arg resolution)/image_depth_rect"/>
           <param name="output_frame_id" value="scan"/>
