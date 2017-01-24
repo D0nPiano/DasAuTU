@@ -15,7 +15,8 @@
 RundkursController::RundkursController(ros::NodeHandle *n,
                                        ros::Publisher *command_pub)
     : n(n), command_pub(command_pub), laserUtil(*n), lowpass(10),
-      drivingState(STRAIGHT), pidRegler(*n), curveDriver(*n) {
+      drivingState(STRAIGHT), pidRegler(*n), curveDriver(*n, laserUtil),
+      time_of_last_corner(0) {
   ROS_INFO("New RundkursController");
 
   laser_sub = n->subscribe<sensor_msgs::LaserScan>(
@@ -93,7 +94,14 @@ float RundkursController::getDistanceToWall() {
 void RundkursController::simpleController() {
   curveDriver.setLaserscan(currentLaserScan);
   curveDriver.setOdom(odomData);
-
+/*
+  static ros::Time time = ros::Time::now();
+  if (ros::Time::now().toSec() - time.toSec() > 0.1) {
+    // ROS_INFO("NextToCorner: %d",
+    curveDriver.isNextToCorner(true, currentCarInfo->speed); //);
+    time = ros::Time::now();
+  }
+  return;*/
 #ifndef NDEBUG
   std_msgs::Float32 value;
 
@@ -109,10 +117,12 @@ void RundkursController::simpleController() {
 
   switch (drivingState) {
   case STRAIGHT:
-    if (curveDriver.isNextToCorner(true, currentCarInfo->speed)) {
-      ROS_INFO("************ Next To Corner ***************");
-      curveDriver.reset();
-      drivingState = BEFORE_CURVE;
+    if (ros::Time::now().toSec() - time_of_last_corner > 1.5) {
+      if (curveDriver.isNextToCorner(true, currentCarInfo->speed)) {
+        ROS_INFO("************ Next To Corner ***************");
+        curveDriver.reset();
+        drivingState = BEFORE_CURVE;
+      }
     }
     break;
   case BEFORE_CURVE:
@@ -123,7 +133,10 @@ void RundkursController::simpleController() {
     }
     break;
   case CURVE:
-    if (curveDriver.isAroundTheCorner()) { //&& pidRegler.isReady()){
+    if (curveDriver.isAroundTheCorner(currentLaserScan)) {
+      //&& pidRegler.isReady(lowpass.getAverage())) {
+      ROS_INFO("************ End of Corner ***************");
+      time_of_last_corner = ros::Time::now().toSec();
       pidRegler.reset();
       drivingState = STRAIGHT;
     }
