@@ -21,7 +21,19 @@ ObstacleController::~ObstacleController() {
 void ObstacleController::convertCommand(const geometry_msgs::Twist::ConstPtr& motionIn){
   command_data cmd;
   cmd.motor_level = int(motionIn->linear.x * 10);
-  cmd.steering_level = int((motionIn->angular.z) * 20);
+  if(motionIn->linear.x > 0.0 && cmd.motor_level < 4){
+  	cmd.motor_level = 4;
+  } else if (motionIn->linear.x < 0.0 && cmd.motor_level > -10){
+  	cmd.motor_level = -10;  	
+  }
+  
+  cmd.steering_level = int((motionIn->angular.z) * 50);
+  if(cmd.steering_level > 45){
+  	cmd.steering_level = 45;
+  } else if (cmd.steering_level < -45){
+  	cmd.steering_level = -45;
+  }
+
   cmd.header.stamp = ros::Time::now();
   command_pub->publish(cmd);
   ros::spinOnce();
