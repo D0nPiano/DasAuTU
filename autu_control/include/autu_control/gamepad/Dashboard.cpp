@@ -34,6 +34,8 @@ Dashboard::Dashboard(ros::NodeHandle *nh, QWidget *parent)
   ui->modeSelection->addItem(QString("Lane Detection"), QVariant());
   ui->modeSelection->addItem(QString("Exploration"), QVariant());
   ui->modeSelection->addItem(QString("Gamepad"), QVariant());
+  ui->modeSelection->addItem(QString("Trajectories"), QVariant());
+  ui->modeSelection->addItem(QString("Create Route"), QVariant());
   connect(ui->modeSelection, SIGNAL(currentIndexChanged(int)), this,
           SLOT(modeSelect(int)));
 
