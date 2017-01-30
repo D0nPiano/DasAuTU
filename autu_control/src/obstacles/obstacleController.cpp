@@ -82,6 +82,32 @@ void ObstacleController::convertCommand(const geometry_msgs::Twist::ConstPtr& mo
 }
 
 void ObstacleController::run() {
+
+	// Trans
+	try {
+    tf::StampedTransform transform;
+  		geometry_msgs::PointStamped currentPosition;
+
+    	transformListener.waitForTransform("base_link", "/map", ros::Time(0),
+                                         ros::Duration(0.1));
+    	transformListener.lookupTransform("base_link", "/map", ros::Time(0),
+                                        transform);
+
+		geometry_msgs::PointStamped positionInBaseLink, startInBaseLaser;
+
+		positionInBaseLink.point.x = 0;
+		positionInBaseLink.point.y = 0;
+		positionInBaseLink.header.frame_id = "/base_link";
+		positionInBaseLink.header.stamp = ros::Time(0);
+		transformListener.transformPoint("/map", positionInBaseLink, currentPosition);
+		currentPosition.point.z = 0;
+
+  		ROS_INFO("Current Position: [%f], [%f]", currentPosition.point.x, currentPosition.point.y);
+
+    } catch (tf::TransformException ex) {
+      ROS_ERROR("%s", ex.what());
+      return;
+    }
 }
 
 #endif

@@ -23,6 +23,10 @@
 #include "pses_basis/SensorData.h"
 #include "ros/ros.h"
 #include <pses_basis/Command.h>
+
+#include "tf/tf.h"
+#include "tf/transform_listener.h"
+
 typedef pses_basis::Command command_data;
 
 typedef struct {
@@ -41,6 +45,7 @@ private:
 	ros::Publisher* command_pub;
 	tinyxml2::XMLDocument routeXML;
 	std::vector<Point> points;
+  	tf::TransformListener transformListener;
 };
 
 #endif
