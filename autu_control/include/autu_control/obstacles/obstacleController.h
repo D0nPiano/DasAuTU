@@ -9,6 +9,7 @@
 */
 
 #include "autu_control/AutoController.h"
+#include "autu_control/obstacles/tinyxml2/tinyxml2.h"
 
 #include "std_msgs/String.h"
 #include <exception>
@@ -24,9 +25,13 @@
 #include <pses_basis/Command.h>
 typedef pses_basis::Command command_data;
 
+typedef struct {
+  float x, y;
+} Point;
+
 class ObstacleController : public AutoController {
 public:
-  ObstacleController(ros::NodeHandle *n, ros::Publisher *command_pub);
+  ObstacleController(ros::NodeHandle *n, ros::Publisher *command_pub, bool startDriving);
   ~ObstacleController();
   void run();
 private:
@@ -34,6 +39,8 @@ private:
 	void convertCommand(const geometry_msgs::Twist::ConstPtr& motionIn);
 	ros::Subscriber plan_command_sub;
 	ros::Publisher* command_pub;
+	tinyxml2::XMLDocument routeXML;
+	std::vector<Point> points;
 };
 
 #endif
