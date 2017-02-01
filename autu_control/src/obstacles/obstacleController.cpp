@@ -18,10 +18,13 @@ ObstacleController::ObstacleController(ros::NodeHandle *n,
     : n(n), command_pub(command_pub) {
   ROS_INFO("New ObstacleController");
 
+
+  goal_pub = n->advertise<geometry_msgs::PoseStamped>("move_base_simple/goal", 1000);
+
   plan_command_sub = n->subscribe<geometry_msgs::Twist>(
       "cmd_vel", 10, &ObstacleController::convertCommand, this);
 
-  if(startDriving){
+  if(!startDriving){
   	ROS_INFO("Warte auf Befehle...");
   } else {
   	ROS_INFO("Suche Rundkurs, loading from XML");
@@ -53,11 +56,53 @@ ObstacleController::ObstacleController(ros::NodeHandle *n,
 	}
 
   }
+
+  currentGoal = -1;
 }
 
 ObstacleController::~ObstacleController() {
   ROS_INFO("Destroying ObstacleController");
   plan_command_sub.shutdown();
+}
+
+void ObstacleController::sendNextGoal() {
+  ROS_INFO("Sending Next Goal");
+  currentGoal++;
+  if(currentGoal == (int) points.size()){
+  	currentGoal = 0;
+  }
+  geometry_msgs::PoseStamped nextGoal;
+  nextGoal.pose.position.x = points[currentGoal].x;
+  nextGoal.pose.position.y = points[currentGoal].y;
+  nextGoal.pose.position.z = 0.0;
+
+  nextGoal.pose.orientation.x = 0.0;
+  nextGoal.pose.orientation.y = 0.0;
+  nextGoal.pose.orientation.z = 0.015;
+  nextGoal.pose.orientation.w = 0.998;
+
+  nextGoal.header.stamp = ros::Time::now();
+  nextGoal.header.frame_id = "map";
+  goal_pub.publish(nextGoal);
+  ros::spinOnce();
+}
+
+bool ObstacleController::isNearToNextGoal(const geometry_msgs::PointStamped* currentPosition) {
+	if(currentGoal == -1){
+		return true;
+	}
+
+  	/*ROS_INFO("Current Position: [%f], [%f]", currentPosition->point.x, currentPosition->point.y);
+  	ROS_INFO("currentGoal: [%d]", currentGoal);
+  	ROS_INFO("Vektor X: [%f]", points[currentGoal].x);
+  	*/
+
+  	float diffx = pow(currentPosition->point.x - points[currentGoal].x, 2);
+  	float diffy = pow(currentPosition->point.y - points[currentGoal].y, 2);
+	float distance = sqrt(diffx + diffy);
+  	
+  	//ROS_INFO("Distance: [%f]", distance);
+	return (distance < 3.0);
 }
 
 void ObstacleController::convertCommand(const geometry_msgs::Twist::ConstPtr& motionIn){
@@ -102,7 +147,9 @@ void ObstacleController::run() {
 		transformListener.transformPoint("/map", positionInBaseLink, currentPosition);
 		currentPosition.point.z = 0;
 
-  		ROS_INFO("Current Position: [%f], [%f]", currentPosition.point.x, currentPosition.point.y);
+  		if(isNearToNextGoal(&currentPosition)){
+  			sendNextGoal();
+  		}
 
     } catch (tf::TransformException ex) {
       ROS_ERROR("%s", ex.what());
