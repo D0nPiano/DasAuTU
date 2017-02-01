@@ -3,7 +3,7 @@
   <!-- Dashboard for gamepad -->
   <include file="$(find pses_simulation)/launch/simulation.launch">
   	<arg name="rviz" value="false"/>
-  	<arg name="dashboard" value="false"/>
+  	<arg name="dashboard" value="true"/>
   </include>
 
   <!--- Run AMCL -->
