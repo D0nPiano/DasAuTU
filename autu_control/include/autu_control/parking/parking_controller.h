@@ -25,7 +25,9 @@ private:
   std::vector<Eigen::Vector2f, Eigen::aligned_allocator<Eigen::Vector2f>>
   calcTrajectory();
   void publishParkingTrajectory();
+  void publishParkingSpot();
   ros::Publisher command_pub;
+  ros::Publisher parking_spot_pub;
   ros::Subscriber odom_sub;
   ros::Subscriber laser_sub;
   nav_msgs::OdometryConstPtr odom;

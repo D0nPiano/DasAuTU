@@ -26,6 +26,8 @@ ParkingController::ParkingController(ros::NodeHandle &nh)
 
   command_pub = nh.advertise<pses_basis::Command>("autu/command", 1);
 
+  parking_spot_pub = nh.advertise<nav_msgs::Path>("autu/parking_spot", 1);
+
   odom_sub = nh.subscribe<nav_msgs::Odometry>(
       "/odom", 1, &ParkingController::odomCallback, this);
 
@@ -130,6 +132,7 @@ void ParkingController::run() {
       ROS_ERROR("%s", ex.what());
       return;
     }
+    publishParkingSpot();
 #ifndef NDEBUG
     publishParkingTrajectory();
 #endif
@@ -249,4 +252,44 @@ void ParkingController::publishParkingTrajectory() {
 
   trajectory_pub.publish(msgWheel);
   trajectory_odom_pub.publish(msgOdom);
+}
+void ParkingController::publishParkingSpot() {
+  nav_msgs::Path msgSpot;
+  msgSpot.header.frame_id = "parking";
+  PoseStamped pose;
+
+  //  const auto &vectors = calcTrajectory();
+
+  /*for (const Vector2f &vec : vectors) {
+    PoseStamped pose;
+    pose.pose.position.x = vec[0]; // + corner.point.x;
+    pose.pose.position.y = vec[1]; // + corner.point.y;
+    msgWheel.poses.push_back(pose);
+
+    pose.pose.position.y += w;
+    msgOdom.poses.push_back(pose);
+  }
+*/
+
+  pose.pose.position.x = 0;
+  pose.pose.position.y = 0;
+  msgSpot.poses.push_back(pose);
+
+  pose.pose.position.x = 0;
+  pose.pose.position.y = -w;
+  msgSpot.poses.push_back(pose);
+
+  pose.pose.position.x = -0.8f;
+  pose.pose.position.y = -w;
+  msgSpot.poses.push_back(pose);
+
+  pose.pose.position.x = -0.8f;
+  pose.pose.position.y = 0;
+  msgSpot.poses.push_back(pose);
+
+  pose.pose.position.x = 0;
+  pose.pose.position.y = 0;
+  msgSpot.poses.push_back(pose);
+
+  parking_spot_pub.publish(msgSpot);
 }
