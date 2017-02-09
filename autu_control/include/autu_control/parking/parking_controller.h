@@ -10,6 +10,8 @@
 #include "sensor_msgs/LaserScan.h"
 #include "tf/tf.h"
 #include "tf/transform_listener.h"
+#include "tf2_ros/static_transform_broadcaster.h"
+#include <tf/transform_broadcaster.h>
 #include <vector>
 
 class ParkingController : public AutoController {
@@ -29,11 +31,11 @@ private:
   nav_msgs::OdometryConstPtr odom;
   sensor_msgs::LaserScanConstPtr laserscan;
   geometry_msgs::Pose curveBegin;
-  // corner is in frame odom
-  geometry_msgs::PointStamped corner;
-  // start is in frame odom
+  // start is in frame parking
   geometry_msgs::PointStamped start;
   tf::TransformListener transformListener;
+  tf::TransformBroadcaster transformBroadcaster;
+  tf2_ros::StaticTransformBroadcaster staticTFBroadcaster;
   LaserUtil laserUtil;
   PIDRegler pidRegler;
   uint8_t state;

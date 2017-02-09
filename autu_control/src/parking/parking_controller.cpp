@@ -1,8 +1,7 @@
 #include "autu_control/parking/parking_controller.h"
 
-#include <cmath>
-
 #include "pses_basis/Command.h"
+#include <cmath>
 
 #define DETECT_CORNER 0
 #define DRIVE_TO_CORNER 1
@@ -23,7 +22,8 @@ using std::vector;
 using geometry_msgs::PoseStamped;
 
 ParkingController::ParkingController(ros::NodeHandle &nh)
-    : laserUtil(nh), state(DETECT_CORNER) {
+    : staticTFBroadcaster(), laserUtil(nh), state(DETECT_CORNER) {
+
   command_pub = nh.advertise<pses_basis::Command>("autu/command", 1);
 
   odom_sub = nh.subscribe<nav_msgs::Odometry>(
@@ -81,11 +81,12 @@ void ParkingController::laserscanCallback(
 void ParkingController::run() {
   tf::Quaternion begin, current;
   if (odom == nullptr || laserscan == nullptr ||
-      !transformListener.canTransform("/rear_right_wheel", "/odom",
-                                      ros::Time(0)) ||
+      //   !transformListener.canTransform("/rear_right_wheel", "/odom",
+      //                                 ros::Time(0)) ||
       !transformListener.canTransform("/base_laser", "/odom", ros::Time(0)))
     return;
   Vector2f vec;
+  float y_dist_to_start = 0.1f;
   switch (state) {
   case DETECT_CORNER:
     vec = laserUtil.findCorner(laserscan);
@@ -97,21 +98,42 @@ void ParkingController::run() {
       transformListener.lookupTransform("base_laser", "/odom", ros::Time(0),
                                         transform);
 
-      geometry_msgs::PointStamped cornerInBaseLaser, startInBaseLaser;
+      geometry_msgs::PointStamped cornerInBaseLaser, cornerInOdom;
 
       vec[1] += safety_distance;
       cornerInBaseLaser.point.x = vec[0];
       cornerInBaseLaser.point.y = vec[1];
       cornerInBaseLaser.header.frame_id = "/base_laser";
       cornerInBaseLaser.header.stamp = ros::Time(0);
-      transformListener.transformPoint("/odom", cornerInBaseLaser, corner);
-      corner.point.z = 0;
+      transformListener.transformPoint("/odom", cornerInBaseLaser,
+                                       cornerInOdom);
+      cornerInOdom.point.z = 0;
 
-      startInBaseLaser.point.x = vec[0] + r * sin(delta);
-      startInBaseLaser.point.y = vec[1] + r * (1 - cos(delta));
-      startInBaseLaser.header.frame_id = "/base_laser";
-      startInBaseLaser.header.stamp = ros::Time(0);
-      transformListener.transformPoint("/odom", startInBaseLaser, start);
+      /* tf::Transform transformToCorner;
+       transformToCorner.setOrigin(
+           tf::Vector3(cornerInOdom.point.x, cornerInOdom.point.y, 0.0));
+       tf::Quaternion q(0, 0, 0, 1);
+       transformToCorner.setRotation(q);
+         transformBroadcaster.sendTransform(
+           tf::StampedTransform(transformToCorner, ros::Time::now(), "/odom",
+                                "/parking"));*/
+
+      geometry_msgs::TransformStamped transformToCorner;
+      transformToCorner.transform.translation.x = cornerInOdom.point.x;
+      transformToCorner.transform.translation.y = cornerInOdom.point.y;
+      transformToCorner.transform.translation.z = 0;
+      transformToCorner.transform.rotation.x = 0;
+      transformToCorner.transform.rotation.y = 0;
+      transformToCorner.transform.rotation.z = 0;
+      transformToCorner.transform.rotation.w = 1;
+      transformToCorner.child_frame_id = "parking";
+      transformToCorner.header.frame_id = "odom";
+      staticTFBroadcaster.sendTransform(transformToCorner);
+
+      start.point.x = r * sin(delta);
+      start.point.y = r * (1 - cos(delta));
+      start.header.frame_id = "/parking";
+      start.header.stamp = ros::Time(0);
       start.point.z = 0;
     } catch (tf::TransformException ex) {
       ROS_ERROR("%s", ex.what());
@@ -126,15 +148,17 @@ void ParkingController::run() {
 
     try {
       tf::StampedTransform transform;
-      transformListener.waitForTransform("/odom", "/rear_right_wheel",
+      transformListener.waitForTransform("/parking", "/rear_right_wheel",
                                          ros::Time(0), ros::Duration(0.1));
-      transformListener.lookupTransform("/odom", "/rear_right_wheel",
+      transformListener.lookupTransform("/parking", "/rear_right_wheel",
                                         ros::Time(0), transform);
 
       geometry_msgs::PointStamped startInRightWheel;
       start.header.stamp = ros::Time(0);
       transformListener.transformPoint("/rear_right_wheel", start,
                                        startInRightWheel);
+      ROS_INFO("x: %f", startInRightWheel.point.x);
+      y_dist_to_start = -startInRightWheel.point.y;
       if (startInRightWheel.point.x < correction_x)
         state = TURN_RIGHT_INIT;
     } catch (tf::TransformException ex) {
@@ -167,7 +191,7 @@ void ParkingController::run() {
   pses_basis::Command cmd;
   switch (state) {
   case DRIVE_TO_CORNER:
-    pidRegler.drive(odom->pose.pose.position.y - start.point.y, false);
+    pidRegler.drive(y_dist_to_start, false);
     break;
   case TURN_RIGHT:
     cmd.motor_level = -velocity_backward;
@@ -219,15 +243,15 @@ ParkingController::calcTrajectory() {
 
 void ParkingController::publishParkingTrajectory() {
   nav_msgs::Path msgWheel, msgOdom;
-  msgWheel.header.frame_id = "odom";
-  msgOdom.header.frame_id = "odom";
+  msgWheel.header.frame_id = "parking";
+  msgOdom.header.frame_id = "parking";
 
   const auto &vectors = calcTrajectory();
 
   for (const Vector2f &vec : vectors) {
     PoseStamped pose;
-    pose.pose.position.x = vec[0] + corner.point.x;
-    pose.pose.position.y = vec[1] + corner.point.y;
+    pose.pose.position.x = vec[0]; // + corner.point.x;
+    pose.pose.position.y = vec[1]; // + corner.point.y;
     msgWheel.poses.push_back(pose);
 
     pose.pose.position.y += w;
