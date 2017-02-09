@@ -31,7 +31,7 @@ private:
   nav_msgs::OdometryConstPtr odom;
   sensor_msgs::LaserScanConstPtr laserscan;
   geometry_msgs::Pose curveBegin;
-  // start is in frame parking
+  // start is in frame odom
   geometry_msgs::PointStamped start;
   tf::TransformListener transformListener;
   tf::TransformBroadcaster transformBroadcaster;
