@@ -173,6 +173,10 @@ target_link_libraries(ps3_controller ${catkin_LIBRARIES})
 add_executable(emergency_brake src/emergency_brake.cpp)
 target_link_libraries(emergency_brake ${catkin_LIBRARIES})
 
+## Denial of Service
+add_library(denialofservice src/dos/denialofservice.cpp)
+target_link_libraries(denialofservice ${catkin_LIBRARIES})
+
 ## Main
 add_executable(main src/main.cpp)
 target_link_libraries(main ${catkin_LIBRARIES})
@@ -180,6 +184,7 @@ target_link_libraries(main rundkursController)
 target_link_libraries(main laserDetector)
 target_link_libraries(main ps3_controller)
 target_link_libraries(main parking_controller)
+target_link_libraries(main denialofservice)
 
 #add_dependencies(main ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
