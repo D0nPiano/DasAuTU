@@ -3,19 +3,40 @@
   <!-- Dashboard for gamepad -->
   <include file="$(find pses_simulation)/launch/simulation.launch">
   	<arg name="rviz" value="false"/>
-  	<arg name="dashboard" value="false"/>
+  	<arg name="dashboard" value="true"/>
   </include>
 
   <!--- Run AMCL -->
   <!--- We load ACML here with diff=true to support our differential drive robot -->
   <include file="$(find amcl)/examples/amcl_diff.launch" />
 
+  <node pkg="autu_control" type="main" name="main" output="screen">
+   <remap from="autu/command" to="pses_basis/command"/>
+    <param name="pidregler/max_motor_level" value="20"/>
+    <param name="pidregler/p" value="6"/>
+    <param name="pidregler/d" value="3"/>
+
+    <param name="curvedriver/max_motor_level" value="8"/>
+    <param name="curvedriver/curve_radius" value="2.5"/>
+
+    <param name="curvedriver_constant/max_motor_level" value="20"/>
+    <param name="curvedriver_constant/steering" value="31"/><!-- 23 -->
+    <param name="curvedriver_constant/precurve_distance" value="1.0"/>
+    <param name="curvedriver_constant/corner_end_angle" value="60"/>
+    <param name="curvedriver_constant/corner_threshold" value="0.4"/>
+    <param name="curvedriver_constant/dist_corner_to_line" value="0.3"/>
+
+    <param name="parking/velocity" value="8"/>
+    <param name="parking/max_steering" value="45"/>
+    <param name="parking/max_angle" value="0.35"/>
+  </node>
+
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
-    <rosparam file="$(find autu_control)/launch/trajectories/config/costmap_common_params.yaml" command="load" ns="global_costmap" />
-    <rosparam file="$(find autu_control)/launch/trajectories/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
-    <rosparam file="$(find autu_control)/launch/trajectories/config/local_costmap_params.yaml" command="load" />
-    <rosparam file="$(find autu_control)/launch/trajectories/config/global_costmap_params_simulation.yaml" command="load" />
-    <rosparam file="$(find autu_control)/launch/trajectories/config/base_local_planner_params.yaml" command="load"/>
+    <rosparam file="$(find autu_control)/launch/trajectories/config_simulation/costmap_common_params.yaml" command="load" ns="global_costmap" />
+    <rosparam file="$(find autu_control)/launch/trajectories/config_simulation/costmap_common_params.yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(find autu_control)/launch/trajectories/config_simulation/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find autu_control)/launch/trajectories/config_simulation/global_costmap_params_simulation.yaml" command="load" />
+    <rosparam file="$(find autu_control)/launch/trajectories/config_simulation/base_local_planner_params.yaml" command="load"/>
 
 
     <param name="base_local_planner" value="teb_local_planner/TebLocalPlannerROS" />

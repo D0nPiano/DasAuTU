@@ -27,6 +27,10 @@
 #include "tf/tf.h"
 #include "tf/transform_listener.h"
 
+
+#include "geometry_msgs/Pose.h"
+#include "geometry_msgs/PoseStamped.h"
+
 typedef pses_basis::Command command_data;
 
 typedef struct {
@@ -41,11 +45,15 @@ public:
 private:
 	ros::NodeHandle* n;
 	void convertCommand(const geometry_msgs::Twist::ConstPtr& motionIn);
+  void sendNextGoal();
+  bool isNearToNextGoal(const geometry_msgs::PointStamped* currentPosition);
 	ros::Subscriber plan_command_sub;
 	ros::Publisher* command_pub;
+  ros::Publisher goal_pub;
 	tinyxml2::XMLDocument routeXML;
 	std::vector<Point> points;
-  	tf::TransformListener transformListener;
+  tf::TransformListener transformListener;
+  int currentGoal;
 };
 
 #endif
