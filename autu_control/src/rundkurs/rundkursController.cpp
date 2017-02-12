@@ -39,6 +39,9 @@ RundkursController::RundkursController(ros::NodeHandle *n,
 
   curveRadius = n->param<float>("main/curvedriver/curve_radius", 1.8f);
 
+  after_curve_deadtime =
+      n->param<double>("main/curvedriver/after_curve_deadtime", 1.5);
+
 #ifndef NDEBUG
   us_raw_dbg_pub = n->advertise<std_msgs::Float32>("autu/debug/us_raw", 1);
   us_lp_dbg_pub = n->advertise<std_msgs::Float32>("autu/debug/us_lp", 1);
@@ -117,7 +120,7 @@ void RundkursController::simpleController() {
 
   switch (drivingState) {
   case STRAIGHT:
-    if (ros::Time::now().toSec() - time_of_last_corner > 1.5) {
+    if (ros::Time::now().toSec() - time_of_last_corner > after_curve_deadtime) {
       if (curveDriver.isNextToCorner(true, currentCarInfo->speed)) {
         ROS_INFO("************ Next To Corner ***************");
         curveDriver.reset();

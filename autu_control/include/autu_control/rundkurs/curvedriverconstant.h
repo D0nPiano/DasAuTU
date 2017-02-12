@@ -30,8 +30,12 @@ private:
   double scanOffsetStamp;
   float corner_end_angle;
   float precurve_distance;
+  float falseCornerDistance;
+  float falseCornerEnd;
+  bool falseCornerDetected;
   ros::Publisher command_pub;
   geometry_msgs::Pose cornerSeen;
+  geometry_msgs::Pose falseCorner, falseCornerSeen;
   geometry_msgs::Pose curveBegin;
   geometry_msgs::Pose rotationCenter;
   tf::TransformListener transformListener;

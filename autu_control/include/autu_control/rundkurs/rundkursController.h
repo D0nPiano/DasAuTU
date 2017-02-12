@@ -65,6 +65,7 @@ private:
   nav_msgs::OdometryConstPtr odomData;
   float curveRadius;
   double time_of_last_corner;
+  double after_curve_deadtime;
 
 #ifndef NDEBUG
   ros::Publisher us_raw_dbg_pub, us_lp_dbg_pub, ransac_dbg_pub;
