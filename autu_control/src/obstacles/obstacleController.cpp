@@ -76,6 +76,14 @@ void ObstacleController::convertCommand(const geometry_msgs::Twist::ConstPtr& mo
   	cmd.steering_level = -45;
   }
 
+  if(cmd.steering_level > 4 && cmd.steering_level < 20){
+    cmd.steering_level = 20;
+  } else if (cmd.steering_level < -4 && cmd.steering_level > -20){
+    cmd.steering_level = -20;
+  }
+
+
+
   cmd.header.stamp = ros::Time::now();
   command_pub->publish(cmd);
   ros::spinOnce();
