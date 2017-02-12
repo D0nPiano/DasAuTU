@@ -32,11 +32,11 @@
   </node>
 
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
-    <rosparam file="$(find autu_control)/launch/trajectories/config/costmap_common_params.yaml" command="load" ns="global_costmap" />
-    <rosparam file="$(find autu_control)/launch/trajectories/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
-    <rosparam file="$(find autu_control)/launch/trajectories/config/local_costmap_params.yaml" command="load" />
-    <rosparam file="$(find autu_control)/launch/trajectories/config/global_costmap_params_simulation.yaml" command="load" />
-    <rosparam file="$(find autu_control)/launch/trajectories/config/base_local_planner_params.yaml" command="load"/>
+    <rosparam file="$(find autu_control)/launch/trajectories/config_simulation/costmap_common_params.yaml" command="load" ns="global_costmap" />
+    <rosparam file="$(find autu_control)/launch/trajectories/config_simulation/costmap_common_params.yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(find autu_control)/launch/trajectories/config_simulation/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find autu_control)/launch/trajectories/config_simulation/global_costmap_params_simulation.yaml" command="load" />
+    <rosparam file="$(find autu_control)/launch/trajectories/config_simulation/base_local_planner_params.yaml" command="load"/>
 
 
     <param name="base_local_planner" value="teb_local_planner/TebLocalPlannerROS" />
