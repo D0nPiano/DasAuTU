@@ -143,7 +143,7 @@ add_library(rundkursController src/rundkurs/rundkursController.cpp src/rundkurs/
 add_library(laserDetector src/rundkurs/laserDetector.cpp)
 
 
-add_library(laserObstaclesController src/laserObstacles/rundkursController.cpp src/laserObstacles/pidregler.cpp src/laserObstacles/curvedriver.cpp src/laserObstacles/curvedriver2.cpp src/laserObstacles/curvedriverconstant.cpp src/laserObstacles/laser_utilities.cpp src/laserObstacles/lowpass.cpp src/laserObstacles/line.cpp)
+add_library(laserObstaclesController src/laserObstacles/rundkursController.cpp src/rundkurs/pidregler.cpp src/rundkurs/curvedriver.cpp src/rundkurs/curvedriver2.cpp src/rundkurs/curvedriverconstant.cpp src/rundkurs/laser_utilities.cpp src/rundkurs/lowpass.cpp src/rundkurs/line.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
