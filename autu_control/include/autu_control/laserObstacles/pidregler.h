@@ -20,8 +20,6 @@ public:
   void setMaxMotorLevel(const int16_t &value);
 
   int16_t getMaxMotorLevel() const;
-  void avoidObstacle(float ldist);
-  bool avoidDirection;
 
 private:
   float e0;
@@ -30,7 +28,6 @@ private:
   float p;
   float d;
   float solldist;
-  float obstacleDist;
   const LaserDetector *laserDetector;
   ros::Publisher command_pub;
 };

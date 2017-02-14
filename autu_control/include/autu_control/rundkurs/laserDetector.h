@@ -17,6 +17,8 @@ public:
   float getAngleToWallInDeg() const;
   float getDistanceToCorner() const;
   float getDistanceToWall() const;
+  float getFrontObstacleDist() const;
+  bool isObstacleRight();
 
   void setCurrentLaserScan(const sensor_msgs::LaserScanConstPtr &value);
 

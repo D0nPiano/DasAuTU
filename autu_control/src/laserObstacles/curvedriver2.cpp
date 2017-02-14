@@ -1,4 +1,4 @@
-#include "autu_control/rundkurs/curvedriver2.h"
+#include "autu_control/laserObstacles/curvedriver2.h"
 
 #include <cmath>
 #include <limits>
@@ -110,7 +110,6 @@ void CurveDriver2::curveInit(float radius, bool left) {
 }
 
 bool CurveDriver2::isNextToCorner(bool left, float speed) {
-	ROS_INFO("HI!");
   if (laserscan == nullptr)
     return false;
   updateScanOffset(speed);
@@ -140,7 +139,9 @@ bool CurveDriver2::isNextToCorner(bool left, float speed) {
   const float vc = maxMotorLevel / 10.0f;
   const float dif = vc - speed;
   distance_to_corner = dif * dif / -2 + speed * (speed - vc);
-  return corner.x - 0.1f < 0.8f + distance_to_corner;
+  bool isNearCorner = corner.x - 0.1f < 0.8f + distance_to_corner;
+  ROS_INFO("Distance: [%f]", corner.x);
+  return isNearCorner && corner.x - 0.1f > 1.5f;
 }
 
 bool CurveDriver2::isAtCurveBegin(bool left) const {

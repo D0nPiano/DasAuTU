@@ -40,6 +40,41 @@ bool LaserDetector::isNextToCorner() const {
   return retVal;
 }
 
+float LaserDetector::getFrontObstacleDist() const {
+  float viewangle = currentLaserScan->angle_max - currentLaserScan->angle_min;
+  int steps = (int)(viewangle / currentLaserScan->angle_increment);
+
+  //float angle = getAngleToWall();
+
+  int stepsLookingAway = 0; //(int) angle / currentLaserScan->angle_increment;
+  
+  float rightDist = currentLaserScan->ranges[(int)(steps/2 - RANGE_DIFF * 4 + stepsLookingAway)];
+  float rightMidDist = currentLaserScan->ranges[(int)(steps/2 - RANGE_DIFF * 2 + stepsLookingAway)];
+  float leftMidDist = currentLaserScan->ranges[(int)(steps/2 - RANGE_DIFF * 2 + stepsLookingAway)];
+  float leftDist = currentLaserScan->ranges[(int)(steps/2 + RANGE_DIFF * 4 + stepsLookingAway)];
+  float minRight = std::min(rightDist, rightMidDist); 
+  float minLeft = std::min(leftMidDist, leftDist);
+  float min = std::min(minRight, minLeft);
+  return min;
+}
+
+bool LaserDetector::isObstacleRight() {
+  float viewangle = currentLaserScan->angle_max - currentLaserScan->angle_min;
+  int steps = (int)(viewangle / currentLaserScan->angle_increment);
+
+  //float angle = getAngleToWall();
+
+  int stepsLookingAway = 0; //(int) angle / currentLaserScan->angle_increment;
+  
+  float rightDist = currentLaserScan->ranges[(int)(steps/2 - RANGE_DIFF * 6 + stepsLookingAway)];
+  float rightMidDist = currentLaserScan->ranges[(int)(steps/2 - RANGE_DIFF * 3 + stepsLookingAway)];
+  float leftMidDist = currentLaserScan->ranges[(int)(steps/2 - RANGE_DIFF * 3 + stepsLookingAway)];
+  float leftDist = currentLaserScan->ranges[(int)(steps/2 + RANGE_DIFF * 6 + stepsLookingAway)];
+  float minRight = std::min(rightDist, rightMidDist); 
+  float minLeft = std::min(leftMidDist, leftDist);
+  return minRight < minLeft;
+}
+
 float LaserDetector::getDistanceToWall() const {
   //  float angle_range =
   //    currentLaserScan->angle_max - currentLaserScan->angle_min; // 70 deg

@@ -1,74 +1,56 @@
-#include "autu_control/rundkurs/curvedriver2.h"
+#include "autu_control/laserObstacles/curvedriverconstant.h"
 
+#include "Eigen/Dense"
 #include <cmath>
 #include <limits>
 #include <vector>
 
 #include "pses_basis/Command.h"
 
-#define MIN_RADIUS 0.6
-#define MAX_STEERING_ANGLE 20.0
-#define MAX_STEERING_LEVEL 40.0
 #define WHEELBASE 0.28
 
-using std::pair;
 using std::sqrt;
 
-CurveDriver2::CurveDriver2(ros::NodeHandle &nh)
-    : e0(0), t0(0), radius(1), steerfactAbs(2), scanOffset(0) {
+CurveDriverConstant::CurveDriverConstant(ros::NodeHandle &nh,
+                                         LaserUtil &laserUtil)
+    : scanOffset(0), laserUtil(laserUtil) {
   command_pub = nh.advertise<pses_basis::Command>("autu/command", 1);
 
-  maxMotorLevel = nh.param<int>("main/curvedriver/max_motor_level", 8);
+  maxMotorLevel = nh.param<int>("main/curvedriver_constant/max_motor_level", 8);
+  steering = nh.param<int>("main/curvedriver_constant/steering", 25);
+
+  corner_threshold =
+      nh.param<float>("main/curvedriver_constant/corner_threshold", 0.5f);
+  corner_end_angle =
+      nh.param<float>("main/curvedriver_constant/corner_end_angle", 80.0f);
+  precurve_distance =
+      nh.param<float>("main/curvedriver_constant/precurve_distance", 0.8f);
 }
 
-void CurveDriver2::reset() {
-  e0 = 0;
-  t0 = 0;
-}
+void CurveDriverConstant::reset() {}
 
-void CurveDriver2::drive() {
-  const float xDif = rotationCenter.position.x - odom->pose.pose.position.x;
-  const float yDif = rotationCenter.position.y - odom->pose.pose.position.y;
-  // actual distance
-  const float currentRadius = sqrt(xDif * xDif + yDif * yDif);
+void CurveDriverConstant::drive() {
 
   pses_basis::Command cmd;
 
-  // P-Regler, tb = 62s
-
   cmd.motor_level = maxMotorLevel;
-  float p = 16;
-  float d = 8;
-  double t = ros::Time::now().toSec();
-  float e = radius - currentRadius;
-  cmd.steering_level =
-      initialSteering + steerfact * p * (e + (e - e0) * d / (t - t0));
-
-  e0 = e;
-  t0 = t;
-
-  if (cmd.steering_level > 40)
-    cmd.steering_level = 40;
-  else if (cmd.steering_level < -40)
-    cmd.steering_level = -40;
+  cmd.steering_level = steering;
 
   cmd.header.stamp = ros::Time::now();
   command_pub.publish(cmd);
 }
 
-bool CurveDriver2::isAroundTheCorner() const {
-  tf::Vector3 start, current;
-  start.setX(curveBegin.position.x - rotationCenter.position.x);
-  start.setY(curveBegin.position.y - rotationCenter.position.y);
+bool CurveDriverConstant::isAroundTheCorner(
+    const sensor_msgs::LaserScanConstPtr &scan) const {
+  tf::Quaternion start, current;
+  tf::quaternionMsgToTF(curveBegin.orientation, start);
+  tf::quaternionMsgToTF(odom->pose.pose.orientation, current);
 
-  current.setX(odom->pose.pose.position.x - rotationCenter.position.x);
-  current.setY(odom->pose.pose.position.y - rotationCenter.position.y);
-
-  return start.angle(current) > M_PI_2;
+  return start.angle(current) > corner_end_angle * M_PI_2 / 180.0f; // &&
+  // std::abs(laserUtil.getAngleToWallRLF(scan, true)) < 10 * M_PI / 180.0;
 }
 
-void CurveDriver2::curveInit(float radius, bool left) {
-  this->radius = radius;
+void CurveDriverConstant::curveInit(float radius, bool left) {
   curveBegin = odom->pose.pose;
   const std::string targetFrame(left ? "/rear_left_wheel"
                                      : "/rear_right_wheel");
@@ -95,34 +77,23 @@ void CurveDriver2::curveInit(float radius, bool left) {
     ROS_ERROR("%s", ex.what());
     return;
   }
-
-  // alpha in radians
-  const float alpha = M_PI / 2 - std::atan(radius / WHEELBASE);
-  initialSteering =
-      alpha * 180 / M_PI / MAX_STEERING_ANGLE * MAX_STEERING_LEVEL;
-
-  if (left)
-    steerfact = -steerfactAbs;
-  else {
-    initialSteering = -initialSteering;
-    steerfact = steerfactAbs;
-  }
 }
 
-bool CurveDriver2::isNextToCorner(bool left, float speed) {
-	ROS_INFO("HI!");
+bool CurveDriverConstant::isNextToCorner(bool left, float speed) {
+  ROS_INFO("test");
   if (laserscan == nullptr)
     return false;
   updateScanOffset(speed);
+  Eigen::Vector2f vecToCorner;
   float last_r = std::numeric_limits<float>::max();
-
+  size_t cornerIndex = 0;
   if (left) {
     size_t i;
     for (i = laserscan->ranges.size() - 1; i > laserscan->ranges.size() / 2;
          --i) {
       const float r = laserscan->ranges[i];
       if (laserscan->range_min < r && r < laserscan->range_max) {
-        if (r - last_r > 1.0)
+        if (r - last_r > corner_threshold)
           break;
         else
           last_r = r;
@@ -130,20 +101,25 @@ bool CurveDriver2::isNextToCorner(bool left, float speed) {
     }
     if (last_r == std::numeric_limits<float>::max())
       return false;
+    cornerIndex = i + 1;
     const float alpha =
         std::abs(laserscan->angle_min + (i + 1) * laserscan->angle_increment);
     corner.x = last_r * std::cos(alpha) - scanOffset;
     corner.y = last_r * std::sin(alpha);
+    vecToCorner[0] = last_r * std::cos(alpha);
+    vecToCorner[1] = last_r * std::sin(alpha);
   }
   cornerSeen = odom->pose.pose;
 
   const float vc = maxMotorLevel / 10.0f;
   const float dif = vc - speed;
   distance_to_corner = dif * dif / -2 + speed * (speed - vc);
-  return corner.x - 0.1f < 0.8f + distance_to_corner;
+  // ROS_INFO("Distance to corner max: %f", distance_to_corner);
+  return corner.x - 0.1f < precurve_distance + distance_to_corner;
+  // laserUtil.calcCornerSize(laserscan, vecToCorner, left) > 1.2f;
 }
 
-bool CurveDriver2::isAtCurveBegin(bool left) const {
+bool CurveDriverConstant::isAtCurveBegin(bool left) const {
   const float xDif = cornerSeen.position.x - odom->pose.pose.position.x;
   const float yDif = cornerSeen.position.y - odom->pose.pose.position.y;
 
@@ -153,7 +129,8 @@ bool CurveDriver2::isAtCurveBegin(bool left) const {
   return distance > distance_to_corner;
 }
 
-void CurveDriver2::setLaserscan(const sensor_msgs::LaserScanConstPtr &scan) {
+void CurveDriverConstant::setLaserscan(
+    const sensor_msgs::LaserScanConstPtr &scan) {
   if (scan == nullptr)
     return;
   if (laserscan == nullptr || scan != laserscan) {
@@ -163,11 +140,11 @@ void CurveDriver2::setLaserscan(const sensor_msgs::LaserScanConstPtr &scan) {
   }
 }
 
-void CurveDriver2::setOdom(const nav_msgs::OdometryConstPtr &msg) {
+void CurveDriverConstant::setOdom(const nav_msgs::OdometryConstPtr &msg) {
   odom = msg;
 }
 
-void CurveDriver2::updateScanOffset(float speed) {
+void CurveDriverConstant::updateScanOffset(float speed) {
   const double now = ros::Time::now().toSec();
   const double timeDif = now - scanOffsetStamp;
   scanOffset += timeDif * speed;
