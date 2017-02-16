@@ -39,7 +39,7 @@ void SimpleObstacleController::updateDistanceToObstacle() {
       const float alpha =
           i * currentLaserScan->angle_increment + currentLaserScan->angle_min;
       const float sin_alpha = std::sin(std::abs(alpha));
-      const float b = CAR_WIDTH / 2.0 + 0.2;
+      const float b = CAR_WIDTH / 2.0 + 0.4;
       if (sin_alpha != 0.0 && r < b / sin_alpha) {
         // distance to obstacle
         const float d = r * std::cos(std::abs(alpha));
@@ -66,9 +66,9 @@ void SimpleObstacleController::updateDistanceToObstacle() {
     ROS_INFO("***** Obstacle ********");
     ROS_INFO("angle: [%f]", alpha_min);
     if(alpha_min < 0.0){
-      currentHeadingAngle = 0.1;
+      currentHeadingAngle = 1.0;
     } else {
-      currentHeadingAngle = -0.1;
+      currentHeadingAngle = -1.0;
     }
     //currentHeadingAngle = alpha_max + 6.0 * (alpha_max - alpha_min);    
   }
@@ -81,10 +81,11 @@ void SimpleObstacleController::getBestHeadingAngle() {
   float distortStep = 1.0 / currentLaserScan->ranges.size(); 
 
   double rangeLeft = currentSensorData->range_sensor_left;
+  rangeLeft = rangeLeft * 0.8;
   if(rangeLeft != 0.0){
     rangeLeft = std::min(rangeLeft, 2.5);
     rangeLeft = std::max(rangeLeft, 0.1);
-    distortStep = (float) rangeLeft / currentLaserScan->ranges.size();
+    distortStep = ((float) rangeLeft / currentLaserScan->ranges.size());
     ROS_INFO("distort range: [%f]", (float) rangeLeft);
     ROS_INFO("distort: [%f]", distortStep);
   }
@@ -96,7 +97,7 @@ void SimpleObstacleController::getBestHeadingAngle() {
       // alpha in radians and always positive
       const float alpha =
           i * currentLaserScan->angle_increment + currentLaserScan->angle_min;
-      float d = r * std::cos(alpha) * (0.0001 + pow(i, 1.5) * distortStep);
+      float d = r * std::cos(alpha) * (0.0005 + pow(i, 1.3) * distortStep);
       if (d > d_max){
           d_max = d;
           alpha_max = alpha;
@@ -115,11 +116,11 @@ void SimpleObstacleController::simpleController(){
   //ROS_INFO("distance: [%f], angle: [%f]", obstacleDistace, currentHeadingAngle);
 
   pses_basis::Command cmd;
-  int motorLevel = std::min((int)(obstacleDistace * 4.0), 20);
-  int maxSpeedUS = (int) (currentSensorData->range_sensor_left * 10.0);
+  int motorLevel = std::min((int)(obstacleDistace * 5.0), 20);
+  int maxSpeedUS = (int) ((currentSensorData->range_sensor_left) * 12.0);
   motorLevel = std::min(motorLevel, maxSpeedUS);
   cmd.motor_level = std::max(motorLevel, 4);
-  cmd.steering_level = (int)(currentHeadingAngle * 150.0);
+  cmd.steering_level = (int)(currentHeadingAngle * 250.0);
 
   
   // If left distance is smaller than ....
@@ -138,7 +139,7 @@ void SimpleObstacleController::simpleController(){
   else if (cmd.steering_level < -40)
     cmd.steering_level = -40;
 
-  //ROS_INFO("steering_level: [%d]", cmd.steering_level);
+  ROS_INFO("steering_level: [%d]", cmd.steering_level);
   cmd.header.stamp = ros::Time::now();
   command_pub->publish(cmd);
   ros::spinOnce();
