@@ -34,6 +34,7 @@ private:
   float falseCornerEnd;
   bool falseCornerDetected;
   ros::Publisher command_pub;
+  ros::Publisher corner_pub;
   geometry_msgs::Pose cornerSeen;
   geometry_msgs::Pose falseCorner, falseCornerSeen;
   geometry_msgs::Pose curveBegin;

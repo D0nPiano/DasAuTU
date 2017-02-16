@@ -425,6 +425,21 @@ Visualization Manager:
       Topic: /autu/wall
       Unreliable: false
       Value: true
+    - Alpha: 1
+      Axes Length: 1
+      Axes Radius: 0.1
+      Class: rviz/Pose
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.3
+      Head Radius: 0.1
+      Name: Rundkurs Corner
+      Shaft Length: 1
+      Shaft Radius: 0.05
+      Shape: Arrow
+      Topic: /autu/rundkurs/corner
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -449,16 +464,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 10.9466
+      Distance: 17.6319
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 5.93974
-        Y: 0.578522
-        Z: 0.00844209
+        X: -1.17705
+        Y: 5.95804
+        Z: 0.0140404
       Name: Current View
       Near Clip Distance: 0.01
       Pitch: 1.5698

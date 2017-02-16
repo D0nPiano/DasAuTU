@@ -19,6 +19,9 @@ CurveDriverConstant::CurveDriverConstant(ros::NodeHandle &nh,
     : scanOffset(0), falseCornerDetected(false), laserUtil(laserUtil) {
   command_pub = nh.advertise<pses_basis::Command>("autu/command", 1);
 
+  corner_pub =
+      nh.advertise<geometry_msgs::PoseStamped>("autu/rundkurs/corner", 1);
+
   maxMotorLevel = nh.param<int>("main/curvedriver_constant/max_motor_level", 8);
   steering = nh.param<int>("main/curvedriver_constant/steering", 25);
 
@@ -219,9 +222,17 @@ bool CurveDriverConstant::isNextToCorner(bool left, float distanceToWall,
        }
    }*/
 
-  return !isNextToGlas(distanceToWall, vecToCorner[0]) &&
-         corner.x - 0.1f < precurve_distance + distance_to_corner;
-  // laserUtil.calcCornerSize(laserscan, vecToCorner, left) > 1.2f;
+  if (!isNextToGlas(distanceToWall, vecToCorner[0]) &&
+      corner.x - 0.1f < precurve_distance + distance_to_corner) {
+
+    geometry_msgs::PoseStamped poseCorner;
+    poseCorner.header.frame_id = "base_laser";
+    poseCorner.pose.position.x = vecToCorner[0];
+    poseCorner.pose.position.y = vecToCorner[1];
+    corner_pub.publish(poseCorner);
+
+    return true;
+  }
 }
 
 bool CurveDriverConstant::isAtCurveBegin(bool left) const {
