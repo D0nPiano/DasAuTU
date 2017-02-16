@@ -14,14 +14,14 @@ public:
   void drive();
   bool isAroundTheCorner(const sensor_msgs::LaserScanConstPtr &scan) const;
   void curveInit(float radius, bool left);
-  bool isNextToCorner(bool left, float speed);
+  bool isNextToCorner(bool left, float distanceToWall, float speed);
   bool isAtCurveBegin(bool left) const;
   void setLaserscan(const sensor_msgs::LaserScanConstPtr &scan);
   void setOdom(const nav_msgs::OdometryConstPtr &msg);
 
 private:
   void updateScanOffset(float speed);
-
+  bool isNextToGlas(float distanceToWall, float distanceToCorner);
   int16_t steering;
   int16_t maxMotorLevel;
   float corner_threshold;

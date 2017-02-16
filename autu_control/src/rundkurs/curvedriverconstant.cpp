@@ -10,6 +10,9 @@
 #define WHEELBASE 0.28
 
 using std::sqrt;
+using std::atan;
+using std::sin;
+using std::cos;
 
 CurveDriverConstant::CurveDriverConstant(ros::NodeHandle &nh,
                                          LaserUtil &laserUtil)
@@ -81,35 +84,74 @@ void CurveDriverConstant::curveInit(float radius, bool left) {
   }
 }
 
-bool CurveDriverConstant::isNextToCorner(bool left, float speed) {
+bool CurveDriverConstant::isNextToGlas(float distanceToWall,
+                                       float distanceToCorner) {
+  const float maxDist = distanceToCorner + 1.2f;
+  const float minAlpha = M_PI_2 - atan(maxDist / distanceToWall);
+  for (size_t i = laserscan->ranges.size() - 1;
+       i > laserscan->ranges.size() / 2; --i) {
+    const float r = laserscan->ranges[i];
+    if (laserscan->range_min < r && r < laserscan->range_max) {
+      const float alpha =
+          std::abs(laserscan->angle_min + i * laserscan->angle_increment);
+
+      if (alpha < minAlpha)
+        break;
+
+      const float x = r * cos(alpha);
+      const float y = r * sin(alpha);
+
+      if (x < distanceToCorner + 0.1f) {
+        if (y > distanceToWall + 0.2f) {
+          ROS_INFO("x: %f, y: %f corner: %f wall: %f", x, y, distanceToCorner,
+                   distanceToWall);
+          return true;
+        }
+      } else if (x < maxDist) {
+        if (y < distanceToWall + 0.2f) {
+          ROS_INFO("x2: %f, y2: %f corner: %f wall: %f", x, y, distanceToCorner,
+                   distanceToWall);
+          return true;
+        }
+      }
+    }
+  }
+  ROS_INFO("Distance to Corner: %f", distanceToCorner);
+  return false;
+}
+
+bool CurveDriverConstant::isNextToCorner(bool left, float distanceToWall,
+                                         float speed) {
   if (laserscan == nullptr)
     return false;
   updateScanOffset(speed);
 
-  if (falseCornerDetected) {
-    const float xDif1 = falseCornerSeen.position.x - odom->pose.pose.position.x;
-    const float yDif1 = falseCornerSeen.position.y - odom->pose.pose.position.y;
+  /* if (falseCornerDetected) {
+     const float xDif1 = falseCornerSeen.position.x -
+   odom->pose.pose.position.x;
+     const float yDif1 = falseCornerSeen.position.y -
+   odom->pose.pose.position.y;
 
-    // distance to falseCornerSeen
-    const float distanceToCornerSeen = sqrt(xDif1 * xDif1 + yDif1 * yDif1);
-    if (distanceToCornerSeen < falseCornerDistance)
-      return false;
+     // distance to falseCornerSeen
+     const float distanceToCornerSeen = sqrt(xDif1 * xDif1 + yDif1 * yDif1);
+     if (distanceToCornerSeen < falseCornerDistance)
+       return false;
 
-    const float xDif = falseCorner.position.x - odom->pose.pose.position.x;
-    const float yDif = falseCorner.position.y - odom->pose.pose.position.y;
+     const float xDif = falseCorner.position.x - odom->pose.pose.position.x;
+     const float yDif = falseCorner.position.y - odom->pose.pose.position.y;
 
-    // distance to falseCorner
-    const float distanceToCorner = sqrt(xDif * xDif + yDif * yDif);
-    if (distanceToCorner > falseCornerEnd) {
-      ROS_INFO("********************** Glasscheibe zu Ende  "
-               "**************************");
-      falseCornerDetected = false;
-    } else {
-      ROS_INFO(
-          "********************** Glas erkannt  **************************");
-      return false;
-    }
-  }
+     // distance to falseCorner
+     const float distanceToCorner = sqrt(xDif * xDif + yDif * yDif);
+     if (distanceToCorner > falseCornerEnd) {
+       ROS_INFO("********************** Glasscheibe zu Ende  "
+                "**************************");
+       falseCornerDetected = false;
+     } else {
+       ROS_INFO(
+           "********************** Glas erkannt  **************************");
+       return false;
+     }
+   }*/
 
   Eigen::Vector2f vecToCorner;
   float last_r = std::numeric_limits<float>::max();
@@ -142,42 +184,42 @@ bool CurveDriverConstant::isNextToCorner(bool left, float speed) {
   const float dif = vc - speed;
   distance_to_corner = dif * dif / -2 + speed * (speed - vc);
   // ROS_INFO("Distance to corner max: %f", distance_to_corner);
-  if (corner.x > 1.2f) {
-    const float cornerSize =
-        laserUtil.calcCornerSize(laserscan, vecToCorner, left);
-    ROS_INFO("Corner Size: %f Corner.x: %f", cornerSize, corner.x);
-    if (0 < cornerSize && cornerSize < 1.2f)
-      try {
-        tf::StampedTransform transform;
-        transformListener.waitForTransform("base_laser", "/odom", ros::Time(0),
-                                           ros::Duration(0.1));
-        transformListener.lookupTransform("base_laser", "/odom", ros::Time(0),
-                                          transform);
+  /* if (corner.x > 1.2f) {
+     const float cornerSize =
+         laserUtil.calcCornerSize(laserscan, vecToCorner, left);
+     ROS_INFO("Corner Size: %f Corner.x: %f", cornerSize, corner.x);
+     if (0 < cornerSize && cornerSize < 1.2f)
+       try {
+         tf::StampedTransform transform;
+         transformListener.waitForTransform("base_laser", "/odom", ros::Time(0),
+                                            ros::Duration(0.1));
+         transformListener.lookupTransform("base_laser", "/odom", ros::Time(0),
+                                           transform);
 
-        geometry_msgs::PointStamped cornerInBaseLaser, cornerInOdom;
+         geometry_msgs::PointStamped cornerInBaseLaser, cornerInOdom;
 
-        cornerInBaseLaser.point.x = corner.x;
-        cornerInBaseLaser.point.y = corner.y;
-        cornerInBaseLaser.header.frame_id = "/base_laser";
-        cornerInBaseLaser.header.stamp = ros::Time(0);
-        transformListener.transformPoint("/odom", cornerInBaseLaser,
-                                         cornerInOdom);
+         cornerInBaseLaser.point.x = corner.x;
+         cornerInBaseLaser.point.y = corner.y;
+         cornerInBaseLaser.header.frame_id = "/base_laser";
+         cornerInBaseLaser.header.stamp = ros::Time(0);
+         transformListener.transformPoint("/odom", cornerInBaseLaser,
+                                          cornerInOdom);
 
-        falseCorner.position.x = cornerInOdom.point.x;
-        falseCorner.position.y = cornerInOdom.point.y;
+         falseCorner.position.x = cornerInOdom.point.x;
+         falseCorner.position.y = cornerInOdom.point.y;
 
-        falseCornerSeen = odom->pose.pose;
-        falseCornerDistance = corner.x;
-        falseCornerDetected = true;
-        ROS_INFO("*********************False Corner "
-                 "detected*******************************");
-      } catch (tf::TransformException ex) {
-        ROS_ERROR("%s", ex.what());
-        return false;
-      }
-  }
+         falseCornerSeen = odom->pose.pose;
+         falseCornerDistance = corner.x;
+         falseCornerDetected = true;
+         ROS_INFO("*********************False Corner "
+                  "detected*******************************");
+       } catch (tf::TransformException ex) {
+         ROS_ERROR("%s", ex.what());
+         return false;
+       }
+   }*/
 
-  return !falseCornerDetected &&
+  return !isNextToGlas(distanceToWall, vecToCorner[0]) &&
          corner.x - 0.1f < precurve_distance + distance_to_corner;
   // laserUtil.calcCornerSize(laserscan, vecToCorner, left) > 1.2f;
 }
