@@ -35,6 +35,9 @@ private:
   void updateDistanceToObstacle();
   void getBestHeadingAngle();
   void simpleController();
+  int getBestSpeed();
+  int getBestSteering();
+  float getWrackingDistance();
   ros::NodeHandle *n;
   ros::Publisher *command_pub;
   ros::Subscriber laser_sub;
