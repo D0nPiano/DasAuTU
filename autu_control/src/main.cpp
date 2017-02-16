@@ -3,6 +3,7 @@
 #include "autu_control/parking/parking_controller.h"
 #include "autu_control/remoteController.h"
 #include "autu_control/rundkurs/rundkursController.h"
+#include "autu_control/simpleObstacle/simpleObstacleController.h"
 
 #include "pses_basis/SensorData.h"
 #include "ros/ros.h"
@@ -38,6 +39,8 @@ void runTimerCallback(const ros::TimerEvent &, AutoController **rndCtrl,
       *rndCtrl = new RundkursController(n, command_pub);
     } else if (!mode->compare("Gamepad")) {
       *rndCtrl = new PS3_Controller(n, command_pub);
+    } else if (!mode->compare("Roundtrip w. Obstacles")) {
+      *rndCtrl = new SimpleObstacleController(n, command_pub);
     } else if (!mode->compare("Park Car")) {
       *rndCtrl = new ParkingController(*n);
     } else {
