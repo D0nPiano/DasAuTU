@@ -33,6 +33,8 @@ CurveDriverConstant::CurveDriverConstant(ros::NodeHandle &nh,
       nh.param<float>("main/curvedriver_constant/precurve_distance", 0.8f);
   falseCornerEnd =
       nh.param<float>("main/curvedriver_constant/false_corner_end", 0.6f);
+  blindness_offset =
+      nh.param<float>("main/curvedriver_constant/blindness_offset", 0);
 }
 
 void CurveDriverConstant::reset() {}
@@ -87,10 +89,9 @@ void CurveDriverConstant::curveInit(float radius, bool left) {
   }
 }
 
-bool CurveDriverConstant::isNextToGlas(float distanceToWall,
-                                       float distanceToCorner) {
-  const float maxDist = distanceToCorner + 1.2f;
-  const float minAlpha = M_PI_2 - atan(maxDist / distanceToWall);
+bool CurveDriverConstant::isNextToGlas(float cornerX, float cornerY) {
+  const float maxDist = cornerX + 1.2f;
+  const float minAlpha = M_PI_2 - atan(maxDist / cornerY);
   for (size_t i = laserscan->ranges.size() - 1;
        i > laserscan->ranges.size() / 2; --i) {
     const float r = laserscan->ranges[i];
@@ -104,22 +105,21 @@ bool CurveDriverConstant::isNextToGlas(float distanceToWall,
       const float x = r * cos(alpha);
       const float y = r * sin(alpha);
 
-      if (x < distanceToCorner + 0.1f) {
-        if (y > distanceToWall + 0.2f) {
-          ROS_INFO("x: %f, y: %f corner: %f wall: %f", x, y, distanceToCorner,
-                   distanceToWall);
+      if (x < cornerX + 0.1f) {
+        if (y > cornerY + 0.2f) {
+          ROS_INFO("x: %f, y: %f corner: %f wall: %f", x, y, cornerX, cornerY);
           return true;
         }
       } else if (x < maxDist) {
-        if (y < distanceToWall + 0.2f) {
-          ROS_INFO("x2: %f, y2: %f corner: %f wall: %f", x, y, distanceToCorner,
-                   distanceToWall);
+        if (y < cornerY + 0.5f) {
+          ROS_INFO("x2: %f, y2: %f corner: %f wall: %f", x, y, cornerX,
+                   cornerY);
           return true;
         }
       }
     }
   }
-  ROS_INFO("Distance to Corner: %f", distanceToCorner);
+  ROS_INFO("Distance to Corner: %f", cornerX);
   return false;
 }
 
@@ -185,7 +185,7 @@ bool CurveDriverConstant::isNextToCorner(bool left, float distanceToWall,
 
   const float vc = maxMotorLevel / 10.0f;
   const float dif = vc - speed;
-  distance_to_corner = dif * dif / -2 + speed * (speed - vc);
+  rolloff_distance = dif * dif / -2 + speed * (speed - vc);
   // ROS_INFO("Distance to corner max: %f", distance_to_corner);
   /* if (corner.x > 1.2f) {
      const float cornerSize =
@@ -222,8 +222,9 @@ bool CurveDriverConstant::isNextToCorner(bool left, float distanceToWall,
        }
    }*/
 
-  if (!isNextToGlas(distanceToWall, vecToCorner[0]) &&
-      corner.x - 0.1f < precurve_distance + distance_to_corner) {
+  if (!isNextToGlas(vecToCorner[0], vecToCorner[1]) &&
+      corner.x - 0.1f <
+          precurve_distance + rolloff_distance + blindness_offset) {
 
     geometry_msgs::PoseStamped poseCorner;
     poseCorner.header.frame_id = "base_laser";
@@ -235,6 +236,16 @@ bool CurveDriverConstant::isNextToCorner(bool left, float distanceToWall,
   }
 }
 
+bool CurveDriverConstant::isAtStraightEnd() const {
+  const float xDif = cornerSeen.position.x - odom->pose.pose.position.x;
+  const float yDif = cornerSeen.position.y - odom->pose.pose.position.y;
+
+  // actual distance
+  const float distance = sqrt(xDif * xDif + yDif * yDif);
+
+  return distance > blindness_offset;
+}
+
 bool CurveDriverConstant::isAtCurveBegin(bool left) const {
   const float xDif = cornerSeen.position.x - odom->pose.pose.position.x;
   const float yDif = cornerSeen.position.y - odom->pose.pose.position.y;
@@ -242,7 +253,7 @@ bool CurveDriverConstant::isAtCurveBegin(bool left) const {
   // actual distance
   const float distance = sqrt(xDif * xDif + yDif * yDif);
 
-  return distance > distance_to_corner;
+  return distance > blindness_offset + rolloff_distance;
 }
 
 void CurveDriverConstant::setLaserscan(

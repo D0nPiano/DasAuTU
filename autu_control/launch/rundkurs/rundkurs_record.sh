@@ -4,4 +4,4 @@ mkdir -p ~/bag/rundkurs
 
 cd ~/bag/rundkurs
 
-rosbag record tf scan autu/rundkurs/corner
+rosbag record --duration=5m tf scan autu/rundkurs/corner

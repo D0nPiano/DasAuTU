@@ -11,6 +11,7 @@
 #define STRAIGHT 0
 #define CURVE 1
 #define BEFORE_CURVE 2
+#define STRAIGHT_END 3
 
 RundkursController::RundkursController(ros::NodeHandle *n,
                                        ros::Publisher *command_pub)
@@ -121,9 +122,14 @@ void RundkursController::simpleController() {
       if (curveDriver.isNextToCorner(true, lowpass.getAverage(),
                                      currentCarInfo->speed)) {
         ROS_INFO("************ Next To Corner ***************");
-        curveDriver.reset();
-        drivingState = BEFORE_CURVE;
+        drivingState = STRAIGHT_END;
       }
+    }
+    break;
+  case STRAIGHT_END:
+    if (curveDriver.isAtStraightEnd()) {
+      curveDriver.reset();
+      drivingState = BEFORE_CURVE;
     }
     break;
   case BEFORE_CURVE:
@@ -148,6 +154,10 @@ void RundkursController::simpleController() {
 
   switch (drivingState) {
   case STRAIGHT:
+    pidRegler.setMaxMotorLevel(pd_maxMotorLevel);
+    pidRegler.drive(lowpass.getAverage(), true);
+    break;
+  case STRAIGHT_END:
     pidRegler.setMaxMotorLevel(pd_maxMotorLevel);
     pidRegler.drive(lowpass.getAverage(), true);
     break;
