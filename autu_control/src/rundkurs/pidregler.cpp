@@ -10,7 +10,7 @@ PIDRegler::PIDRegler(ros::NodeHandle &nh) : e0(0), t0(0) {
   maxMotorLevel = nh.param<int>("main/pidregler/max_motor_level", 8);
   p = nh.param<float>("main/pidregler/p", 16.0f);
   d = nh.param<float>("main/pidregler/d", 8.0f);
-  solldist = nh.param<float>("main/pidregler/solldist", 0.8f);
+  solldist = nh.param<float>("main/pidregler/solldist", 0.9f);
   obstacleDist = 0.0;
   avoidDirection = true;
 }
@@ -86,12 +86,12 @@ void PIDRegler::avoidObstacle(float ldist) {
   ROS_INFO("Difference [%f]", diff);
   if(avoidDirection){
     obstacleDist += 0.0002 * diff;
-    if(obstacleDist > 0.25){ //weiter links
+    if(obstacleDist > 0.32){ //weiter links
       avoidDirection = false;
     }
   } else {
     obstacleDist -= 0.0002 * diff;
-    if(obstacleDist < -0.25){ // weiter rechts
+    if(obstacleDist < -0.32){ // weiter rechts
       avoidDirection = true;
     }
   }
