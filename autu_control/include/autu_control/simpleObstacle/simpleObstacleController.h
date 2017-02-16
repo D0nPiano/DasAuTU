@@ -31,11 +31,16 @@ public:
   void getCurrentLaserScan(const sensor_msgs::LaserScan::ConstPtr &);
   void run();
 private:
+  void updateDistanceToObstacle();
+  void getBestHeadingAngle();
+  void simpleController();
   ros::NodeHandle *n;
   ros::Publisher *command_pub;
   ros::Subscriber laser_sub;
   sensor_msgs::LaserScanConstPtr currentLaserScan;
   bool initialized;
+  float obstacleDistace;
+  float currentHeadingAngle;
 };
 
 #endif
