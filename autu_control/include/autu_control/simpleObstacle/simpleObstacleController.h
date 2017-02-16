@@ -28,16 +28,19 @@ class SimpleObstacleController : public AutoController {
 public:
   SimpleObstacleController(ros::NodeHandle *n, ros::Publisher *command_pub);
   ~SimpleObstacleController();
-  void getCurrentLaserScan(const sensor_msgs::LaserScan::ConstPtr &);
   void run();
 private:
+  void getCurrentLaserScan(const sensor_msgs::LaserScan::ConstPtr &);
+  void getCurrentSensorData(const pses_basis::SensorData::ConstPtr &);
   void updateDistanceToObstacle();
   void getBestHeadingAngle();
   void simpleController();
   ros::NodeHandle *n;
   ros::Publisher *command_pub;
   ros::Subscriber laser_sub;
+  ros::Subscriber sensor_sub;
   sensor_msgs::LaserScanConstPtr currentLaserScan;
+  pses_basis::SensorDataConstPtr currentSensorData;
   bool initialized;
   float obstacleDistace;
   float currentHeadingAngle;
