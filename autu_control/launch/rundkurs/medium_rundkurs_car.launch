@@ -60,6 +60,7 @@ args="$(arg optical_rotate) kinect2_base_link kinect2_link 100" />
 
   <param name="curvedriver/max_motor_level" value="8"/>
   <param name="curvedriver/curve_radius" value="2.5"/>
+  <param name="curvedriver/after_curve_deadtime" value="1.5"/>
 
   <param name="curvedriver_constant/max_motor_level" value="14"/>
   <param name="curvedriver_constant/steering" value="20"/>
