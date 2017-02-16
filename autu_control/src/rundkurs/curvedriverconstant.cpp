@@ -105,6 +105,9 @@ bool CurveDriverConstant::isNextToGlas(float cornerX, float cornerY) {
       const float x = r * cos(alpha);
       const float y = r * sin(alpha);
 
+      if (x < 0.15f)
+        continue;
+
       if (x < cornerX + 0.1f) {
         if (y > cornerY + 0.2f) {
           ROS_INFO("x: %f, y: %f corner: %f wall: %f", x, y, cornerX, cornerY);
@@ -163,7 +166,7 @@ bool CurveDriverConstant::isNextToCorner(bool left, float distanceToWall,
     for (i = laserscan->ranges.size() - 1; i > laserscan->ranges.size() / 2;
          --i) {
       const float r = laserscan->ranges[i];
-      if (laserscan->range_min < r && r < laserscan->range_max) {
+      if (laserscan->range_min < r && 0.4f < r && r < laserscan->range_max) {
         if (r - last_r > corner_threshold)
           break;
         else
