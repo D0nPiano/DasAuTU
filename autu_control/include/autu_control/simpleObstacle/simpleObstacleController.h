@@ -47,6 +47,12 @@ private:
   bool initialized;
   float obstacleDistace;
   float currentHeadingAngle;
+
+  float minWallDist;
+  float steeringMulti;
+  float distortPow;
+  float distortUSInfluencePow;
+  float obstacleSteeringPow; 
 };
 
 #endif

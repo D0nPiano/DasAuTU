@@ -25,6 +25,12 @@
 
     <param name="curvedriver_constant/max_motor_level" value="10"/>
     <param name="curvedriver_constant/steering" value="15"/>
+
+    <param name="obstacleController/minWallDist" value="0.0"/>
+    <param name="obstacleController/steeringMulti" value="0.0"/>
+    <param name="obstacleController/distortPow" value="0.0"/>
+    <param name="obstacleController/distortUSInfluencePow" value="0.0"/>
+    <param name="obstacleController/obstacleSteeringPow" value="0.0"/>
   </node>
 
   <node pkg="rviz" type="rviz" name="rviz" args="-d $(find autu_control)/launch/rundkurs/simulation.rviz"/>
