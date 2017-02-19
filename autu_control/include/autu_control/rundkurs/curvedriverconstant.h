@@ -12,11 +12,11 @@ public:
   CurveDriverConstant(ros::NodeHandle &nh, LaserUtil &laserUtil);
   void reset();
   void drive();
-  bool isAroundTheCorner(const sensor_msgs::LaserScanConstPtr &scan) const;
-  void curveInit(float radius, bool left);
-  bool isNextToCorner(bool left, float distanceToWall, float speed);
-  bool isAtStraightEnd() const;
-  bool isAtCurveBegin(bool left) const;
+  bool isAroundTheCorner() const;
+  void curveInit();
+  bool isNextToCorner(float speed);
+  bool rolloutBegins() const;
+  bool isAtCurveBegin() const;
   void setLaserscan(const sensor_msgs::LaserScanConstPtr &scan);
   void setOdom(const nav_msgs::OdometryConstPtr &msg);
 
@@ -26,7 +26,7 @@ private:
   int16_t steering;
   int16_t maxMotorLevel;
   float corner_threshold;
-  float rolloff_distance;
+  float rollout_distance;
   float blindness_offset;
   float scanOffset;
   double scanOffsetStamp;
@@ -40,7 +40,6 @@ private:
   geometry_msgs::Pose cornerSeen;
   geometry_msgs::Pose falseCorner, falseCornerSeen;
   geometry_msgs::Pose curveBegin;
-  geometry_msgs::Pose rotationCenter;
   tf::TransformListener transformListener;
   tf::StampedTransform transform;
   sensor_msgs::LaserScanConstPtr laserscan;
