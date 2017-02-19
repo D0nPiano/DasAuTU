@@ -10,6 +10,9 @@
 
 #include "autu_control/AutoController.h"
 
+#include "autu_control/rundkurs/lowpass.h"
+#include "autu_control/rundkurs/pidregler.h"
+
 #include "std_msgs/String.h"
 #include <exception>
 #include <iostream>
@@ -47,6 +50,7 @@ private:
   bool initialized;
   float obstacleDistace;
   float currentHeadingAngle;
+  PIDRegler* pidRegler;
 };
 
 #endif
