@@ -128,6 +128,9 @@ bool CurveDriverConstant::isNextToCorner(float speed) {
   const float dif = vc - speed;
   rollout_distance = dif * dif / -2 + speed * (speed - vc);
 
+  if (rollout_distance < 0)
+    rollout_distance = 0;
+
   if (!isNextToGlas(vecToCorner[0], vecToCorner[1]) &&
       corner.x - 0.1f <
           precurve_distance + rollout_distance + blindness_offset) {
