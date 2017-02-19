@@ -51,6 +51,11 @@ private:
   float obstacleDistace;
   float currentHeadingAngle;
   PIDRegler* pidRegler;
+  float minWallDist;
+  float steeringMulti;
+  float distortPow;
+  float distortUSInfluencePow;
+  float obstacleSteeringPow;
 };
 
 #endif
