@@ -81,7 +81,8 @@ void RundkursController::simpleController() {
   switch (drivingState) {
   case STRAIGHT:
     if (ros::Time::now().toSec() - time_of_last_corner > after_curve_deadtime) {
-      if (curveDriver.isNextToCorner(currentCarInfo->speed)) {
+      if (curveDriver.isNextToCorner(lowpass.getAverage(),
+                                     currentCarInfo->speed)) {
         ROS_INFO("************ Next To Corner ***************");
         drivingState = BEFORE_CURVE;
       }

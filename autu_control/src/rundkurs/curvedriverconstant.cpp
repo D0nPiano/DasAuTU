@@ -34,6 +34,11 @@ CurveDriverConstant::CurveDriverConstant(ros::NodeHandle &nh,
       nh.param<float>("main/curvedriver_constant/false_corner_end", 0.6f);
   blindness_offset =
       nh.param<float>("main/curvedriver_constant/blindness_offset", 0);
+  radius = nh.param<float>("main/curvedriver_constant/radius", 1.5f);
+  cornerSafetyDistance =
+      nh.param<float>("main/curvedriver_constant/corner_safety_distance", 0.2f);
+  motorLevelFactor =
+      nh.param<float>("main/curvedriver_constant/motorlevel_factor", 10.0f);
 }
 
 void CurveDriverConstant::reset() {}
@@ -90,7 +95,7 @@ bool CurveDriverConstant::isNextToGlas(float cornerX, float cornerY) {
   return false;
 }
 
-bool CurveDriverConstant::isNextToCorner(float speed) {
+bool CurveDriverConstant::isNextToCorner(float distanceToWall, float speed) {
   if (laserscan == nullptr)
     return false;
   updateScanOffset(speed);
@@ -124,16 +129,30 @@ bool CurveDriverConstant::isNextToCorner(float speed) {
 
   cornerSeen = odom->pose.pose;
 
-  const float vc = maxMotorLevel / 10.0f;
+  const float vc = maxMotorLevel / motorLevelFactor;
   const float dif = vc - speed;
   rollout_distance = dif * dif / -2 + speed * (speed - vc);
 
   if (rollout_distance < 0)
     rollout_distance = 0;
 
+  /* precurve_distance =
+       sqrt(cornerSafetyDistance * cornerSafetyDistance -
+            distanceToWall * distanceToWall +
+            2 * radius * (distanceToWall - cornerSafetyDistance));*/
+
+  // precurve_distance += speed * 0.15f;
+
+  // precurve_distance = 1.3f * distanceToWall;
+
+  // ROS_INFO("scanOffset: %f", scanOffset);
+
   if (!isNextToGlas(vecToCorner[0], vecToCorner[1]) &&
       corner.x - 0.1f <
           precurve_distance + rollout_distance + blindness_offset) {
+
+    //    ROS_INFO("distanceToWall: %f precurve_distance: %f", distanceToWall,
+    //           1.3f * distanceToWall);
 
     geometry_msgs::PoseStamped poseCorner;
     poseCorner.header.frame_id = "base_laser";

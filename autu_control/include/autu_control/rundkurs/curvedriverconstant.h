@@ -14,7 +14,7 @@ public:
   void drive();
   bool isAroundTheCorner() const;
   void curveInit();
-  bool isNextToCorner(float speed);
+  bool isNextToCorner(float distanceToWall, float speed);
   bool rolloutBegins() const;
   bool isAtCurveBegin() const;
   void setLaserscan(const sensor_msgs::LaserScanConstPtr &scan);
@@ -34,6 +34,9 @@ private:
   float precurve_distance;
   float falseCornerDistance;
   float falseCornerEnd;
+  float radius;
+  float cornerSafetyDistance;
+  float motorLevelFactor;
   bool falseCornerDetected;
   ros::Publisher command_pub;
   ros::Publisher corner_pub;
