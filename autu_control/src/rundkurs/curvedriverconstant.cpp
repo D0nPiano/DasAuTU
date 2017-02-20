@@ -80,16 +80,19 @@ bool CurveDriverConstant::isNextToGlas(float cornerX, float cornerY) {
       const float x = r * cos(alpha);
       const float y = r * sin(alpha);
 
-      if (x < 0.15f)
+      /*if (x < 0.15f)
         continue;
 
-      if (x < cornerX + 0.1f) {
-        if (y > cornerY + 0.2f)
-          return true;
-      } else if (x < maxDist) {
+       if (x < cornerX + 0.1f) {
+         if (y > cornerY + 0.2f)
+           return true;
+       } else if (x < maxDist) {
+         if (y < cornerY + 0.5f)
+           return true;
+       }*/
+      if (cornerX + 0.1f < x && x < maxDist)
         if (y < cornerY + 0.5f)
           return true;
-      }
     }
   }
   return false;
@@ -141,18 +144,9 @@ bool CurveDriverConstant::isNextToCorner(float distanceToWall, float speed) {
             distanceToWall * distanceToWall +
             2 * radius * (distanceToWall - cornerSafetyDistance));*/
 
-  // precurve_distance += speed * 0.15f;
-
-  // precurve_distance = 1.3f * distanceToWall;
-
-  // ROS_INFO("scanOffset: %f", scanOffset);
-
   if (!isNextToGlas(vecToCorner[0], vecToCorner[1]) &&
       corner.x - 0.1f <
           precurve_distance + rollout_distance + blindness_offset) {
-
-    //    ROS_INFO("distanceToWall: %f precurve_distance: %f", distanceToWall,
-    //           1.3f * distanceToWall);
 
     geometry_msgs::PoseStamped poseCorner;
     poseCorner.header.frame_id = "base_laser";
