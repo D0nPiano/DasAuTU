@@ -25,7 +25,7 @@ SimpleObstacleController::SimpleObstacleController(ros::NodeHandle *n,
       "pses_basis/sensor_data", 10, &SimpleObstacleController::getCurrentSensorData,
       this);
 
-  pidRegler = new PIDRegler(*n, 10.0, 1.0, 10, 0.3);
+  pidRegler = new PIDRegler(*n, 10.0, 1.0, 5, 0.4);
 
   initialized = false;
 
@@ -84,9 +84,9 @@ void SimpleObstacleController::updateDistanceToObstacle() {
     ROS_INFO("angle: [%f]", alpha_min);
     float distanceFactor = pow(0.7, obstacleSteeringPow) - obstacleDistace;
     if(alpha_min < 0.0){
-      currentHeadingAngle = distanceFactor * 50.0 / (250.0 * steeringMulti);
+      currentHeadingAngle = distanceFactor * 90.0 / (250.0 * steeringMulti);
     } else {
-      currentHeadingAngle = distanceFactor * -50.0 / (250.0 * steeringMulti);
+      currentHeadingAngle = distanceFactor * -90.0 / (250.0 * steeringMulti);
     }
     //currentHeadingAngle = alpha_max + 6.0 * (alpha_max - alpha_min);    
   }
@@ -125,8 +125,9 @@ float SimpleObstacleController::getWrackingDistance(){
 }
 
 int SimpleObstacleController::getBestSpeed(){
-  int motorLevel = std::min((int)(this->getWrackingDistance() * 2.0), 20);
-  int maxSpeedUS = (int) ((currentSensorData->range_sensor_left) * 40.0);
+  //int motorLevel = std::min((int)(this->getWrackingDistance() * 2.0), 20);
+  int motorLevel = std::min((int)(obstacleDistace * 0.8), 20);
+  int maxSpeedUS = (int) ((currentSensorData->range_sensor_left) * 30.0);
   motorLevel = std::min(motorLevel, maxSpeedUS);
   return std::max(motorLevel, 4);
 }
@@ -151,7 +152,7 @@ int SimpleObstacleController::getBestSteering(){
   else if (steering_level < -40)
     steering_level = -40;
 
-  ROS_INFO("steering_level: [%d]", steering_level);
+  //ROS_INFO("steering_level: [%d]", steering_level);
   return steering_level;
 }
 
@@ -194,7 +195,7 @@ void SimpleObstacleController::simpleController(){
   if(obstacleDistace > 0.7){ // does not have to avoid obstacle immediatly
     this->getBestHeadingAngle();
     int steering_level = (int)(currentHeadingAngle * 250.0 * steeringMulti);
-    if(0.0 < currentSensorData->range_sensor_left && currentSensorData->range_sensor_left < 0.8 && steering_level > 0){ // is next to Wall and wants to drive left
+    if(0.0 < currentSensorData->range_sensor_left && currentSensorData->range_sensor_left < 1.0 && steering_level > 0){ // is next to Wall and wants to drive left
 	    // use PID-Regler
 	    ROS_INFO("using PID Controller");
 		pidRegler->drive(currentSensorData->range_sensor_left, true);
