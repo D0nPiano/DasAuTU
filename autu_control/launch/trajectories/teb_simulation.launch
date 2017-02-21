@@ -8,7 +8,7 @@
 
   <!--- Run AMCL -->
   <!--- We load ACML here with diff=true to support our differential drive robot -->
-  <include file="$(find amcl)/examples/amcl_diff.launch" />
+ <!-- <include file="$(find amcl)/examples/amcl_diff.launch" />-->
 
   <node pkg="autu_control" type="main" name="main" output="screen">
    <remap from="autu/command" to="pses_basis/command"/>

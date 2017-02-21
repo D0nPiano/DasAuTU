@@ -149,7 +149,7 @@ void ObstacleController::convertCommand(
   }
 
   cmd.header.stamp = ros::Time::now();
-  command_pub->publish(cmd);
+  // command_pub->publish(cmd);
   ros::spinOnce();
 }
 
