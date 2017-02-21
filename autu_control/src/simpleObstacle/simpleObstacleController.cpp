@@ -29,16 +29,16 @@ SimpleObstacleController::SimpleObstacleController(ros::NodeHandle *n,
 
   initialized = false;
 
-  minWallDist = n->param<float>("main/obstacleController/minWallDist", 0.2f);
-  steeringMulti = n->param<float>("main/obstacleController/steeringMulti", 0.4f);
-  distortPow = n->param<float>("main/obstacleController/distortPow", 1.2f);
-  distortUSInfluencePow = n->param<float>("main/obstacleController/distortUSInfluencePow", 1.5f);
-  obstacleSteeringPow = n->param<float>("main/obstacleController/obstacleSteeringPow", 0.6f);
-  PIDMotorLevel = n->param<int>("main/obstacleController/PIDMotorLevel ", 5);
-  PIDWallDistance = n->param<float>("main/obstacleController/ PIDWallDistance ", 0.4f);
-  PIDP = n->param<float>("main/obstacleController/PIDP ", 10.0f);
-  PIDD = n->param<float>("main/obstacleController/PIDD ", 1.0f);
-  obstacleMotorLevel = n->param<float>("main/obstacleController/ obstacleMotorLevel ", 0.8f);
+  minWallDist = n->param<float>("main/obstacleController/minWallDist", 0.2);
+  steeringMulti = n->param<float>("main/obstacleController/steeringMulti", 0.4);
+  distortPow = n->param<float>("main/obstacleController/distortPow", 1.2);
+  distortUSInfluencePow = n->param<float>("main/obstacleController/distortUSInfluencePow", 1.5);
+  obstacleSteeringPow = n->param<float>("main/obstacleController/obstacleSteeringPow", 0.6);
+  PIDMotorLevel = n->param<int>("main/obstacleController/PIDMotorLevel", 5);
+  PIDWallDistance = n->param<float>("main/obstacleController/PIDWallDistance", 0.4);
+  PIDP = n->param<float>("main/obstacleController/PIDP", 10.0);
+  PIDD = n->param<float>("main/obstacleController/PIDD", 1.0);
+  obstacleMotorLevel = n->param<float>("main/obstacleController/obstacleMotorLevel", 0.8);
 
     pidRegler = new PIDRegler(*n, PIDP, PIDD, PIDMotorLevel, PIDWallDistance);
 
