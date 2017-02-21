@@ -25,7 +25,7 @@ SimpleObstacleController::SimpleObstacleController(ros::NodeHandle *n,
       "pses_basis/sensor_data", 10, &SimpleObstacleController::getCurrentSensorData,
       this);
 
-  pidRegler = new PIDRegler(*n, 10.0, 1.0, 5, 0.4);
+
 
   initialized = false;
 
@@ -34,6 +34,13 @@ SimpleObstacleController::SimpleObstacleController(ros::NodeHandle *n,
   distortPow = n->param<float>("main/obstacleController/distortPow", 1.2f);
   distortUSInfluencePow = n->param<float>("main/obstacleController/distortUSInfluencePow", 1.5f);
   obstacleSteeringPow = n->param<float>("main/obstacleController/obstacleSteeringPow", 0.6f);
+  PIDMotorLevel = n->param<int>("main/obstacleController/PIDMotorLevel ", 5);
+  PIDWallDistance = n->param<float>("main/obstacleController/ PIDWallDistance ", 0.4f);
+  PIDP = n->param<float>("main/obstacleController/PIDP ", 10.0f);
+  PIDD = n->param<float>("main/obstacleController/PIDD ", 1.0f);
+  obstacleMotorLevel = n->param<float>("main/obstacleController/ obstacleMotorLevel ", 0.8f);
+
+    pidRegler = new PIDRegler(*n, PIDP, PIDD, PIDMotorLevel, PIDWallDistance);
 
   ROS_INFO_STREAM("Alle Werte: " << minWallDist << steeringMulti << distortPow << distortUSInfluencePow << obstacleSteeringPow);
 }
@@ -79,7 +86,7 @@ void SimpleObstacleController::updateDistanceToObstacle() {
   
   obstacleDistace = d_min;
   obstacleDistace = pow(obstacleDistace, obstacleSteeringPow);
-  if(obstacleDistace < 0.7){
+  if(obstacleDistace < 1.0){
     ROS_INFO("***** Obstacle ********");
     ROS_INFO("angle: [%f]", alpha_min);
     float distanceFactor = pow(0.7, obstacleSteeringPow) - obstacleDistace;
@@ -126,7 +133,7 @@ float SimpleObstacleController::getWrackingDistance(){
 
 int SimpleObstacleController::getBestSpeed(){
   //int motorLevel = std::min((int)(this->getWrackingDistance() * 2.0), 20);
-  int motorLevel = std::min((int)(obstacleDistace * 0.8), 20);
+  int motorLevel = std::min((int)(obstacleDistace * obstacleMotorLevel), 20);
   int maxSpeedUS = (int) ((currentSensorData->range_sensor_left) * 30.0);
   motorLevel = std::min(motorLevel, maxSpeedUS);
   return std::max(motorLevel, 4);

@@ -56,6 +56,11 @@ private:
   float distortPow;
   float distortUSInfluencePow;
   float obstacleSteeringPow;
+  int PIDMotorLevel;
+  float PIDWallDistance;
+  float obstacleMotorLevel;
+  float PIDP;
+  float PIDD;
 };
 
 #endif
