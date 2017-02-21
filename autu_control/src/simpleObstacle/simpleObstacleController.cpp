@@ -202,7 +202,7 @@ void SimpleObstacleController::simpleController(){
   if(obstacleDistace > 0.7){ // does not have to avoid obstacle immediatly
     this->getBestHeadingAngle();
     int steering_level = (int)(currentHeadingAngle * 250.0 * steeringMulti);
-    if(0.0 < currentSensorData->range_sensor_left && currentSensorData->range_sensor_left < 1.0 && steering_level > 0){ // is next to Wall and wants to drive left
+    if(0.0 < currentSensorData->range_sensor_left && currentSensorData->range_sensor_left < 1.5 && steering_level > 0){ // is next to Wall and wants to drive left
 	    // use PID-Regler
 	    ROS_INFO("using PID Controller");
 		pidRegler->drive(currentSensorData->range_sensor_left, true);
