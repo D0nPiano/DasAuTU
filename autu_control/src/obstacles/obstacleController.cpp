@@ -109,6 +109,7 @@ bool ObstacleController::isNearToNextGoal(
 }
 
 void ObstacleController::generateNextGoal(const ros::TimerEvent &) {
+  return;
   geometry_msgs::PoseStamped goal;
   goal.header.frame_id = "map";
   goal.header.stamp = ros::Time::now();
@@ -155,19 +156,7 @@ void ObstacleController::convertCommand(
 void ObstacleController::run() {
 
   // Trans
-  /*  geometry_msgs::PoseStamped goal;
-    goal.header.frame_id = "map";
-    goal.header.stamp = ros::Time::now();
 
-    goal.pose.position.x = 8;
-    goal.pose.position.y = 0;
-    goal.pose.position.z = 0.0;
-
-    goal.pose.orientation.x = 0.0;
-    goal.pose.orientation.y = 0.0;
-    goal.pose.orientation.z = 0.015;
-    goal.pose.orientation.w = 0.998;
-    goal_pub.publish(goal);*/
   /* try {
      tf::StampedTransform transform;
      geometry_msgs::PointStamped currentPosition;

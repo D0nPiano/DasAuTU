@@ -31,7 +31,13 @@
     <param name="parking/max_angle" value="0.35"/>
   </node>
 
+  <node name="empty_map_server" pkg="map_server" type="map_server" args="$(find autu_control)/map/map_empty.yaml">
+  	<remap from="map" to="empty_map"/>
+  	<param name="frame_id" value="empty_map"/>
+  </node>
+
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+  	<remap from="map" to="empty_map"/>
     <rosparam file="$(find autu_control)/launch/trajectories/config_simulation/costmap_common_params.yaml" command="load" ns="global_costmap" />
     <rosparam file="$(find autu_control)/launch/trajectories/config_simulation/costmap_common_params.yaml" command="load" ns="local_costmap" />
     <rosparam file="$(find autu_control)/launch/trajectories/config_simulation/local_costmap_params.yaml" command="load" />
