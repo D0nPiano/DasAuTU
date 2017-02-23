@@ -22,9 +22,18 @@
     <param name="pidregler/d" value="1"/>
 
     <param name="curvedriver/max_motor_level" value="10"/>
+    <param name="curvedriver/after_curve_deadtime" value="0.75"/>
 
-    <param name="curvedriver_constant/max_motor_level" value="10"/>
+    <param name="curvedriver_constant/max_motor_level" value="20"/>
     <param name="curvedriver_constant/steering" value="15"/>
+    <param name="curvedriver_constant/precurve_distance" value="1.3"/>
+    <param name="curvedriver_constant/corner_end_angle" value="60"/>
+    <param name="curvedriver_constant/corner_threshold" value="0.4"/>
+    <param name="curvedriver_constant/dist_corner_to_line" value="0.3"/>
+    <param name="curvedriver_constant/false_corner_end" value="0.4"/>
+    <param name="curvedriver_constant/blindness_offset" value="0.5"/>
+    <param name="curvedriver_constant/radius" value="1.25"/>
+    <param name="curvedriver_constant/corner_safety_distance" value="0.15"/>
   </node>
 
   <node pkg="rviz" type="rviz" name="rviz" args="-d $(find autu_control)/launch/rundkurs/simulation.rviz"/>

@@ -4,6 +4,7 @@
 #include "autu_control/rundkurs/laser_utilities.h"
 #include "nav_msgs/Odometry.h"
 #include "ros/ros.h"
+#include "std_msgs/String.h"
 #include <sensor_msgs/LaserScan.h>
 #include <tf/transform_listener.h>
 
@@ -23,6 +24,7 @@ public:
 private:
   void updateScanOffset(float speed);
   bool isNextToGlas(float cornerX, float cornerY);
+  bool wallFound(float cornerX, float cornerY);
   int16_t steering;
   int16_t maxMotorLevel;
   float corner_threshold;
@@ -40,9 +42,11 @@ private:
   bool falseCornerDetected;
   ros::Publisher command_pub;
   ros::Publisher corner_pub;
+  ros::Publisher info_pub;
   geometry_msgs::Pose cornerSeen;
   geometry_msgs::Pose falseCorner, falseCornerSeen;
   geometry_msgs::Pose curveBegin;
+  geometry_msgs::PointStamped cornerInOdom;
   tf::TransformListener transformListener;
   tf::StampedTransform transform;
   sensor_msgs::LaserScanConstPtr laserscan;
