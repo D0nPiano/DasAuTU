@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+<include file="$(find pses_basis)/launch/pses_basis.launch" >
+ 	<arg name="dashboard" value="false"/>
+    	<arg name="kinect" value="false" />
+ </include>
+
+ <include file="$(find kinect2_bridge)/launch/kinect2_bridge.launch" >
+	<arg name="publish_tf" value="true" />
+</include>
+
+<!-- Set static tf transformations -->
+  <node pkg="tf" type="static_transform_publisher" name="map_broadcaster" args="0 0 0 0 0 0 1 map odom 10"/>
+  <param name="robot_description" textfile="$(find pses_simulation)/data/urdf_model/apollo_13.urdf"/>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/>
+
+
+  <node pkg="tf" type="static_transform_publisher" name="kinect_con"
+        args="$0 0 0 0 0 0 1 base_laser kinect2_base_link 100" /> 
+<!-- Kinect 2
+        Install Kinect2 : Follow ALL directives at https://github.com/code-iai/iai_kinect2
+                          Make sure it is calibrated!
+        Run:
+           $ roslaunch kinect2_bridge kinect2_bridge.launch publish_tf:=true
+           $ roslaunch rtabmap_ros rgbd_mapping_kinect2.launch
+   -->
+
+   <!-- Which image resolution to process in rtabmap: sd, qhd, hd -->
+   <arg name="resolution" default="qhd" />
+   
+   <!-- Fixed frame id, you may set "base_link" or "base_footprint" if they are published -->
+   <arg name="frame_id" default="kinect2_base_link"/>
+   
+   <!-- Rotate the camera -->
+   <arg name="pi/2" value="1.5707963267948966"/>
+   <arg name="optical_rotate" value="0 0 0 -$(arg pi/2) 0 -$(arg pi/2)" />
+   <node pkg="tf" type="static_transform_publisher" name="kinect2_base_link"
+args="$(arg optical_rotate) kinect2_base_link kinect2_link 100" /> 
+
+<!-- Emergency Brake -->
+<node pkg="autu_control" type="emergency_brake" name="emergency_brake" output="screen">
+  <!-- deceleration in m/s² -->
+  <param name="deceleration" value="0.9"/>
+  <!-- safety_distance in m -->
+  <param name="safety_distance" value="0.5"/>
+</node>
+<!-- Joystick driver -->
+   <node pkg="joy" type="joy_node" name="joy_node" output="screen">
+    <param name="dev" value="/dev/input/js0"/>
+    <param name="max_motorlevel" value="20"/>
+    <param name="max_steering" value="26"/>
+  </node>
+<node pkg="autu_control" type="main" name="main" output="screen">
+ <remap from="autu/command" to="pses_basis/command"/>
+  <param name="pidregler/max_motor_level" value="13"/>
+  <param name="pidregler/p" value="4"/>
+  <param name="pidregler/d" value="3"/>
+  <param name="pidregler/solldist" value="1.4"/>
+
+  <param name="curvedriver/max_motor_level" value="8"/>
+  <param name="curvedriver/curve_radius" value="2.5"/>
+  <param name="curvedriver/after_curve_deadtime" value="0.0"/>
+
+  <param name="curvedriver_constant/max_motor_level" value="13"/>
+  <param name="curvedriver_constant/steering" value="28"/>
+  <param name="curvedriver_constant/precurve_distance" value="1.2"/>
+  <param name="curvedriver_constant/corner_end_angle" value="55"/>
+  <param name="curvedriver_constant/corner_threshold" value="0.4"/>
+  <param name="curvedriver_constant/dist_corner_to_line" value="0.3"/>
+  <param name="curvedriver_constant/false_corner_end" value="0.4"/>
+  <param name="curvedriver_constant/blindness_offset" value="0"/>
+  <param name="curvedriver_constant/radius" value="1.25"/>
+  <param name="curvedriver_constant/corner_safety_distance" value="0.1"/>
+  <param name="curvedriver_constant/motorlevel_factor" value="5.7"/>
+
+  <param name="parking/velocity" value="8"/>
+  <param name="parking/max_steering" value="45"/>
+  <param name="parking/max_angle" value="0.35"/>
+</node>
+<node name="depthimage_to_laserscan" pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" >
+	<remap from="image" to="/kinect2/$(arg resolution)/image_depth_rect"/>
+        <param name="output_frame_id" value="scan"/>
+        <param name="angle_min" value="-0.610865235329"/>
+        <param name="angle_max" value="0.610865235329"/>
+        <param name="angle_increment " value="0.00349065847695"/>
+        <param name="range_min" value="0"/>
+        <param name="range_max" value="10"/>
+        <param name="use_inf" value="false"/>
+	<param name="target_frame" value="scan"/>
+	<!--<param name="scan_time" value=""/>-->
+</node>
+
+  
+</launch>
+
