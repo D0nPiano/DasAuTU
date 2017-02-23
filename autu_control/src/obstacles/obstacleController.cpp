@@ -14,16 +14,22 @@ Point point_new(float x, float y) {
 ObstacleController::ObstacleController(ros::NodeHandle *n,
                                        ros::Publisher *command_pub,
                                        bool startDriving)
-    : n(n), command_pub(command_pub) {
+    : n(n), command_pub(command_pub), drivingToCorner(false), laserUtil(*n) {
   ROS_INFO("New ObstacleController");
 
   goal_pub =
       n->advertise<geometry_msgs::PoseStamped>("move_base_simple/goal", 10);
 
+  result_pub = n->subscribe<move_base_msgs::MoveBaseActionResult>(
+      "/move_base/result", 3, &ObstacleController::resultCallback, this);
+
   plan_command_sub = n->subscribe<geometry_msgs::Twist>(
       "cmd_vel", 10, &ObstacleController::convertCommand, this);
 
-  timer = n->createTimer(ros::Duration(1.0),
+  laser_sub = n->subscribe<sensor_msgs::LaserScan>(
+      "/scan", 10, &ObstacleController::updateCurrentLaserScan, this);
+
+  timer = n->createTimer(ros::Duration(0.5),
                          &ObstacleController::generateNextGoal, this);
 
   if (!startDriving) {
@@ -108,21 +114,123 @@ bool ObstacleController::isNearToNextGoal(
   return (distance < 3.0);
 }
 
-void ObstacleController::generateNextGoal(const ros::TimerEvent &) {
-  return;
-  geometry_msgs::PoseStamped goal;
-  goal.header.frame_id = "map";
-  goal.header.stamp = ros::Time::now();
+void ObstacleController::generateGoalFromFarestPoint() {
+  if (laserscan == nullptr)
+    return;
 
-  goal.pose.position.x = 8;
-  goal.pose.position.y = 0;
+  size_t i_max = 0;
+  float r_max = 0;
+  for (size_t i = 0; i < laserscan->ranges.size(); ++i) {
+    const float r = laserscan->ranges[i];
+    if (laserscan->range_min < r && r < laserscan->range_max) {
+      if (r > r_max) {
+        r_max = r;
+        i_max = i;
+      }
+    }
+  }
+  const float alpha = laserscan->angle_min + i_max * laserscan->angle_increment;
+  geometry_msgs::PoseStamped goal;
+  goal.header.frame_id = "base_laser";
+  goal.header.stamp = laserscan->header.stamp;
+
+  goal.pose.position.x = r_max * cos(alpha);
+  goal.pose.position.y = r_max * sin(alpha);
   goal.pose.position.z = 0.0;
 
   goal.pose.orientation.x = 0.0;
   goal.pose.orientation.y = 0.0;
-  goal.pose.orientation.z = 0.015;
-  goal.pose.orientation.w = 0.998;
+  goal.pose.orientation.z = 0;
+  goal.pose.orientation.w = 1.0;
+
+  // if (r_max > 2.5)
   goal_pub.publish(goal);
+}
+
+void ObstacleController::generateNextGoal(const ros::TimerEvent &) {
+  // return;
+  if (laserscan == nullptr || drivingToCorner)
+    return;
+  geometry_msgs::PoseStamped goal;
+  Eigen::Vector2f vecToCorner;
+
+  float last_r = std::numeric_limits<float>::max();
+
+  float corner_threshold = 0.8;
+
+  size_t i;
+  bool found = false;
+  float r = 0;
+  for (i = laserscan->ranges.size() - 1; i > laserscan->ranges.size() / 2;
+       --i) {
+    r = laserscan->ranges[i];
+    if (laserscan->range_min < r && 0.4f < r && r < laserscan->range_max) {
+      if (r - last_r > corner_threshold) {
+        const float target_r = r + last_r / 2;
+        ROS_INFO(
+            "********************* Corner detected ************************");
+        const float alpha = 2 * 0.4f / r;
+        const size_t last_x = i - alpha / laserscan->angle_increment;
+        found = true;
+        for (size_t x = i; x > laserscan->ranges.size() / 2 && x > last_x;
+             --x) {
+          const float r2 = laserscan->ranges[x];
+          if (laserscan->range_min < r2 && 0.4f < r2 &&
+              r2 < laserscan->range_max) {
+            if (r2 < r / 2 + 0.4f) {
+              found = false;
+              i = x;
+              last_r = r2;
+              break;
+            }
+          }
+        }
+        if (found) {
+          r = target_r;
+          break;
+        }
+      } else
+        last_r = r;
+    }
+  }
+  const float alpha =
+      laserscan->angle_min + i * laserscan->angle_increment - 0.4f / r;
+
+  vecToCorner[0] = r / 2 * cos(alpha);
+  vecToCorner[1] = r / 2 * sin(alpha);
+  if (found) { //&& vecToCorner[0] < 4.0f) {
+    //&&wallFound(vecToCorner[0], vecToCorner[1])) {
+    goal.header.frame_id = "base_laser";
+    goal.header.stamp = laserscan->header.stamp;
+
+    goal.pose.position.x = vecToCorner[0];
+    goal.pose.position.y = vecToCorner[1];
+    goal.pose.position.z = 0.0;
+
+    /*goal.pose.orientation.x = 0.0;
+    goal.pose.orientation.y = 0.0;
+    goal.pose.orientation.z = 0;
+    goal.pose.orientation.w = 1.0;*/
+    tf::quaternionTFToMsg(tf::createQuaternionFromYaw(alpha),
+                          goal.pose.orientation);
+    // cornerDetectedTimestamp=ros::Time::now().toSec();
+    drivingToCorner = true;
+    goal_pub.publish(goal);
+  } else {
+    generateGoalFromFarestPoint();
+  }
+}
+
+void ObstacleController::updateCurrentLaserScan(
+    const sensor_msgs::LaserScanConstPtr &msg) {
+  laserscan = msg;
+}
+
+void ObstacleController::resultCallback(
+    const move_base_msgs::MoveBaseActionResultConstPtr &msg) {
+
+  if (msg->status.status == msg->status.SUCCEEDED)
+    drivingToCorner = false;
 }
 
 void ObstacleController::convertCommand(

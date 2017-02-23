@@ -10,6 +10,8 @@
 
 #include "autu_control/AutoController.h"
 #include "autu_control/obstacles/tinyxml2/tinyxml2.h"
+#include "autu_control/rundkurs/laser_utilities.h"
+#include "autu_control/rundkurs/line.h"
 
 #include "std_msgs/String.h"
 #include <exception>
@@ -27,8 +29,10 @@
 #include "tf/tf.h"
 #include "tf/transform_listener.h"
 
+#include "Eigen/Dense"
 #include "geometry_msgs/Pose.h"
 #include "geometry_msgs/PoseStamped.h"
+#include "move_base_msgs/MoveBaseActionResult.h"
 
 typedef pses_basis::Command command_data;
 
@@ -46,15 +50,24 @@ private:
   void convertCommand(const geometry_msgs::Twist::ConstPtr &motionIn);
   void sendNextGoal();
   bool isNearToNextGoal(const geometry_msgs::PointStamped *currentPosition);
+  void generateGoalFromFarestPoint();
   void generateNextGoal(const ros::TimerEvent &);
+  void updateCurrentLaserScan(const sensor_msgs::LaserScanConstPtr &);
+  void resultCallback(const move_base_msgs::MoveBaseActionResultConstPtr &msg);
   ros::Timer timer;
   ros::Subscriber plan_command_sub;
+  ros::Subscriber laser_sub;
   ros::Publisher *command_pub;
   ros::Publisher goal_pub;
+  ros::Subscriber result_pub;
   tinyxml2::XMLDocument routeXML;
   std::vector<Point> points;
   tf::TransformListener transformListener;
   int currentGoal;
+  sensor_msgs::LaserScanConstPtr laserscan;
+  double cornerDetectedTimestamp;
+  bool drivingToCorner;
+  LaserUtil laserUtil;
 };
 
 #endif
