@@ -12,37 +12,37 @@
 
 RundkursController::RundkursController(ros::NodeHandle *n,
                                        ros::Publisher *command_pub)
-    : n(n), command_pub(command_pub), laserUtil(*n), lowpass(10),
-      drivingState(STRAIGHT), pidRegler(*n), curveDriver(*n, laserUtil),
-      time_of_last_corner(0) {
+    : n(n), commandPub(command_pub), laserUtil(*n), curveDriver(*n, laserUtil),
+      lowpass(10), pdController(*n), drivingState(STRAIGHT),
+      timeOfLastCorner(0) {
   ROS_INFO("New RundkursController");
 
-  laser_sub = n->subscribe<sensor_msgs::LaserScan>(
+  laserscanSub = n->subscribe<sensor_msgs::LaserScan>(
       "/scan", 10, &RundkursController::getCurrentLaserScan, this);
 
-  sensor_sub = n->subscribe<pses_basis::SensorData>(
+  sensorDataSub = n->subscribe<pses_basis::SensorData>(
       "pses_basis/sensor_data", 10, &RundkursController::getCurrentSensorData,
       this);
 
-  odom_sub = n->subscribe<nav_msgs::Odometry>(
+  odomSub = n->subscribe<nav_msgs::Odometry>(
       "/odom", 1, &RundkursController::odomCallback, this);
 
-  carinfo_sub = n->subscribe<pses_basis::CarInfo>(
+  carinfoSub = n->subscribe<pses_basis::CarInfo>(
       "/pses_basis/car_info", 1, &RundkursController::carinfoCallback, this);
 
-  pd_maxMotorLevel = pidRegler.getMaxMotorLevel();
+  pdMaxMotorLevel = pdController.getMaxMotorLevel();
 
   curveRadius = n->param<float>("main/curvedriver/curve_radius", 1.8f);
 
-  after_curve_deadtime =
+  afterCurveDeadtime =
       n->param<double>("main/curvedriver/after_curve_deadtime", 1.5);
 }
 
 RundkursController::~RundkursController() {
   ROS_INFO("Destroying RundkursController");
   this->stop();
-  laser_sub.shutdown();
-  sensor_sub.shutdown();
+  laserscanSub.shutdown();
+  sensorDataSub.shutdown();
 }
 
 void RundkursController::stop() {
@@ -50,7 +50,7 @@ void RundkursController::stop() {
   cmd.motor_level = 0;
   cmd.steering_level = 0;
   cmd.header.stamp = ros::Time::now();
-  command_pub->publish(cmd);
+  commandPub->publish(cmd);
   ros::spinOnce();
 }
 
@@ -80,7 +80,7 @@ void RundkursController::simpleController() {
 
   switch (drivingState) {
   case STRAIGHT:
-    if (ros::Time::now().toSec() - time_of_last_corner > after_curve_deadtime) {
+    if (ros::Time::now().toSec() - timeOfLastCorner > afterCurveDeadtime) {
       if (curveDriver.isNextToCorner(lowpass.getAverage(),
                                      currentCarInfo->speed)) {
         ROS_INFO("************ Next To Corner ***************");
@@ -105,8 +105,8 @@ void RundkursController::simpleController() {
   case CURVE:
     if (curveDriver.isAroundTheCorner()) {
       ROS_INFO("************ End of Corner ***************");
-      time_of_last_corner = ros::Time::now().toSec();
-      pidRegler.reset();
+      timeOfLastCorner = ros::Time::now().toSec();
+      pdController.reset();
       drivingState = STRAIGHT;
     }
     break;
@@ -116,16 +116,16 @@ void RundkursController::simpleController() {
 
   switch (drivingState) {
   case STRAIGHT:
-    pidRegler.setMaxMotorLevel(pd_maxMotorLevel);
-    pidRegler.drive(lowpass.getAverage(), true);
+    pdController.setMaxMotorLevel(pdMaxMotorLevel);
+    pdController.drive(lowpass.getAverage(), true);
     break;
   case BEFORE_CURVE:
-    pidRegler.setMaxMotorLevel(pd_maxMotorLevel);
-    pidRegler.drive(lowpass.getAverage(), true);
+    pdController.setMaxMotorLevel(pdMaxMotorLevel);
+    pdController.drive(lowpass.getAverage(), true);
     break;
   case ROLLOUT:
-    pidRegler.setMaxMotorLevel(1);
-    pidRegler.drive(lowpass.getAverage(), true);
+    pdController.setMaxMotorLevel(1);
+    pdController.drive(lowpass.getAverage(), true);
     break;
   case CURVE:
     curveDriver.drive();

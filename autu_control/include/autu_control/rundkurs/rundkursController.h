@@ -29,7 +29,7 @@ typedef pses_basis::Command command_data;
 
 class RundkursController : public AutoController {
 public:
-  RundkursController(ros::NodeHandle *n, ros::Publisher *command_pub);
+  RundkursController(ros::NodeHandle *n, ros::Publisher *commandPub);
   ~RundkursController();
   void run();
 
@@ -40,26 +40,30 @@ private:
   void odomCallback(const nav_msgs::OdometryConstPtr &msg);
   void carinfoCallback(const pses_basis::CarInfoConstPtr &msg);
   void simpleController();
+
   ros::NodeHandle *n;
-  ros::Publisher *command_pub;
-  ros::Subscriber laser_sub;
-  ros::Subscriber sensor_sub;
-  ros::Subscriber odom_sub;
-  ros::Subscriber carinfo_sub;
-  LaserUtil laserUtil;
-  Lowpass lowpass;
+  ros::Publisher *commandPub;
+  ros::Subscriber laserscanSub;
+  ros::Subscriber sensorDataSub;
+  ros::Subscriber odomSub;
+  ros::Subscriber carinfoSub;
+
   sensor_msgs::LaserScanConstPtr currentLaserScan;
   pses_basis::SensorDataConstPtr currentSensorData;
   pses_basis::CarInfoConstPtr currentCarInfo;
+  nav_msgs::OdometryConstPtr odomData;
+
+  LaserUtil laserUtil;
+  CurveDriverConstant curveDriver;
+  Lowpass lowpass;
+  PIDRegler pdController;
+
   bool initialized;
   uint8_t drivingState;
-  PIDRegler pidRegler;
-  uint16_t pd_maxMotorLevel;
-  CurveDriverConstant curveDriver;
-  nav_msgs::OdometryConstPtr odomData;
+  int pdMaxMotorLevel;
   float curveRadius;
-  double time_of_last_corner;
-  double after_curve_deadtime;
+  double timeOfLastCorner;
+  double afterCurveDeadtime;
 };
 
 #endif
