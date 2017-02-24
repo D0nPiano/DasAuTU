@@ -61,6 +61,7 @@ private:
   float obstacleMotorLevel;
   float PIDP;
   float PIDD;
+  Lowpass lowpass;
 };
 
 #endif

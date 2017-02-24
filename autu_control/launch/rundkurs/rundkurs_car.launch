@@ -71,16 +71,16 @@ args="$(arg optical_rotate) kinect2_base_link kinect2_link 100" />
   <param name="parking/max_steering" value="45"/>
   <param name="parking/max_angle" value="0.35"/>
 
-  <param name="obstacleController/minWallDist" value="0.8"/>
-  <param name="obstacleController/steeringMulti" value="2.0"/>
-  <param name="obstacleController/distortPow" value="1.2"/>
+  <param name="obstacleController/minWallDist" value="0.35"/><!-- distance to left and right of vehicle where obstacles are detected --> 
+  <param name="obstacleController/steeringMulti" value="5.0"/>
+  <param name="obstacleController/distortPow" value="1.0"/>
   <param name="obstacleController/distortUSInfluencePow" value="1.1"/>
-  <param name="obstacleController/obstacleSteeringPow" value="1.2"/>
-  <param name="obstacleController/PIDMotorLevel" value="10"/>
+  <param name="obstacleController/obstacleSteeringPow" value="0.5"/>
+  <param name="obstacleController/PIDMotorLevel" value="8"/>
   <param name="obstacleController/PIDWallDistance" value="0.7"/>
-  <param name="obstacleController/obstacleMotorLevel" value="4.5"/>
+  <param name="obstacleController/obstacleMotorLevel" value="2.2"/>
   <param name="obstacleController/PIDP" value="16.0"/>
-  <param name="obstacleController/PIDD" value="1.6"/>
+  <param name="obstacleController/PIDD" value="3.0"/>
 
 </node>
 <node name="depthimage_to_laserscan" pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" >
