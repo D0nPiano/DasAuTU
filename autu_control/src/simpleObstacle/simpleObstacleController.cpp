@@ -10,12 +10,13 @@
 //#define steeringMulti 0.3	// between 0.0 (straight) and 1.0 (full)
 //#define distortPow 1.2		// behave linear (1) or quadradic (2.0)-> Higher: Drive further left
 //#define distortUSInfluencePow 1.5
-//#define obstacleSteeringPow 0.6
+//#define obstacleSteeringPow 0.
+#define OBSTACLE_DIST 0.7   // Car width in m
 
 
 SimpleObstacleController::SimpleObstacleController(ros::NodeHandle *n,
                                        ros::Publisher *command_pub)
-    : n(n), command_pub(command_pub), lowpass(10){
+    : n(n), command_pub(command_pub), lowpass(5){
   ROS_INFO("New SimpleObstacleController");
 
   laser_sub = n->subscribe<sensor_msgs::LaserScan>(
@@ -87,11 +88,38 @@ void SimpleObstacleController::updateDistanceToObstacle() {
   
   obstacleDistace = d_min;
   obstacleDistace = pow(obstacleDistace, obstacleSteeringPow);
-  if(obstacleDistace < 1.0){
+  if(obstacleDistace < OBSTACLE_DIST){
     ROS_INFO("***** Obstacle ********");
+
+  // sum pu left side
+    double sumLeft, sumRight;
+    for (size_t i = 0; i < (int)(currentLaserScan->ranges.size() / 2); ++i) {
+      const float r = currentLaserScan->ranges[i];
+      if (currentLaserScan->range_min < r && r < currentLaserScan->range_max) {
+        // alpha in radians and always positive
+        const float alpha =
+            i * currentLaserScan->angle_increment + currentLaserScan->angle_min;
+        sumRight += r * std::cos(std::abs(alpha));
+      }
+    }
+
+    for (size_t i = (int)(currentLaserScan->ranges.size() / 2); i < currentLaserScan->ranges.size(); ++i) {
+      const float r = currentLaserScan->ranges[i];
+      if (currentLaserScan->range_min < r && r < currentLaserScan->range_max) {
+        // alpha in radians and always positive
+        const float alpha =
+            i * currentLaserScan->angle_increment + currentLaserScan->angle_min;
+        sumLeft += r * std::cos(std::abs(alpha));
+      }
+    }
+
+
+  ROS_INFO("Right [%f]", sumRight);
+  ROS_INFO("Left: [%f]", sumLeft);
+
     ROS_INFO("angle: [%f]", alpha_min);
     float distanceFactor = pow(0.7, obstacleSteeringPow) - obstacleDistace;
-    if(alpha_min < alpha_max){
+    if(sumRight < sumLeft){
       currentHeadingAngle = distanceFactor * 90.0 / (250.0 * steeringMulti);
     } else {
       currentHeadingAngle = distanceFactor * -90.0 / (250.0 * steeringMulti);
@@ -191,8 +219,11 @@ void SimpleObstacleController::getBestHeadingAngle() {
 
 
   for (size_t i = 0; i < currentLaserScan->ranges.size(); ++i) {
-    const float r = currentLaserScan->ranges[i];
+    float r = currentLaserScan->ranges[i];
     if (currentLaserScan->range_min < r && r < currentLaserScan->range_max) {
+    	if(r > 6.0){
+    		r = 6.0;
+    	}
       // alpha in radians and always positive
       const float alpha =
           i * currentLaserScan->angle_increment + currentLaserScan->angle_min;
@@ -209,10 +240,10 @@ void SimpleObstacleController::getBestHeadingAngle() {
 
 void SimpleObstacleController::simpleController(){
   this->updateDistanceToObstacle();
-  if(obstacleDistace > 1.0){ // does not have to avoid obstacle immediatly
+  if(obstacleDistace > OBSTACLE_DIST){ // does not have to avoid obstacle immediatly
     this->getBestHeadingAngle();
     int steering_level = this->getBestSteering();
-    if(lowpass.getAverage() < 1.5 && steering_level > 0 && obstacleDistace > 1.2){ // is next to Wall and wants to drive left
+    if(lowpass.getAverage() < 1.5 && obstacleDistace > 1.2){ // is next to Wall and wants to drive left
 	    // use PID-Regler
 	    ROS_INFO("using PID Controller");
       	pidRegler->setMaxMotorLevel(std::min(this->getBestSpeed(),PIDMotorLevel));

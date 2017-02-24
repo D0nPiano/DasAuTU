@@ -72,7 +72,7 @@ args="$(arg optical_rotate) kinect2_base_link kinect2_link 100" />
   <param name="parking/max_angle" value="0.35"/>
 
   <param name="obstacleController/minWallDist" value="0.35"/><!-- distance to left and right of vehicle where obstacles are detected --> 
-  <param name="obstacleController/steeringMulti" value="5.0"/>
+  <param name="obstacleController/steeringMulti" value="1.0"/>
   <param name="obstacleController/distortPow" value="1.0"/>
   <param name="obstacleController/distortUSInfluencePow" value="1.1"/>
   <param name="obstacleController/obstacleSteeringPow" value="0.5"/>
