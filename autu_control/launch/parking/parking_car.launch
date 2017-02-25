@@ -7,6 +7,7 @@
   <include file="$(find kinect2_bridge)/launch/kinect2_bridge.launch">
     <arg name="publish_tf" value="true"/>
   </include>
+
   <!-- Set static tf transformations -->
   <node pkg="tf" type="static_transform_publisher" name="map_broadcaster" args="0 0 0 0 0 0 1 map odom 10"/>
   <param name="robot_description" textfile="$(find pses_simulation)/data/urdf_model/apollo_13.urdf"/>
@@ -60,11 +61,11 @@
     <param name="curvedriver/max_motor_level" value="0"/>
     <param name="parking/regulator_p" value="25"/>
     <param name="parking/regulator_d" value="4"/>
-    <param name="parking/correction_x" value="0.2"/>
+    <param name="parking/correction_x" value="0"/>
     <param name="parking/velocity_forward" value="5"/>
-    <param name="parking/velocity_backward" value="8"/>
+    <param name="parking/velocity_backward" value="10"/> 
     <param name="parking/w" value="0.2"/>
-    <param name="parking/safety_distance" value="0.1"/>
+    <param name="parking/safety_distance" value="0.1"/> 
     <param name="parking/max_steering_left" value="45"/>
     <param name="parking/max_steering_right" value="37"/>
     <param name="parking/minimal_radius" value="1.0"/>
