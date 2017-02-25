@@ -91,7 +91,7 @@ void SimpleObstacleController::updateDistanceToObstacle() {
   if(obstacleDistace < OBSTACLE_DIST){
 
     ROS_INFO("***** Obstacle ********");
-    obstacleDistace = pow(obstacleDistace, obstacleSteeringPow);
+    //obstacleDistace = pow(obstacleDistace, obstacleSteeringPow);
   // sum pu left side
     double sumLeft, sumRight;
     for (size_t i = 0; i < (int)(currentLaserScan->ranges.size() / 2); ++i) {
@@ -119,7 +119,7 @@ void SimpleObstacleController::updateDistanceToObstacle() {
   ROS_INFO("Left: [%f]", sumLeft);
 
     ROS_INFO("angle: [%f]", alpha_min);
-    float distanceFactor = pow(0.7, obstacleSteeringPow) - obstacleDistace;
+    float distanceFactor = obstacleSteeringPow/obstacleDistace ;
     if(sumRight < sumLeft){
       currentHeadingAngle = distanceFactor * 90.0 / (250.0 * steeringMulti);
     } else {
