@@ -11,7 +11,7 @@
 //#define distortPow 1.2		// behave linear (1) or quadradic (2.0)-> Higher: Drive further left
 //#define distortUSInfluencePow 1.5
 //#define obstacleSteeringPow 0.
-#define OBSTACLE_DIST 0.7   // Car width in m
+#define OBSTACLE_DIST 0.5   // obstacle Distance fo emergency reaction
 
 
 SimpleObstacleController::SimpleObstacleController(ros::NodeHandle *n,
@@ -87,10 +87,11 @@ void SimpleObstacleController::updateDistanceToObstacle() {
     d_min = currentLaserScan->range_max;
   
   obstacleDistace = d_min;
-  obstacleDistace = pow(obstacleDistace, obstacleSteeringPow);
+  
   if(obstacleDistace < OBSTACLE_DIST){
-    ROS_INFO("***** Obstacle ********");
 
+    ROS_INFO("***** Obstacle ********");
+    obstacleDistace = pow(obstacleDistace, obstacleSteeringPow);
   // sum pu left side
     double sumLeft, sumRight;
     for (size_t i = 0; i < (int)(currentLaserScan->ranges.size() / 2); ++i) {
