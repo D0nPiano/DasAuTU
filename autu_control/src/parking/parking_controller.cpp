@@ -57,6 +57,9 @@ ParkingController::ParkingController(ros::NodeHandle &nh)
 
   theta = acos((r - w) / r_e) - beta;
 
+  ROS_INFO("*************** Theta: %f *********************",
+           theta * 180 / M_PI);
+
   delta = theta - alpha;
 
   pidRegler = PIDRegler(nh, regulator_p, regulator_d, velocity_forward, 0);
@@ -149,6 +152,7 @@ void ParkingController::run() {
   case TURN_RIGHT:
     tf::quaternionMsgToTF(curveBegin.orientation, begin);
     tf::quaternionMsgToTF(odom->pose.pose.orientation, current);
+    ROS_INFO("Current Angle: %f", 2 * begin.angle(current) * 180 / M_PI);
     if (2 * begin.angle(current) > theta) {
       curveBegin = odom->pose.pose;
       state = TURN_LEFT;
