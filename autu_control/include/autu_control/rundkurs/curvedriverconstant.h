@@ -11,7 +11,8 @@
 
 class CurveDriverConstant {
 public:
-  CurveDriverConstant(ros::NodeHandle &nh, LaserUtil &laserUtil);
+  CurveDriverConstant(ros::NodeHandle &nh);
+
   /**
    * @brief Generates the commands to control the car in the curves.
    *
@@ -54,7 +55,7 @@ public:
    * @param speed - The current speed of the car in m/s
    * @return True means the car is near to a curve/corner.
    */
-  bool isNextToCorner(float distanceToWall, float speed);
+  bool isNextToCorner(float speed);
 
   /**
    * @brief Signals that the rollout-phase should begin now.
@@ -75,6 +76,7 @@ public:
    * @brief Updates the laserscan.
    */
   void setLaserscan(const sensor_msgs::LaserScanConstPtr &scan);
+
   /**
    * @brief Updates odometry data.
    */
@@ -89,7 +91,22 @@ private:
    * @param speed - The current speed of the car in m/s
    */
   void updateScanOffset(float speed);
+
+  /**
+   * @brief Determines if the detected corner was only produced by a glass pane
+   * or a reflection on the wall.
+   * @param cornerX - x-coordinate of the detected corner in base_laser
+   * @param cornerY - y-coordinate of the detected corner in base_laser
+   * @return True = glass pane or reflection produced the corner
+   */
   bool isNextToGlas(float cornerX, float cornerY);
+
+  /**
+   * @brief Looks for a wall in the environment of the detected corner.
+   * @param cornerX - x-coordinate of the detected corner in base_laser
+   * @param cornerY - y-coordinate of the detected corner in base_laser
+   * @return True = wall was found near the corner
+   */
   bool wallFound(float cornerX, float cornerY);
 
   /**
@@ -108,8 +125,19 @@ private:
   sensor_msgs::LaserScanConstPtr laserscan;
   nav_msgs::OdometryConstPtr odom;
 
+  /**
+   * @brief Car's position when the curve was detected
+   */
   geometry_msgs::Pose cornerSeen;
+
+  /**
+   * @brief Car's position when entering the curve.
+   */
   geometry_msgs::Pose curveBegin;
+
+  /**
+   * @brief Position of the detected corner in frame odom
+   */
   geometry_msgs::PointStamped cornerInOdom;
 
   /**
@@ -163,11 +191,18 @@ private:
    * ended.
    */
   float cornerEndAngle;
-  float precurveDistance;
-  float cornerSafetyDistance;
-  float motorLevelFactor;
 
-  LaserUtil &laserUtil;
+  /**
+   * @brief If the distance to the corner is smaller than precurveDistance the
+   * car starts to steer left.
+   */
+  float precurveDistance;
+
+  /**
+   * @brief The coordinates of the detected corner (frame: base_laser).
+   *
+   * The scanOffset was already considered.
+   */
   struct Point {
     float x;
     float y;

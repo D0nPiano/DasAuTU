@@ -13,9 +13,7 @@ using std::sin;
 using std::cos;
 using std::abs;
 
-CurveDriverConstant::CurveDriverConstant(ros::NodeHandle &nh,
-                                         LaserUtil &laserUtil)
-    : scanOffset(0), laserUtil(laserUtil) {
+CurveDriverConstant::CurveDriverConstant(ros::NodeHandle &nh) : scanOffset(0) {
   commandPub = nh.advertise<pses_basis::Command>("autu/command", 1);
 
   cornerPub =
@@ -34,10 +32,6 @@ CurveDriverConstant::CurveDriverConstant(ros::NodeHandle &nh,
       nh.param<float>("main/curvedriver_constant/precurve_distance", 0.8f);
   blindnessOffset =
       nh.param<float>("main/curvedriver_constant/blindness_offset", 0);
-  cornerSafetyDistance =
-      nh.param<float>("main/curvedriver_constant/corner_safety_distance", 0.2f);
-  motorLevelFactor =
-      nh.param<float>("main/curvedriver_constant/motorlevel_factor", 10.0f);
 }
 
 void CurveDriverConstant::drive() {
@@ -108,7 +102,7 @@ bool CurveDriverConstant::wallFound(float cornerX, float cornerY) {
   return counter >= 80;
 }
 
-bool CurveDriverConstant::isNextToCorner(float distanceToWall, float speed) {
+bool CurveDriverConstant::isNextToCorner(float speed) {
   if (laserscan == nullptr)
     return false;
   updateScanOffset(speed);
@@ -142,7 +136,7 @@ bool CurveDriverConstant::isNextToCorner(float distanceToWall, float speed) {
 
   cornerSeen = odom->pose.pose;
 
-  /*const float vc = maxMotorLevel / motorLevelFactor;
+  /*const float vc = maxMotorLevel / 10.0f;
   const float dif = vc - speed;
    rollout_distance = dif * dif / -2 + speed * (speed - vc);
 
@@ -151,10 +145,6 @@ bool CurveDriverConstant::isNextToCorner(float distanceToWall, float speed) {
 
   rolloutDistance = 0;
 
-  /* precurve_distance =
-       sqrt(cornerSafetyDistance * cornerSafetyDistance -
-            distanceToWall * distanceToWall +
-            2 * radius * (distanceToWall - cornerSafetyDistance));*/
   std_msgs::String debugMsg;
   if (!isNextToGlas(vecToCorner[0], vecToCorner[1])) {
     if (wallFound(vecToCorner[0], vecToCorner[1])) {

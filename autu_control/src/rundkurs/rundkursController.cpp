@@ -11,9 +11,8 @@
 
 RundkursController::RundkursController(ros::NodeHandle *n,
                                        ros::Publisher *command_pub)
-    : n(n), commandPub(command_pub), laserUtil(*n), curveDriver(*n, laserUtil),
-      lowpass(10), pdController(*n), drivingState(STRAIGHT),
-      timeOfLastCorner(0) {
+    : n(n), commandPub(command_pub), curveDriver(*n), lowpass(10),
+      pdController(*n), drivingState(STRAIGHT), timeOfLastCorner(0) {
   ROS_INFO("New CircuitController");
 
   laserscanSub = n->subscribe<sensor_msgs::LaserScan>(
@@ -87,8 +86,7 @@ void RundkursController::controlCar() {
     // last curve wasn't shortly before
     if (ros::Time::now().toSec() - timeOfLastCorner > afterCurveDeadtime)
       // curveDriver checks if the car is near to a corner
-      if (curveDriver.isNextToCorner(lowpass.getAverage(),
-                                     currentCarInfo->speed)) {
+      if (curveDriver.isNextToCorner(currentCarInfo->speed)) {
         ROS_INFO("************ Next To Corner ***************");
         drivingState = BEFORE_CURVE;
       }
