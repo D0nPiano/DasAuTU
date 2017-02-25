@@ -98,7 +98,6 @@ void RundkursController::controlCar() {
 
     if (curveDriver.rolloutBegins()) {
       ROS_INFO("************ Rollout ***************");
-      curveDriver.reset();
       drivingState = ROLLOUT;
     }
 

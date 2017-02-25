@@ -15,45 +15,39 @@ using std::abs;
 
 CurveDriverConstant::CurveDriverConstant(ros::NodeHandle &nh,
                                          LaserUtil &laserUtil)
-    : scanOffset(0), falseCornerDetected(false), laserUtil(laserUtil) {
-  command_pub = nh.advertise<pses_basis::Command>("autu/command", 1);
+    : scanOffset(0), laserUtil(laserUtil) {
+  commandPub = nh.advertise<pses_basis::Command>("autu/command", 1);
 
-  corner_pub =
+  cornerPub =
       nh.advertise<geometry_msgs::PoseStamped>("autu/rundkurs/corner", 1);
 
-  info_pub = nh.advertise<std_msgs::String>("autu/rundkurs/info", 10);
+  infoPub = nh.advertise<std_msgs::String>("autu/rundkurs/info", 10);
 
   maxMotorLevel = nh.param<int>("main/curvedriver_constant/max_motor_level", 8);
   steering = nh.param<int>("main/curvedriver_constant/steering", 25);
 
-  corner_threshold =
+  cornerThreshold =
       nh.param<float>("main/curvedriver_constant/corner_threshold", 0.5f);
-  corner_end_angle =
+  cornerEndAngle =
       nh.param<float>("main/curvedriver_constant/corner_end_angle", 80.0f);
-  precurve_distance =
+  precurveDistance =
       nh.param<float>("main/curvedriver_constant/precurve_distance", 0.8f);
-  falseCornerEnd =
-      nh.param<float>("main/curvedriver_constant/false_corner_end", 0.6f);
-  blindness_offset =
+  blindnessOffset =
       nh.param<float>("main/curvedriver_constant/blindness_offset", 0);
-  radius = nh.param<float>("main/curvedriver_constant/radius", 1.5f);
   cornerSafetyDistance =
       nh.param<float>("main/curvedriver_constant/corner_safety_distance", 0.2f);
   motorLevelFactor =
       nh.param<float>("main/curvedriver_constant/motorlevel_factor", 10.0f);
 }
 
-void CurveDriverConstant::reset() {}
-
 void CurveDriverConstant::drive() {
-
   pses_basis::Command cmd;
 
   cmd.motor_level = maxMotorLevel;
   cmd.steering_level = steering;
 
   cmd.header.stamp = ros::Time::now();
-  command_pub.publish(cmd);
+  commandPub.publish(cmd);
 }
 
 bool CurveDriverConstant::isAroundTheCorner() const {
@@ -61,7 +55,7 @@ bool CurveDriverConstant::isAroundTheCorner() const {
   tf::quaternionMsgToTF(curveBegin.orientation, start);
   tf::quaternionMsgToTF(odom->pose.pose.orientation, current);
 
-  return start.angle(current) > corner_end_angle * M_PI_2 / 180.0f;
+  return start.angle(current) > cornerEndAngle * M_PI_2 / 180.0f;
 }
 
 void CurveDriverConstant::curveInit() { curveBegin = odom->pose.pose; }
@@ -110,7 +104,7 @@ bool CurveDriverConstant::wallFound(float cornerX, float cornerY) {
           ++counter;
     }
   }
-  ROS_INFO("counter: %d", counter);
+
   return counter >= 80;
 }
 
@@ -127,7 +121,7 @@ bool CurveDriverConstant::isNextToCorner(float distanceToWall, float speed) {
        --i) {
     const float r = laserscan->ranges[i];
     if (laserscan->range_min < r && 0.4f < r && r < laserscan->range_max) {
-      if (r - last_r > corner_threshold)
+      if (r - last_r > cornerThreshold)
         break;
       else
         last_r = r;
@@ -155,24 +149,17 @@ bool CurveDriverConstant::isNextToCorner(float distanceToWall, float speed) {
    if (rollout_distance < 0)
      rollout_distance = 0;*/
 
-  rollout_distance = 0;
+  rolloutDistance = 0;
 
   /* precurve_distance =
        sqrt(cornerSafetyDistance * cornerSafetyDistance -
             distanceToWall * distanceToWall +
             2 * radius * (distanceToWall - cornerSafetyDistance));*/
-  std_msgs::String msg;
+  std_msgs::String debugMsg;
   if (!isNextToGlas(vecToCorner[0], vecToCorner[1])) {
     if (wallFound(vecToCorner[0], vecToCorner[1])) {
       if (corner.x - 0.1f <
-          precurve_distance + rollout_distance + blindness_offset) {
-
-        /* geometry_msgs::PoseStamped poseCorner;
-         poseCorner.header.frame_id = "base_laser";
-         poseCorner.header.stamp = laserscan->header.stamp;
-         poseCorner.pose.position.x = vecToCorner[0];
-         poseCorner.pose.position.y = vecToCorner[1];*/
-        // corner_pub.publish(poseCorner);
+          precurveDistance + rolloutDistance + blindnessOffset) {
 
         try {
           tf::StampedTransform transform;
@@ -195,7 +182,7 @@ bool CurveDriverConstant::isNextToCorner(float distanceToWall, float speed) {
           poseCorner.header.stamp = laserscan->header.stamp;
           poseCorner.pose.position.x = cornerInOdom.point.x;
           poseCorner.pose.position.y = cornerInOdom.point.y;
-          corner_pub.publish(poseCorner);
+          cornerPub.publish(poseCorner);
         } catch (tf::TransformException ex) {
           ROS_ERROR("%s", ex.what());
           return false;
@@ -203,45 +190,21 @@ bool CurveDriverConstant::isNextToCorner(float distanceToWall, float speed) {
 
         return true;
       } else
-        msg.data = "Curve-condition not fulfilled";
+        debugMsg.data = "Curve-condition not fulfilled";
     } else
-      msg.data = "No wall found";
+      debugMsg.data = "No wall found";
   } else
-    msg.data = "Next To Glas";
-  info_pub.publish(msg);
+    debugMsg.data = "Next To Glas";
+  infoPub.publish(debugMsg);
   return false;
 }
 
 bool CurveDriverConstant::rolloutBegins() const {
-  /* const float xDif = cornerSeen.position.x - odom->pose.pose.position.x;
-   const float yDif = cornerSeen.position.y - odom->pose.pose.position.y;
-
-   // distance to the point where the corner was detected
-   const float distance = sqrt(xDif * xDif + yDif * yDif);
-
-   return distance > blindness_offset;*/
-  const float xDif = cornerInOdom.point.x - odom->pose.pose.position.x;
-  const float yDif = cornerInOdom.point.y - odom->pose.pose.position.y;
-
-  // distance to the point where the corner was detected
-  const float distance = sqrt(xDif * xDif + yDif * yDif);
-  return distance < precurve_distance + rollout_distance;
+  return getCurrentDistanceToCorner() < precurveDistance + rolloutDistance;
 }
 
 bool CurveDriverConstant::isAtCurveBegin() const {
-  /*  const float xDif = cornerSeen.position.x - odom->pose.pose.position.x;
-    const float yDif = cornerSeen.position.y - odom->pose.pose.position.y;
-
-    // distance to the point where the corner was detected
-    const float distance = sqrt(xDif * xDif + yDif * yDif);
-
-    return distance > blindness_offset + rollout_distance;*/
-  const float xDif = cornerInOdom.point.x - odom->pose.pose.position.x;
-  const float yDif = cornerInOdom.point.y - odom->pose.pose.position.y;
-
-  // distance to the point where the corner was detected
-  const float distance = sqrt(xDif * xDif + yDif * yDif);
-  return distance < precurve_distance;
+  return getCurrentDistanceToCorner() < precurveDistance;
 }
 
 void CurveDriverConstant::setLaserscan(
@@ -255,13 +218,22 @@ void CurveDriverConstant::setLaserscan(
   }
 }
 
+float CurveDriverConstant::getCurrentDistanceToCorner() const {
+  const float xDif = cornerInOdom.point.x - odom->pose.pose.position.x;
+  const float yDif = cornerInOdom.point.y - odom->pose.pose.position.y;
+
+  return sqrt(xDif * xDif + yDif * yDif);
+}
+
 void CurveDriverConstant::setOdom(const nav_msgs::OdometryConstPtr &msg) {
   odom = msg;
 }
 
 void CurveDriverConstant::updateScanOffset(float speed) {
   const double now = ros::Time::now().toSec();
+  // time since last update
   const double timeDif = now - scanOffsetStamp;
   scanOffset += timeDif * speed;
+  // last update happened now
   scanOffsetStamp = now;
 }
