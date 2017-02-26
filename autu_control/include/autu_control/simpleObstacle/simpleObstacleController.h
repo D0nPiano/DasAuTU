@@ -12,7 +12,7 @@
 
 #include "autu_control/rundkurs/lowpass.h"
 #include "autu_control/rundkurs/pidregler.h"
-
+#include "autu_control/rundkurs/curvedriverconstant.h"
 #include "std_msgs/String.h"
 #include <exception>
 #include <iostream>
@@ -51,6 +51,7 @@ private:
   float obstacleDistace;
   float currentHeadingAngle;
   PIDRegler* pidRegler;
+  CurveDriverConstant* curveDriverConstant;
   float minWallDist;
   float steeringMulti;
   float distortPow;

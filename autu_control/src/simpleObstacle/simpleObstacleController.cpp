@@ -27,7 +27,6 @@ SimpleObstacleController::SimpleObstacleController(ros::NodeHandle *n,
       this);
 
 
-
   initialized = false;
 
   minWallDist = n->param<float>("main/obstacleController/minWallDist", 0.2);
@@ -41,7 +40,8 @@ SimpleObstacleController::SimpleObstacleController(ros::NodeHandle *n,
   PIDD = n->param<float>("main/obstacleController/PIDD", 1.0);
   obstacleMotorLevel = n->param<float>("main/obstacleController/obstacleMotorLevel", 0.8);
 
-    pidRegler = new PIDRegler(*n, PIDP, PIDD, PIDMotorLevel, PIDWallDistance);
+  pidRegler = new PIDRegler(*n, PIDP, PIDD, PIDMotorLevel, PIDWallDistance);
+  curveDriverConstant = new CurveDriverConstant(*n);
 
 
   ROS_INFO_STREAM("Alle Werte: " << minWallDist << steeringMulti << distortPow << distortUSInfluencePow << obstacleSteeringPow);
