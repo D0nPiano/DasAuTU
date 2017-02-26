@@ -11,7 +11,7 @@
 //#define distortPow 1.2		// behave linear (1) or quadradic (2.0)-> Higher: Drive further left
 //#define distortUSInfluencePow 1.5
 //#define obstacleSteeringPow 0.
-#define OBSTACLE_DIST 0.3   // obstacle Distance fo emergency reaction
+#define OBSTACLE_DIST 0.5   // obstacle Distance fo emergency reaction
 
 
 SimpleObstacleController::SimpleObstacleController(ros::NodeHandle *n,
@@ -262,15 +262,17 @@ void SimpleObstacleController::simpleController(){
 		curveBegin=false;
 		distortPow-=0.2;
 	}
+
+
   this->updateDistanceToObstacle();
   if(obstacleDistace > OBSTACLE_DIST){ // does not have to avoid obstacle immediatly
     this->getBestHeadingAngle();
     int steering_level = this->getBestSteering();
-    if(!curveBegin && lowpass.getAverage() < 1.5 && obstacleDistace > 1.2 && steering_level > 0){ // is next to Wall and wants to drive left
+    if(lowpass.getAverage() < 1.5 && obstacleDistace > 1.2 && steering_level > 0){ // is next to Wall and wants to drive left
 	    // use PID-Regler
 	    ROS_INFO("using PID Controller");
       	pidRegler->setMaxMotorLevel(std::min(this->getBestSpeed(),PIDMotorLevel));
-		pidRegler->drive(lowpass.getAverage(), true);
+		    pidRegler->drive(lowpass.getAverage(), true);
 	    return;
 	}
   }

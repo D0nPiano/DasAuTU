@@ -76,7 +76,7 @@ args="$(arg optical_rotate) kinect2_base_link kinect2_link 100" />
   <param name="obstacleController/steeringMulti" value="1.0"/>
   <param name="obstacleController/distortPow" value="1.2"/>
   <param name="obstacleController/distortUSInfluencePow" value="1.2"/>
-  <param name="obstacleController/obstacleSteeringPow" value="0.2"/>
+  <param name="obstacleController/obstacleSteeringPow" value="0.15"/>
   <param name="obstacleController/PIDMotorLevel" value="8"/>
   <param name="obstacleController/PIDWallDistance" value="0.7"/>
   <param name="obstacleController/obstacleMotorLevel" value="2.2"/>
@@ -90,7 +90,7 @@ args="$(arg optical_rotate) kinect2_base_link kinect2_link 100" />
         <param name="angle_min" value="-0.610865235329"/>
         <param name="angle_max" value="0.610865235329"/>
         <param name="angle_increment " value="0.00349065847695"/>
-        <param name="range_min" value="0"/>
+        <param name="range_min" value="0.1"/>
         <param name="range_max" value="10"/>
         <param name="use_inf" value="false"/>
 	<param name="target_frame" value="scan"/>
