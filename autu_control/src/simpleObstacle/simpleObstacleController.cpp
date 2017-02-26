@@ -5,13 +5,13 @@
 #include "ros/ros.h"
 #include <math.h>       /* pow */
 
-#define CAR_WIDTH 0.2		// Car width in m
+#define CAR_WIDTH 0.3		// Car width in m
 //#define minWallDist 0.4	// Wall distance in m
 //#define steeringMulti 0.3	// between 0.0 (straight) and 1.0 (full)
 //#define distortPow 1.2		// behave linear (1) or quadradic (2.0)-> Higher: Drive further left
 //#define distortUSInfluencePow 1.5
 //#define obstacleSteeringPow 0.
-#define OBSTACLE_DIST 0.5   // obstacle Distance fo emergency reaction
+#define OBSTACLE_DIST 0.3   // obstacle Distance fo emergency reaction
 
 
 SimpleObstacleController::SimpleObstacleController(ros::NodeHandle *n,
@@ -215,9 +215,9 @@ void SimpleObstacleController::getBestHeadingAngle() {
 
   double rangeLeft = lowpass.getAverage();
   if(rangeLeft != 0.0){
-    rangeLeft = std::min(rangeLeft, 2.5);
+    rangeLeft = std::min(rangeLeft, 5.0);
     rangeLeft = std::max(rangeLeft, 0.1);
-  	rangeLeft = pow (rangeLeft, distortUSInfluencePow) / pow(2.5, distortUSInfluencePow);
+  	rangeLeft = pow (rangeLeft, distortUSInfluencePow) / pow(5.0, distortUSInfluencePow);
     distortStep = ((float) rangeLeft / currentLaserScan->ranges.size());
     //ROS_INFO("distort range: [%f]", (float) rangeLeft);
     //ROS_INFO("distort: [%f]", distortStep);
@@ -233,7 +233,7 @@ void SimpleObstacleController::getBestHeadingAngle() {
       // alpha in radians and always positive
       const float alpha =
           i * currentLaserScan->angle_increment + currentLaserScan->angle_min;
-      float d = r * std::cos(alpha) * (0.001 + pow(i, distortPow) * distortStep);
+      float d = r * std::cos(alpha) * (0.0 + pow(i, distortPow) * distortStep);
       if (d > d_max){
           d_max = d;
           alpha_max = alpha;
@@ -266,7 +266,7 @@ void SimpleObstacleController::simpleController(){
   if(obstacleDistace > OBSTACLE_DIST){ // does not have to avoid obstacle immediatly
     this->getBestHeadingAngle();
     int steering_level = this->getBestSteering();
-    if(!curveBegin && lowpass.getAverage() < 1.5 && obstacleDistace > 1.2){ // is next to Wall and wants to drive left
+    if(!curveBegin && lowpass.getAverage() < 1.5 && obstacleDistace > 1.2 && steering_level > 0){ // is next to Wall and wants to drive left
 	    // use PID-Regler
 	    ROS_INFO("using PID Controller");
       	pidRegler->setMaxMotorLevel(std::min(this->getBestSpeed(),PIDMotorLevel));
