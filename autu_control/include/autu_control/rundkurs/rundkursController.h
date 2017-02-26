@@ -90,7 +90,6 @@ private:
   pses_basis::CarInfoConstPtr currentCarInfo;
   nav_msgs::OdometryConstPtr odomData;
 
-  LaserUtil laserUtil;
   CurveDriverConstant curveDriver;
   Lowpass lowpass;
   PIDRegler pdController;
