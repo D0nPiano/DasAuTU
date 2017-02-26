@@ -26,6 +26,11 @@ SimpleObstacleController::SimpleObstacleController(ros::NodeHandle *n,
       "pses_basis/sensor_data", 10, &SimpleObstacleController::getCurrentSensorData,
       this);
 
+  odomSub = n->subscribe<nav_msgs::Odometry>(
+      "/odom", 1, &SimpleObstacleController::odomCallback, this);
+
+  carinfoSub = n->subscribe<pses_basis::CarInfo>(
+      "/pses_basis/car_info", 1, &SimpleObstacleController::carinfoCallback, this);
 
   initialized = false;
 
@@ -43,8 +48,8 @@ SimpleObstacleController::SimpleObstacleController(ros::NodeHandle *n,
   pidRegler = new PIDRegler(*n, PIDP, PIDD, PIDMotorLevel, PIDWallDistance);
   curveDriverConstant = new CurveDriverConstant(*n);
 
-
-  ROS_INFO_STREAM("Alle Werte: " << minWallDist << steeringMulti << distortPow << distortUSInfluencePow << obstacleSteeringPow);
+  curveAhead = false;
+  //ROS_INFO_STREAM("Alle Werte: " << minWallDist << steeringMulti << distortPow << distortUSInfluencePow << obstacleSteeringPow);
 }
 
 SimpleObstacleController::~SimpleObstacleController() {
@@ -115,8 +120,8 @@ void SimpleObstacleController::updateDistanceToObstacle() {
     }
 
 
-  ROS_INFO("Right [%f]", sumRight);
-  ROS_INFO("Left: [%f]", sumLeft);
+  //ROS_INFO("Right [%f]", sumRight);
+  //ROS_INFO("Left: [%f]", sumLeft);
 
     ROS_INFO("angle: [%f]", alpha_min);
     float distanceFactor = obstacleSteeringPow/obstacleDistace ;
@@ -128,7 +133,7 @@ void SimpleObstacleController::updateDistanceToObstacle() {
     //currentHeadingAngle = alpha_max + 6.0 * (alpha_max - alpha_min);    
   }
 
-  ROS_INFO("Obstacle: [%f]", obstacleDistace);
+  //ROS_INFO("Obstacle: [%f]", obstacleDistace);
 }
 
 float SimpleObstacleController::getWrackingDistance(){
@@ -157,7 +162,7 @@ float SimpleObstacleController::getWrackingDistance(){
   else if (d_min > currentLaserScan->range_max)
     d_min = currentLaserScan->range_max;
 
-  ROS_INFO("Wracking: [%f]", d_min);
+  //ROS_INFO("Wracking: [%f]", d_min);
   return d_min;
 }
 
@@ -170,28 +175,28 @@ int SimpleObstacleController::getBestSpeed(){
   // int steering_level = this->getBestSteering();
   //motorLevel =  3*motorLevel/(std::abs((steering_level) / 8 + 1));
  // ROS_INFO("steering_level: [%d]", steering_level);
-  ROS_INFO("motor_level: [%d]", motorLevel);
-  return std::min(12,std::max(motorLevel, 7));
+  //ROS_INFO("motor_level: [%d]", motorLevel);
+  return std::min(8,std::max(motorLevel, 6));
 }
 
 int SimpleObstacleController::getBestSteering(){
   int steering_level = (int)(currentHeadingAngle * 250.0 * steeringMulti);
-
+  ROS_INFO_STREAM("Steering Level Raw: " << steering_level);
   
   // If left distance is smaller than ....
   if(lowpass.getAverage() < 0.3){
     if(steering_level > 0){
-      ROS_INFO("is next to wall - not steering left");
+      //ROS_INFO("is next to wall - not steering left");
       steering_level = 0;
     }
   }
   if(0.0 < currentSensorData->range_sensor_right && currentSensorData->range_sensor_right < 0.3 && steering_level < 0){
-    ROS_INFO("is next to wall - not steering right");
+    //ROS_INFO("is next to wall - not steering right");
     steering_level = 0;
   }
 
   
-  ROS_INFO("steering_level: [%d]", steering_level);
+  //ROS_INFO("steering_level: [%d]", steering_level);
 
   if (steering_level > 40)
     steering_level = 40;
@@ -240,11 +245,28 @@ void SimpleObstacleController::getBestHeadingAngle() {
 }
 
 void SimpleObstacleController::simpleController(){
+
+  if(curveDriverConstant->isNextToCorner(0.0)){
+  	ROS_INFO("----------Kurve------------");
+  	curveAhead=true;
+  	
+	}
+	if(curveAhead && curveDriverConstant->isAtCurveBegin()){
+		curveTimer = ros::Time::now().toSec();
+		curveBegin=true;
+		curveAhead=false;
+		ROS_INFO("********************* Kurvenbeginn *******************************");
+		distortPow+=0.2;
+	}
+	if(curveBegin && ros::Time::now().toSec()-curveTimer > 2){
+		curveBegin=false;
+		distortPow-=0.2;
+	}
   this->updateDistanceToObstacle();
   if(obstacleDistace > OBSTACLE_DIST){ // does not have to avoid obstacle immediatly
     this->getBestHeadingAngle();
     int steering_level = this->getBestSteering();
-    if(lowpass.getAverage() < 1.5 && obstacleDistace > 1.2){ // is next to Wall and wants to drive left
+    if(!curveBegin && lowpass.getAverage() < 1.5 && obstacleDistace > 1.2){ // is next to Wall and wants to drive left
 	    // use PID-Regler
 	    ROS_INFO("using PID Controller");
       	pidRegler->setMaxMotorLevel(std::min(this->getBestSpeed(),PIDMotorLevel));
@@ -252,9 +274,9 @@ void SimpleObstacleController::simpleController(){
 	    return;
 	}
   }
-  //ROS_INFO("distance: [%f], angle: [%f]", obstacleDistace, currentHeadingAngle);
-  if(curveDriverConstant->isNextToCorner(0.0))
-  ROS_INFO("----------Kurve------------");
+  ROS_INFO("distance: [%f], angle: [%f]", obstacleDistace, currentHeadingAngle);
+  
+  
   pses_basis::Command cmd;
   cmd.motor_level = this->getBestSpeed();
   cmd.steering_level = this->getBestSteering();
@@ -266,6 +288,7 @@ void SimpleObstacleController::simpleController(){
 void SimpleObstacleController::getCurrentLaserScan(
     const sensor_msgs::LaserScan::ConstPtr &msg) {
   currentLaserScan = msg;
+  curveDriverConstant->setLaserscan(currentLaserScan);
   //laserDetector->setCurrentLaserScan(msg);
 }
 
@@ -276,6 +299,15 @@ void SimpleObstacleController::getCurrentSensorData(
   if(msg->range_sensor_left >0){
     lowpass.addValue(msg->range_sensor_left);
   }
+}
+void SimpleObstacleController::odomCallback(const nav_msgs::OdometryConstPtr &msg) {
+  odomData = msg;
+  curveDriverConstant->setOdom(odomData);
+}
+
+void SimpleObstacleController::carinfoCallback(
+    const pses_basis::CarInfoConstPtr &msg) {
+  currentCarInfo = msg;
 }
 
 void SimpleObstacleController::run() {

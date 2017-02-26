@@ -41,12 +41,18 @@ private:
   int getBestSpeed();
   int getBestSteering();
   float getWrackingDistance();
+  void odomCallback(const nav_msgs::OdometryConstPtr &msg);
+  void carinfoCallback(const pses_basis::CarInfoConstPtr &msg);
   ros::NodeHandle *n;
   ros::Publisher *command_pub;
   ros::Subscriber laser_sub;
   ros::Subscriber sensor_sub;
+  ros::Subscriber odomSub;
+  ros::Subscriber carinfoSub;
   sensor_msgs::LaserScanConstPtr currentLaserScan;
   pses_basis::SensorDataConstPtr currentSensorData;
+  pses_basis::CarInfoConstPtr currentCarInfo;
+  nav_msgs::OdometryConstPtr odomData;
   bool initialized;
   float obstacleDistace;
   float currentHeadingAngle;
@@ -63,6 +69,9 @@ private:
   float PIDP;
   float PIDD;
   Lowpass lowpass;
+  bool curveAhead;
+  double curveTimer;
+  bool curveBegin;
 };
 
 #endif
