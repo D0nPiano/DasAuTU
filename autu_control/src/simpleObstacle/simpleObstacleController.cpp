@@ -253,7 +253,8 @@ void SimpleObstacleController::simpleController(){
 	}
   }
   //ROS_INFO("distance: [%f], angle: [%f]", obstacleDistace, currentHeadingAngle);
-
+  if(curveDriverConstant->isNextToCorner(0.0))
+  ROS_INFO("----------Kurve------------");
   pses_basis::Command cmd;
   cmd.motor_level = this->getBestSpeed();
   cmd.steering_level = this->getBestSteering();
