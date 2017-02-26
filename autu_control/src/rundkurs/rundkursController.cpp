@@ -4,73 +4,64 @@
 #include "autu_control/rundkurs/rundkursController.h"
 #include "ros/ros.h"
 
-#ifndef NDEBUG
-#include "std_msgs/Float32.h"
-#endif
-
 #define STRAIGHT 0
-#define CURVE 1
-#define BEFORE_CURVE 2
+#define BEFORE_CURVE 1
+#define CURVE 2
+#define ROLLOUT 3
 
 RundkursController::RundkursController(ros::NodeHandle *n,
                                        ros::Publisher *command_pub)
-    : n(n), command_pub(command_pub), laserUtil(*n), lowpass(10),
-      drivingState(STRAIGHT), pidRegler(*n), curveDriver(*n, laserUtil),
-      time_of_last_corner(0) {
-  ROS_INFO("New RundkursController");
+    : n(n), commandPub(command_pub), laserUtil(*n), curveDriver(*n, laserUtil),
+      lowpass(10), pdController(*n), drivingState(STRAIGHT),
+      timeOfLastCorner(0) {
+  ROS_INFO("New CircuitController");
 
-  laser_sub = n->subscribe<sensor_msgs::LaserScan>(
+  laserscanSub = n->subscribe<sensor_msgs::LaserScan>(
       "/scan", 10, &RundkursController::getCurrentLaserScan, this);
 
-  sensor_sub = n->subscribe<pses_basis::SensorData>(
+  sensorDataSub = n->subscribe<pses_basis::SensorData>(
       "pses_basis/sensor_data", 10, &RundkursController::getCurrentSensorData,
       this);
 
-  odom_sub = n->subscribe<nav_msgs::Odometry>(
+  odomSub = n->subscribe<nav_msgs::Odometry>(
       "/odom", 1, &RundkursController::odomCallback, this);
 
-  carinfo_sub = n->subscribe<pses_basis::CarInfo>(
+  carinfoSub = n->subscribe<pses_basis::CarInfo>(
       "/pses_basis/car_info", 1, &RundkursController::carinfoCallback, this);
 
-  laserDetector = std::unique_ptr<LaserDetector>(new LaserDetector());
-  pidRegler.setLaserDetector(*laserDetector);
+  pdMaxMotorLevel = pdController.getMaxMotorLevel();
 
-  pd_maxMotorLevel = pidRegler.getMaxMotorLevel();
-
-  curveRadius = n->param<float>("main/curvedriver/curve_radius", 1.8f);
-
-#ifndef NDEBUG
-  us_raw_dbg_pub = n->advertise<std_msgs::Float32>("autu/debug/us_raw", 1);
-  us_lp_dbg_pub = n->advertise<std_msgs::Float32>("autu/debug/us_lp", 1);
-  ransac_dbg_pub = n->advertise<std_msgs::Float32>("autu/debug/ransac", 1);
-#endif
+  afterCurveDeadtime =
+      n->param<double>("main/curvedriver/after_curve_deadtime", 1.5);
 }
 
 RundkursController::~RundkursController() {
   ROS_INFO("Destroying RundkursController");
   this->stop();
-  laser_sub.shutdown();
-  sensor_sub.shutdown();
+  laserscanSub.shutdown();
+  sensorDataSub.shutdown();
+  carinfoSub.shutdown();
+  odomSub.shutdown();
 }
 
 void RundkursController::stop() {
-  command_data cmd;
+  pses_basis::Command cmd;
   cmd.motor_level = 0;
   cmd.steering_level = 0;
   cmd.header.stamp = ros::Time::now();
-  command_pub->publish(cmd);
+  commandPub->publish(cmd);
   ros::spinOnce();
 }
 
 void RundkursController::getCurrentLaserScan(
     const sensor_msgs::LaserScan::ConstPtr &msg) {
   currentLaserScan = msg;
-  laserDetector->setCurrentLaserScan(msg);
 }
 
 void RundkursController::getCurrentSensorData(
     const pses_basis::SensorData::ConstPtr &msg) {
   currentSensorData = msg;
+  // update the ultrasonic lowpass
   lowpass.addValue(currentSensorData->range_sensor_left);
 }
 
@@ -83,87 +74,104 @@ void RundkursController::carinfoCallback(
   currentCarInfo = msg;
 }
 
-float RundkursController::getDistanceToWall() {
-  const float laserDist = laserUtil.getDistanceToWall(currentLaserScan, true);
-  if (laserDist == -1 || laserDist > 5)
-    return currentSensorData->range_sensor_left;
-  else
-    return (laserDist + currentSensorData->range_sensor_left) / 2;
-}
-
-void RundkursController::simpleController() {
+void RundkursController::controlCar() {
+  // update the curveDriver with the current data
   curveDriver.setLaserscan(currentLaserScan);
   curveDriver.setOdom(odomData);
-/*
-  static ros::Time time = ros::Time::now();
-  if (ros::Time::now().toSec() - time.toSec() > 0.1) {
-    // ROS_INFO("NextToCorner: %d",
-    curveDriver.isNextToCorner(true, currentCarInfo->speed); //);
-    time = ros::Time::now();
-  }
-  return;*/
-#ifndef NDEBUG
-  std_msgs::Float32 value;
 
-  value.data = currentSensorData->range_sensor_left;
-  us_raw_dbg_pub.publish(value);
-
-  value.data = lowpass.getAverage();
-  us_lp_dbg_pub.publish(value);
-
-// value.data = laserUtil.getDistanceToWall(currentLaserScan, true);
-// ransac_dbg_pub.publish(value);
-#endif
-
+  // FSM transitions
   switch (drivingState) {
   case STRAIGHT:
-    if (ros::Time::now().toSec() - time_of_last_corner > 1.5) {
-      if (curveDriver.isNextToCorner(true, currentCarInfo->speed)) {
+
+    // The transition from STRAIGHT to BEFORE_CURVE is only possible, if the
+    // last curve wasn't shortly before
+    if (ros::Time::now().toSec() - timeOfLastCorner > afterCurveDeadtime)
+      // curveDriver checks if the car is near to a corner
+      if (curveDriver.isNextToCorner(lowpass.getAverage(),
+                                     currentCarInfo->speed)) {
         ROS_INFO("************ Next To Corner ***************");
-        curveDriver.reset();
         drivingState = BEFORE_CURVE;
       }
-    }
+
     break;
   case BEFORE_CURVE:
-    if (curveDriver.isAtCurveBegin(true)) {
+
+    if (curveDriver.rolloutBegins()) {
+      ROS_INFO("************ Rollout ***************");
+      drivingState = ROLLOUT;
+    }
+
+    break;
+  case ROLLOUT:
+
+    if (curveDriver.isAtCurveBegin()) {
       ROS_INFO("************ Corner ***************");
-      curveDriver.curveInit(curveRadius, true);
+      curveDriver.curveInit();
       drivingState = CURVE;
     }
+
     break;
   case CURVE:
-    if (curveDriver.isAroundTheCorner(currentLaserScan)) {
-      //&& pidRegler.isReady(lowpass.getAverage())) {
+
+    if (curveDriver.isAroundTheCorner()) {
       ROS_INFO("************ End of Corner ***************");
-      time_of_last_corner = ros::Time::now().toSec();
-      pidRegler.reset();
+      timeOfLastCorner = ros::Time::now().toSec();
+      pdController.reset();
       drivingState = STRAIGHT;
     }
+
     break;
   default:
     break;
   }
 
+  // FSM output
   switch (drivingState) {
   case STRAIGHT:
-    pidRegler.setMaxMotorLevel(pd_maxMotorLevel);
-    pidRegler.drive(lowpass.getAverage(), true);
+
+    // let the pd-controller drive with its maximum speed
+    pdController.setMaxMotorLevel(pdMaxMotorLevel);
+    pdController.drive(lowpass.getAverage(), true);
+
     break;
   case BEFORE_CURVE:
-    pidRegler.setMaxMotorLevel(1);
-    pidRegler.drive(lowpass.getAverage(), true);
+
+    // let the pd-controller drive with its maximum speed
+    pdController.setMaxMotorLevel(pdMaxMotorLevel);
+    pdController.drive(lowpass.getAverage(), true);
+
+    break;
+  case ROLLOUT:
+
+    // turn off the motor but let the pd-controller control the steering
+    // motorlevel must not be zero because this would freak out the odometry
+    pdController.setMaxMotorLevel(1);
+    pdController.drive(lowpass.getAverage(), true);
+
     break;
   case CURVE:
+
+    // let the curvedriver drive in the curve
     curveDriver.drive();
+
     break;
   default:
+
+    // this case should never occur
+    // stop the car immediatly because the FSM is broken
+    stop();
+
     break;
   }
 }
 
 void RundkursController::run() {
+  // check if all required sensors are ready
   if (!initialized) {
+    /*
+            If LaserScan is uninitialized, its range[0] is -1.0
+            If SensorData is uninitialized, its range_sensor_left is -1.0
+    */
     if (currentLaserScan == nullptr || currentSensorData == nullptr ||
         odomData == nullptr || currentCarInfo == nullptr ||
         currentLaserScan->ranges[0] == -1.0 ||
@@ -172,12 +180,11 @@ void RundkursController::run() {
       return;
     } else {
       initialized = true;
-      laserDetector->initialize();
     }
   }
 
   // If everything is initialized, run Controller
-  this->simpleController();
+  this->controlCar();
 }
 
 #endif

@@ -1,74 +1,120 @@
 #ifndef _RundkursController_H_
 #define _RundkursController_H_
 
-#define PI 3.14159265
-
-/*
-        If LaserScan is uninitialized, its range[0] is -1.0
-        If SensorData is uninitialized, its range_sensor_left is -1.0
-*/
-
 #include "autu_control/AutoController.h"
-#include "autu_control/rundkurs/curvedriver.h"
-#include "autu_control/rundkurs/curvedriver2.h"
 #include "autu_control/rundkurs/curvedriverconstant.h"
-#include "autu_control/rundkurs/laserDetector.h"
 #include "autu_control/rundkurs/laser_utilities.h"
 #include "autu_control/rundkurs/lowpass.h"
 #include "autu_control/rundkurs/pidregler.h"
 
-#include "std_msgs/String.h"
-#include <exception>
-#include <iostream>
-#include <memory>
-
 #include "nav_msgs/Odometry.h"
-#include <sensor_msgs/LaserScan.h>
+#include "ros/ros.h"
+#include "sensor_msgs/LaserScan.h"
+#include "std_msgs/String.h"
 
 #include "pses_basis/CarInfo.h"
+#include "pses_basis/Command.h"
 #include "pses_basis/SensorData.h"
-#include "ros/ros.h"
-#include <pses_basis/Command.h>
-typedef pses_basis::Command command_data;
 
+/**
+ * @brief The controller for the circuit without obstacles
+ *
+ * From the controllers point of view the circuit contains only straight
+ * sections and curves.
+ * While on the straight sections of the track a pd-controller maintains the
+ * distance to the left wall via the left ultrasonic sensor.
+ * The curves at the end of the straight sections are detected with the kinect,
+ * more precisely with the generated laserscans from depthimage_to_laserscan
+ * node.
+ * To drive through a curve a constant steering level is used.
+ * The curve's end is determined by comparing the current car's yaw angle to the
+ * yaw angle at the beginning of the curve.
+ * By exceeding a given threshold the curve-mode finishes.
+ *
+ * A minimum time span between two curves is also defined to prevent the car
+ * from recognizing a second curve at the end of another curve, which is
+ * obviously not existing.
+ */
 class RundkursController : public AutoController {
 public:
-  RundkursController(ros::NodeHandle *n, ros::Publisher *command_pub);
+  RundkursController(ros::NodeHandle *n, ros::Publisher *commandPub);
   ~RundkursController();
   void run();
 
 private:
+  /**
+   * @brief Stops the car immediatly.
+   *
+   * Sends a motor-command with motorlevel = 0 and steering = 0 to stop the car.
+   */
   void stop();
+
+  /**
+   * @brief Updates the laserscan.
+   */
   void getCurrentLaserScan(const sensor_msgs::LaserScan::ConstPtr &);
+
+  /**
+   * @brief Updates values from sensors.
+   *
+   * Contains the ultrasonic values.
+   */
   void getCurrentSensorData(const pses_basis::SensorData::ConstPtr &);
+
+  /**
+   * @brief Updates the odometry data.
+   */
   void odomCallback(const nav_msgs::OdometryConstPtr &msg);
+
+  /**
+   * @brief Updates car information
+   *
+   * Contains the car's current speed.
+   */
   void carinfoCallback(const pses_basis::CarInfoConstPtr &msg);
-  float getDistanceToWall();
-  void simpleController();
+
+  /**
+   * @brief Drives the car through the circuit.
+   */
+  void controlCar();
+
   ros::NodeHandle *n;
-  ros::Publisher *command_pub;
-  ros::Subscriber laser_sub;
-  ros::Subscriber sensor_sub;
-  ros::Subscriber odom_sub;
-  ros::Subscriber carinfo_sub;
-  LaserUtil laserUtil;
-  Lowpass lowpass;
+  ros::Publisher *commandPub;
+  ros::Subscriber laserscanSub;
+  ros::Subscriber sensorDataSub;
+  ros::Subscriber odomSub;
+  ros::Subscriber carinfoSub;
+
   sensor_msgs::LaserScanConstPtr currentLaserScan;
   pses_basis::SensorDataConstPtr currentSensorData;
   pses_basis::CarInfoConstPtr currentCarInfo;
-  std::unique_ptr<LaserDetector> laserDetector;
-  bool initialized;
-  uint8_t drivingState;
-  PIDRegler pidRegler;
-  uint16_t pd_maxMotorLevel;
-  CurveDriverConstant curveDriver;
   nav_msgs::OdometryConstPtr odomData;
-  float curveRadius;
-  double time_of_last_corner;
 
-#ifndef NDEBUG
-  ros::Publisher us_raw_dbg_pub, us_lp_dbg_pub, ransac_dbg_pub;
-#endif
+  LaserUtil laserUtil;
+  CurveDriverConstant curveDriver;
+  Lowpass lowpass;
+  PIDRegler pdController;
+
+  /**  @brief If false the sensors aren't ready yet. */
+  bool initialized;
+
+  /** @brief The current state of the intern FSM */
+  uint8_t drivingState;
+
+  /** @brief The motorlevel for the pd-controller */
+  int pdMaxMotorLevel;
+
+  /**
+   * @brief Timestamp of the last corner the car drove.
+   *
+   * The timestamp refers to the curve's end.
+   */
+  double timeOfLastCorner;
+
+  /**
+   * @brief Minimum time span between two curves
+   */
+  double afterCurveDeadtime;
 };
 
 #endif

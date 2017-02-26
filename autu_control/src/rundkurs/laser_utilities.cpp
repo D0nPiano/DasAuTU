@@ -281,9 +281,6 @@ float LaserUtil::calcCornerSize(const sensor_msgs::LaserScanConstPtr &scan,
         cornerSize = currentSize;
     }
 
-  ROS_INFO("Timestamp: %f Corner Size: %f", ros::Time::now().toSec(),
-           cornerSize);
-
   if (cornerSize > 5.0f)
     return -1;
   return cornerSize;

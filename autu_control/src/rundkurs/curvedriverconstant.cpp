@@ -7,125 +7,204 @@
 
 #include "pses_basis/Command.h"
 
-#define WHEELBASE 0.28
-
 using std::sqrt;
+using std::atan;
+using std::sin;
+using std::cos;
+using std::abs;
 
 CurveDriverConstant::CurveDriverConstant(ros::NodeHandle &nh,
                                          LaserUtil &laserUtil)
     : scanOffset(0), laserUtil(laserUtil) {
-  command_pub = nh.advertise<pses_basis::Command>("autu/command", 1);
+  commandPub = nh.advertise<pses_basis::Command>("autu/command", 1);
+
+  cornerPub =
+      nh.advertise<geometry_msgs::PoseStamped>("autu/rundkurs/corner", 1);
+
+  infoPub = nh.advertise<std_msgs::String>("autu/rundkurs/info", 10);
 
   maxMotorLevel = nh.param<int>("main/curvedriver_constant/max_motor_level", 8);
   steering = nh.param<int>("main/curvedriver_constant/steering", 25);
 
-  corner_threshold =
+  cornerThreshold =
       nh.param<float>("main/curvedriver_constant/corner_threshold", 0.5f);
-  corner_end_angle =
+  cornerEndAngle =
       nh.param<float>("main/curvedriver_constant/corner_end_angle", 80.0f);
-  precurve_distance =
+  precurveDistance =
       nh.param<float>("main/curvedriver_constant/precurve_distance", 0.8f);
+  blindnessOffset =
+      nh.param<float>("main/curvedriver_constant/blindness_offset", 0);
+  cornerSafetyDistance =
+      nh.param<float>("main/curvedriver_constant/corner_safety_distance", 0.2f);
+  motorLevelFactor =
+      nh.param<float>("main/curvedriver_constant/motorlevel_factor", 10.0f);
 }
 
-void CurveDriverConstant::reset() {}
-
 void CurveDriverConstant::drive() {
-
   pses_basis::Command cmd;
 
   cmd.motor_level = maxMotorLevel;
   cmd.steering_level = steering;
 
   cmd.header.stamp = ros::Time::now();
-  command_pub.publish(cmd);
+  commandPub.publish(cmd);
 }
 
-bool CurveDriverConstant::isAroundTheCorner(
-    const sensor_msgs::LaserScanConstPtr &scan) const {
+bool CurveDriverConstant::isAroundTheCorner() const {
   tf::Quaternion start, current;
   tf::quaternionMsgToTF(curveBegin.orientation, start);
   tf::quaternionMsgToTF(odom->pose.pose.orientation, current);
 
-  return start.angle(current) > corner_end_angle * M_PI_2 / 180.0f; // &&
-  // std::abs(laserUtil.getAngleToWallRLF(scan, true)) < 10 * M_PI / 180.0;
+  return start.angle(current) > cornerEndAngle * M_PI_2 / 180.0f;
 }
 
-void CurveDriverConstant::curveInit(float radius, bool left) {
-  curveBegin = odom->pose.pose;
-  const std::string targetFrame(left ? "/rear_left_wheel"
-                                     : "/rear_right_wheel");
+void CurveDriverConstant::curveInit() { curveBegin = odom->pose.pose; }
 
-  try {
-    transformListener.waitForTransform(targetFrame, "/odom", ros::Time(0),
-                                       ros::Duration(0.1));
-    transformListener.lookupTransform(targetFrame, "/odom", ros::Time(0),
-                                      transform);
+bool CurveDriverConstant::isNextToGlas(float cornerX, float cornerY) {
+  const float maxDist = cornerX + 1.2f;
+  const float minAlpha = M_PI_2 - atan(maxDist / cornerY);
+  int counter = 0;
+  for (size_t i = laserscan->ranges.size() - 1;
+       i > laserscan->ranges.size() / 2; --i) {
+    const float r = laserscan->ranges[i];
+    if (laserscan->range_min < r && r < laserscan->range_max) {
+      const float alpha = laserscan->angle_min + i * laserscan->angle_increment;
 
-    geometry_msgs::PointStamped pointICC, pointOdom;
+      if (alpha < minAlpha)
+        break;
 
-    if (left)
-      pointICC.point.y += radius;
-    else
-      pointICC.point.y -= radius;
+      const float x = r * cos(alpha);
+      const float y = r * sin(alpha);
 
-    pointICC.header.frame_id = targetFrame;
-    pointICC.header.stamp = ros::Time(0);
-    transformListener.transformPoint("/odom", pointICC, pointOdom);
-    rotationCenter.position.x = pointOdom.point.x;
-    rotationCenter.position.y = pointOdom.point.y;
-  } catch (tf::TransformException ex) {
-    ROS_ERROR("%s", ex.what());
-    return;
+      if (cornerX + 0.1f < x && x < maxDist)
+        if (y < cornerY + 0.5f)
+          ++counter;
+    }
   }
+  return counter >= 5;
 }
 
-bool CurveDriverConstant::isNextToCorner(bool left, float speed) {
+bool CurveDriverConstant::wallFound(float cornerX, float cornerY) {
+  const float minAlpha = M_PI_2 - atan(cornerX / cornerY);
+  int counter = 0;
+  for (size_t i = laserscan->ranges.size() - 1;
+       i > laserscan->ranges.size() / 2; --i) {
+    const float r = laserscan->ranges[i];
+    if (laserscan->range_min < r && r < laserscan->range_max) {
+      const float alpha = laserscan->angle_min + i * laserscan->angle_increment;
+
+      if (alpha < minAlpha)
+        break;
+
+      const float x = r * cos(alpha);
+      const float y = r * sin(alpha);
+
+      if (x < cornerX)
+        if (cornerY - 0.3f < y && y < cornerY + 0.3f)
+          ++counter;
+    }
+  }
+
+  return counter >= 80;
+}
+
+bool CurveDriverConstant::isNextToCorner(float distanceToWall, float speed) {
   if (laserscan == nullptr)
     return false;
   updateScanOffset(speed);
+
   Eigen::Vector2f vecToCorner;
   float last_r = std::numeric_limits<float>::max();
-  size_t cornerIndex = 0;
-  if (left) {
-    size_t i;
-    for (i = laserscan->ranges.size() - 1; i > laserscan->ranges.size() / 2;
-         --i) {
-      const float r = laserscan->ranges[i];
-      if (laserscan->range_min < r && r < laserscan->range_max) {
-        if (r - last_r > corner_threshold)
-          break;
-        else
-          last_r = r;
-      }
+
+  size_t i;
+  for (i = laserscan->ranges.size() - 1; i > laserscan->ranges.size() / 2;
+       --i) {
+    const float r = laserscan->ranges[i];
+    if (laserscan->range_min < r && 0.4f < r && r < laserscan->range_max) {
+      if (r - last_r > cornerThreshold)
+        break;
+      else
+        last_r = r;
     }
-    if (last_r == std::numeric_limits<float>::max())
-      return false;
-    cornerIndex = i + 1;
-    const float alpha =
-        std::abs(laserscan->angle_min + (i + 1) * laserscan->angle_increment);
-    corner.x = last_r * std::cos(alpha) - scanOffset;
-    corner.y = last_r * std::sin(alpha);
-    vecToCorner[0] = last_r * std::cos(alpha);
-    vecToCorner[1] = last_r * std::sin(alpha);
   }
+
+  const float alpha =
+      abs(laserscan->angle_min + (i + 1) * laserscan->angle_increment);
+
+  corner.x = last_r * cos(alpha) - scanOffset;
+  corner.y = last_r * sin(alpha);
+
+  if (corner.x > 4.0f)
+    return false;
+
+  vecToCorner[0] = last_r * cos(alpha);
+  vecToCorner[1] = last_r * sin(alpha);
+
   cornerSeen = odom->pose.pose;
 
-  const float vc = maxMotorLevel / 10.0f;
+  /*const float vc = maxMotorLevel / motorLevelFactor;
   const float dif = vc - speed;
-  distance_to_corner = dif * dif / -2 + speed * (speed - vc);
-  // ROS_INFO("Distance to corner max: %f", distance_to_corner);
-  return corner.x - 0.1f < precurve_distance + distance_to_corner;
-  // laserUtil.calcCornerSize(laserscan, vecToCorner, left) > 1.2f;
+   rollout_distance = dif * dif / -2 + speed * (speed - vc);
+
+   if (rollout_distance < 0)
+     rollout_distance = 0;*/
+
+  rolloutDistance = 0;
+
+  /* precurve_distance =
+       sqrt(cornerSafetyDistance * cornerSafetyDistance -
+            distanceToWall * distanceToWall +
+            2 * radius * (distanceToWall - cornerSafetyDistance));*/
+  std_msgs::String debugMsg;
+  if (!isNextToGlas(vecToCorner[0], vecToCorner[1])) {
+    if (wallFound(vecToCorner[0], vecToCorner[1])) {
+      if (corner.x - 0.1f <
+          precurveDistance + rolloutDistance + blindnessOffset) {
+
+        try {
+          tf::StampedTransform transform;
+          transformListener.waitForTransform("/base_laser", "/odom",
+                                             laserscan->header.stamp,
+                                             ros::Duration(0.1));
+          transformListener.lookupTransform("/base_laser", "/odom",
+                                            laserscan->header.stamp, transform);
+
+          geometry_msgs::PointStamped cornerInBaseLaser;
+          cornerInBaseLaser.header.stamp = laserscan->header.stamp;
+          cornerInBaseLaser.header.frame_id = "/base_laser";
+          cornerInBaseLaser.point.x = vecToCorner[0];
+          cornerInBaseLaser.point.y = vecToCorner[1];
+          transformListener.transformPoint("/odom", cornerInBaseLaser,
+                                           cornerInOdom);
+
+          geometry_msgs::PoseStamped poseCorner;
+          poseCorner.header.frame_id = "/odom";
+          poseCorner.header.stamp = laserscan->header.stamp;
+          poseCorner.pose.position.x = cornerInOdom.point.x;
+          poseCorner.pose.position.y = cornerInOdom.point.y;
+          cornerPub.publish(poseCorner);
+        } catch (tf::TransformException ex) {
+          ROS_ERROR("%s", ex.what());
+          return false;
+        }
+
+        return true;
+      } else
+        debugMsg.data = "Curve-condition not fulfilled";
+    } else
+      debugMsg.data = "No wall found";
+  } else
+    debugMsg.data = "Next To Glas";
+  infoPub.publish(debugMsg);
+  return false;
 }
 
-bool CurveDriverConstant::isAtCurveBegin(bool left) const {
-  const float xDif = cornerSeen.position.x - odom->pose.pose.position.x;
-  const float yDif = cornerSeen.position.y - odom->pose.pose.position.y;
+bool CurveDriverConstant::rolloutBegins() const {
+  return getCurrentDistanceToCorner() < precurveDistance + rolloutDistance;
+}
 
-  // actual distance
-  const float distance = sqrt(xDif * xDif + yDif * yDif);
-
-  return distance > distance_to_corner;
+bool CurveDriverConstant::isAtCurveBegin() const {
+  return getCurrentDistanceToCorner() < precurveDistance;
 }
 
 void CurveDriverConstant::setLaserscan(
@@ -139,13 +218,22 @@ void CurveDriverConstant::setLaserscan(
   }
 }
 
+float CurveDriverConstant::getCurrentDistanceToCorner() const {
+  const float xDif = cornerInOdom.point.x - odom->pose.pose.position.x;
+  const float yDif = cornerInOdom.point.y - odom->pose.pose.position.y;
+
+  return sqrt(xDif * xDif + yDif * yDif);
+}
+
 void CurveDriverConstant::setOdom(const nav_msgs::OdometryConstPtr &msg) {
   odom = msg;
 }
 
 void CurveDriverConstant::updateScanOffset(float speed) {
   const double now = ros::Time::now().toSec();
+  // time since last update
   const double timeDif = now - scanOffsetStamp;
   scanOffset += timeDif * speed;
+  // last update happened now
   scanOffsetStamp = now;
 }
