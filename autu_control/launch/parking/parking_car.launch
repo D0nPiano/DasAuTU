@@ -60,13 +60,13 @@
     <param name="curvedriver/max_motor_level" value="0"/>
     <param name="parking/regulator_p" value="25"/>
     <param name="parking/regulator_d" value="4"/>
-    <param name="parking/correction_x" value="0.1"/>
-    <param name="parking/velocity_forward" value="4"/>
-    <param name="parking/velocity_backward" value="8"/>
+    <param name="parking/correction_x" value="-0.1"/>
+    <param name="parking/velocity_forward" value="5"/>
+    <param name="parking/velocity_backward" value="10"/>
     <param name="parking/w" value="0.2"/>
     <param name="parking/safety_distance" value="0.1"/>
-    <param name="parking/max_steering_left" value="45"/>
-    <param name="parking/max_steering_right" value="37"/>
+    <param name="parking/max_steering_left" value="46"/>
+    <param name="parking/max_steering_right" value="38"/>
     <param name="parking/minimal_radius" value="1.0"/>
   </node>
 </launch>
