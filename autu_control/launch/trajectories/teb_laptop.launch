@@ -13,7 +13,7 @@
 
 
     <param name="base_local_planner" value="teb_local_planner/TebLocalPlannerROS" />
-    <param name="controller_frequency" value="10.0" />
+    <param name="controller_frequency" value="5.0" />
   </node>
 
   <!-- Dashboard for gamepad -->

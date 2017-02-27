@@ -425,6 +425,14 @@ Visualization Manager:
       Topic: /autu/wall
       Unreliable: false
       Value: true
+    - Arrow Length: 0.3
+      Class: rviz/PoseArray
+      Color: 255; 25; 0
+      Enabled: true
+      Name: PoseArray
+      Topic: /particlecloud
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -449,22 +457,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 10.9466
+      Distance: 21.6066
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 5.93974
-        Y: 0.578522
-        Z: 0.00844209
+        X: 13.3288
+        Y: -4.86491
+        Z: -0.0150083
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 1.5698
+      Pitch: 1.5498
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.74357
+      Yaw: 4.70857
     Saved: ~
 Window Geometry:
   Displays:
