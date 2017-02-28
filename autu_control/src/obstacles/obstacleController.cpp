@@ -180,7 +180,7 @@ void ObstacleController::run() {
     currentPosition.point.z = 0;
 
     if (isNearToNextGoal(&currentPosition)) {
-      // sendNextGoal();
+      sendNextGoal();
     }
 
   } catch (tf::TransformException ex) {
