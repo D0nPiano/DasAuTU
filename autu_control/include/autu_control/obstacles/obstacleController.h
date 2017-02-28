@@ -29,6 +29,7 @@
 
 #include "geometry_msgs/Pose.h"
 #include "geometry_msgs/PoseStamped.h"
+#include "sensor_msgs/Range.h"
 
 typedef pses_basis::Command command_data;
 
@@ -45,6 +46,7 @@ private:
   void sensorDataCallback(const pses_basis::SensorDataConstPtr &msg);
   ros::NodeHandle *n;
   ros::Subscriber sensorDataSub;
+  ros::Publisher usFrontPub, usLeftPub, usRightPub;
   void convertCommand(const geometry_msgs::Twist::ConstPtr &motionIn);
   void sendNextGoal();
   bool isNearToNextGoal(const geometry_msgs::PointStamped *currentPosition);

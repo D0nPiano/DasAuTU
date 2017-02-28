@@ -26,6 +26,10 @@ ObstacleController::ObstacleController(ros::NodeHandle *n,
   sensorDataSub = n->subscribe<pses_basis::SensorData>(
       "pses_basis/sensor_data", 10, &ObstacleController::sensorDataCallback,
       this);
+  //['/front_us_range', '/left_us_range', '/right_us_range']
+  usFrontPub = n->advertise<sensor_msgs::Range>("/front_us_range", 10);
+  usLeftPub = n->advertise<sensor_msgs::Range>("/left_us_range", 10);
+  usRightPub = n->advertise<sensor_msgs::Range>("/right_us_range", 10);
 
   if (!startDriving) {
     ROS_INFO("Warte auf Befehle...");
@@ -188,6 +192,17 @@ void ObstacleController::run() {
 void ObstacleController::sensorDataCallback(
     const pses_basis::SensorDataConstPtr &msg) {
   us_front = msg->range_sensor_front;
+  sensor_msgs::Range range;
+  range.min_range = 0.02;
+  range.max_range = 0.5;
+  range.field_of_view = 0.5;
+  range.range = msg->range_sensor_front;
+  range.radiation_type = 0;
+  usFrontPub.publish(range);
+  range.range = msg->range_sensor_left;
+  // usLeftPub.publish(range);
+  range.range = msg->range_sensor_right;
+  // usRightPub.publish(range);
 }
 
 #endif

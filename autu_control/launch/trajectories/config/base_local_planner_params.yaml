@@ -48,7 +48,7 @@ TebLocalPlannerROS:
  # Obstacles
     
  min_obstacle_dist: 0.15 # This value must also include our robot's expansion, since footprint_model is set to "line".
- inflation_dist: 0 #0.2 #0.25
+ inflation_dist: 0.4 #0.25
  include_costmap_obstacles: True
  costmap_obstacles_behind_robot_dist: 4.0
  obstacle_poses_affected: 30
@@ -70,10 +70,12 @@ TebLocalPlannerROS:
  weight_kinematics_nh: 1000
  weight_kinematics_forward_drive: 100
  weight_kinematics_turning_radius: 10
- weight_optimaltime: 1
+ weight_optimaltime: 3
  weight_obstacle: 150
  weight_dynamic_obstacle: 10 # not in use yet
 # weight_viapoint: 0.1
+
+
 
  # Homotopy Class Planner
 
@@ -81,9 +83,10 @@ TebLocalPlannerROS:
  enable_multithreading: True
  simple_exploration: False
  max_number_classes: 4
- selection_cost_hysteresis: 1.0
- selection_obst_cost_scale: 1.0
+ selection_cost_hysteresis: 0.4
+ selection_obst_cost_scale: 100 #1.0
  selection_alternative_time_cost: False
+ selecting_viapoint_cost_scale: 1
  roadmap_graph_no_samples: 15
  roadmap_graph_area_width: 5
  h_signature_prescaler: 0.5
