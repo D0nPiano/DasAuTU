@@ -165,6 +165,19 @@ target_link_libraries(autu_dashboard ${catkin_LIBRARIES} autu_dashboard_ui)
 add_library(parking_controller src/parking/parking_controller.cpp src/parking/corner.cpp)
 target_link_libraries(parking_controller ${catkin_LIBRARIES})
 
+
+## Obstacles 
+add_library(obstacleController src/obstacles/obstacleController.cpp)
+target_link_libraries(obstacleController ${catkin_LIBRARIES})
+
+## createRouteController 
+add_library(createRouteController src/obstacles/createRouteController.cpp)
+target_link_libraries(createRouteController ${catkin_LIBRARIES})
+
+## tinyxml2 
+add_library(tinyxml include/autu_control/obstacles/tinyxml2/tinyxml2.cpp)
+target_link_libraries(tinyxml ${catkin_LIBRARIES})
+
 ## Gamepad
 add_library(ps3_controller src/gamepad/ps3_controller.cpp)
 target_link_libraries(ps3_controller ${catkin_LIBRARIES})
@@ -180,6 +193,9 @@ target_link_libraries(main rundkursController)
 target_link_libraries(main laserDetector)
 target_link_libraries(main ps3_controller)
 target_link_libraries(main parking_controller)
+target_link_libraries(main obstacleController)
+target_link_libraries(main createRouteController)
+target_link_libraries(main tinyxml)
 
 #add_dependencies(main ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
