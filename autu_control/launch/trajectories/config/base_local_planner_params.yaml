@@ -48,9 +48,9 @@ TebLocalPlannerROS:
  # Obstacles
     
  min_obstacle_dist: 0.15 # This value must also include our robot's expansion, since footprint_model is set to "line".
- inflation_dist: 0 #0.25
+ inflation_dist: 0 #0.2 #0.25
  include_costmap_obstacles: True
- costmap_obstacles_behind_robot_dist: 1.0
+ costmap_obstacles_behind_robot_dist: 4.0
  obstacle_poses_affected: 30
  costmap_converter_plugin: ""
  costmap_converter_spin_thread: True
