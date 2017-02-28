@@ -392,7 +392,8 @@ Visualization Manager:
       Line Style: Lines
       Line Width: 0.03
       Name: Path
-      Offset:
+      Offset: selection_obst_cost_scale: 100 #1.0
+
         X: 0
         Y: 0
         Z: 0

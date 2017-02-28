@@ -3,8 +3,6 @@
 
 #include "ros/ros.h"
 
-#include "autu_control/rundkurs/laserDetector.h"
-
 class PIDRegler {
 public:
   PIDRegler() {}
@@ -13,9 +11,6 @@ public:
             float solldist);
   void reset();
   void drive(float ldist, bool left);
-  bool isReady(float dist);
-
-  void setLaserDetector(const LaserDetector &detector);
 
   void setMaxMotorLevel(const int16_t &value);
 
@@ -28,7 +23,6 @@ private:
   float p;
   float d;
   float solldist;
-  const LaserDetector *laserDetector;
   ros::Publisher command_pub;
 };
 
