@@ -45,6 +45,8 @@ ParkingController::ParkingController(ros::NodeHandle &nh)
   safety_distance = nh.param<float>("main/parking/safety_distance", 0.1f);
   b = nh.param<float>("main/parking/b", 0.32f);
   w = nh.param<float>("main/parking/w", 0.2f);
+
+  // Add a safety distance to the actual car width
   w += safety_distance;
 
   r = nh.param<float>("main/parking/minimal_radius", 1);
@@ -93,6 +95,7 @@ void ParkingController::run() {
   case DETECT_CORNER:
     vec = laserUtil.findCorner(laserscan);
 
+// convert corner and start position in odom-frame
     try {
       tf::StampedTransform transform;
       transformListener.waitForTransform("base_laser", "/odom", ros::Time(0),
@@ -102,6 +105,7 @@ void ParkingController::run() {
 
       geometry_msgs::PointStamped cornerInBaseLaser, startInBaseLaser;
 
+      // move corner virtually so the car won't hit it
       vec[1] += safety_distance;
       cornerInBaseLaser.point.x = vec[0];
       cornerInBaseLaser.point.y = vec[1];
@@ -110,6 +114,7 @@ void ParkingController::run() {
       transformListener.transformPoint("/odom", cornerInBaseLaser, corner);
       corner.point.z = 0;
 
+       // convert start position in odom-frame
       startInBaseLaser.point.x = vec[0] + r * sin(delta);
       startInBaseLaser.point.y = vec[1] + r * (1 - cos(delta));
       startInBaseLaser.header.frame_id = "/base_laser";
@@ -138,6 +143,9 @@ void ParkingController::run() {
       start.header.stamp = ros::Time(0);
       transformListener.transformPoint("/rear_right_wheel", start,
                                        startInRightWheel);
+
+      // if odom.x > start.x the start position is reached and the backwards
+      // movement can be started
       if (startInRightWheel.point.x < correction_x)
         state = TURN_RIGHT_INIT;
     } catch (tf::TransformException ex) {
@@ -146,6 +154,7 @@ void ParkingController::run() {
     }
     break;
   case TURN_RIGHT_INIT:
+  // remember where the turn was started
     curveBegin = odom->pose.pose;
     state = TURN_RIGHT;
     break;
@@ -153,7 +162,8 @@ void ParkingController::run() {
     tf::quaternionMsgToTF(curveBegin.orientation, begin);
     tf::quaternionMsgToTF(odom->pose.pose.orientation, current);
     ROS_INFO("Current Angle: %f", 2 * begin.angle(current) * 180 / M_PI);
-    if (2 * begin.angle(current) > theta) {
+    // if the yaw angle is bigger than theta, steer left
+    if (2 * begin.angle(current) > theta) { // 2 * because angle() only returns angle/2
       curveBegin = odom->pose.pose;
       state = TURN_LEFT;
     }
@@ -161,7 +171,7 @@ void ParkingController::run() {
   case TURN_LEFT:
     tf::quaternionMsgToTF(curveBegin.orientation, begin);
     tf::quaternionMsgToTF(odom->pose.pose.orientation, current);
-    if (2 * begin.angle(current) > theta)
+    if (2 * begin.angle(current) > theta) // 2 * because angle() only returns angle/2
       state = STOP;
     break;
   default:
@@ -171,6 +181,7 @@ void ParkingController::run() {
   pses_basis::Command cmd;
   switch (state) {
   case DRIVE_TO_CORNER:
+   // drive to the start position with the pd controller
     pidRegler.drive(odom->pose.pose.position.y - start.point.y, false);
     break;
   case TURN_RIGHT:
@@ -185,6 +196,8 @@ void ParkingController::run() {
     break;
   case STOP:
     cmd.motor_level = 0;
+    // keep steering level from last movement to prevent the servo from making
+    // noises
     cmd.steering_level = maxSteeringLeft;
     command_pub.publish(cmd);
     break;
@@ -200,19 +213,24 @@ ParkingController::calcTrajectory() {
 
   const Vector2f v_r(0, r);
 
+  // ICC of the first turn
   const Vector2f startICC = start - v_r;
-
   vectors.push_back(start);
 
+  // number of vectors used to depict the circles
   const int intervals = 20;
+
+  // sector of circle with angle theta around first ICC
   for (int i = 0; i <= intervals; ++i) {
     Rotation2Df rot(theta * i / intervals);
 
     vectors.push_back(rot * v_r + startICC);
   }
 
+  // ICC of the second turn
   const Vector2f endICC = Rotation2Df(theta) * (2 * v_r) + startICC;
-
+   
+   // sector of circle with angle theta around second ICC
   for (int i = intervals; i >= 0; --i) {
     Rotation2Df rot(theta * i / intervals);
 
@@ -228,12 +246,15 @@ void ParkingController::publishParkingTrajectory() {
 
   const auto &vectors = calcTrajectory();
 
+  // add each point of the trajectory to the messages
   for (const Vector2f &vec : vectors) {
     PoseStamped pose;
     pose.pose.position.x = vec[0] + corner.point.x;
     pose.pose.position.y = vec[1] + corner.point.y;
     msgWheel.poses.push_back(pose);
 
+    // trajectory of the left wheel is nearly the trajectory of the right wheel
+    // plus the car-width
     pose.pose.position.y += w;
     msgOdom.poses.push_back(pose);
   }
