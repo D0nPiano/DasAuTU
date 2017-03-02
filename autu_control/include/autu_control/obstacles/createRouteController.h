@@ -25,12 +25,11 @@
 #include "pses_basis/SensorData.h"
 #include <pses_basis/Command.h>
 
-
 #include "geometry_msgs/Point.h"
 #include "geometry_msgs/PointStamped.h"
-#include <geometry_msgs/PointStamped.h>
-#include <geometry_msgs/PolygonStamped.h>
 #include <geometry_msgs/Point32.h>
+#include <geometry_msgs/PolygonStamped.h>
+#include <geometry_msgs/PoseStamped.h>
 
 typedef pses_basis::Command command_data;
 
@@ -39,14 +38,17 @@ public:
   CreateRouteController(ros::NodeHandle *n, ros::Publisher *command_pub);
   ~CreateRouteController();
   void run();
+
 private:
-	ros::NodeHandle* n;
-	void addToPoints(const geometry_msgs::PointStampedConstPtr& currentPoint);
-	ros::Subscriber plan_command_sub;
-	ros::Subscriber clicked_point_sub;
-	ros::Publisher* command_pub;
-	tinyxml2::XMLDocument routeXML;
-	tinyxml2::XMLNode * pRoot;
+  ros::NodeHandle *n;
+  void addToPoints(const geometry_msgs::PointStampedConstPtr &currentPoint);
+  void poseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
+  ros::Subscriber plan_command_sub;
+  ros::Subscriber clicked_point_sub;
+  ros::Subscriber poses_sub;
+  ros::Publisher *command_pub;
+  tinyxml2::XMLDocument routeXML;
+  tinyxml2::XMLNode *pRoot;
 };
 
 #endif

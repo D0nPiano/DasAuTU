@@ -48,13 +48,19 @@ ObstacleController::ObstacleController(ros::NodeHandle *n,
         pRoot->FirstChildElement("point");
     while (currentPointElement != nullptr) {
       float currentX;
-      float currentY;
+      float currentY, w, z;
       currentPointElement->QueryFloatAttribute("x", &currentX);
       currentPointElement->QueryFloatAttribute("y", &currentY);
+      currentPointElement->QueryFloatAttribute("w", &w);
+      currentPointElement->QueryFloatAttribute("z", &z);
 
-      Point currentPoint = point_new(currentX, currentY);
+      geometry_msgs::Pose currentPoint;
+      currentPoint.position.x = currentX;
+      currentPoint.position.y = currentY;
+      currentPoint.orientation.w = w;
+      currentPoint.orientation.z = z;
 
-      points.push_back(currentPoint);
+      poses.push_back(currentPoint);
       currentPointElement = currentPointElement->NextSiblingElement("point");
     }
 
@@ -74,18 +80,20 @@ ObstacleController::~ObstacleController() {
 void ObstacleController::sendNextGoal() {
   ROS_INFO("Sending Next Goal");
   currentGoal++;
-  if (currentGoal == (int)points.size()) {
+  if (currentGoal == (int)poses.size()) {
     currentGoal = 0;
   }
   geometry_msgs::PoseStamped nextGoal;
-  nextGoal.pose.position.x = points[currentGoal].x;
+  /*nextGoal.pose.position.x = points[currentGoal].x;
   nextGoal.pose.position.y = points[currentGoal].y;
   nextGoal.pose.position.z = 0.0;
 
   nextGoal.pose.orientation.x = 0.0;
   nextGoal.pose.orientation.y = 0.0;
   nextGoal.pose.orientation.z = 0.015;
-  nextGoal.pose.orientation.w = 0.998;
+  nextGoal.pose.orientation.w = 0.998;*/
+
+  nextGoal.pose = poses[currentGoal];
 
   nextGoal.header.stamp = ros::Time::now();
   nextGoal.header.frame_id = "map";
@@ -105,12 +113,14 @@ bool ObstacleController::isNearToNextGoal(
   ROS_INFO("Vektor X: [%f]", points[currentGoal].x);
   */
 
-  float diffx = pow(currentPosition->point.x - points[currentGoal].x, 2);
-  float diffy = pow(currentPosition->point.y - points[currentGoal].y, 2);
+  float diffx =
+      pow(currentPosition->point.x - poses[currentGoal].position.x, 2);
+  float diffy =
+      pow(currentPosition->point.y - poses[currentGoal].position.y, 2);
   float distance = sqrt(diffx + diffy);
 
   // ROS_INFO("Distance: [%f]", distance);
-  return (distance < 3.0);
+  return (distance < 1.0);
 }
 
 void ObstacleController::convertCommand(
