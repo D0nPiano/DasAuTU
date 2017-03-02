@@ -64,7 +64,7 @@ ParkingController::ParkingController(ros::NodeHandle &nh)
 
   delta = theta - alpha;
 
-  pidRegler = PIDRegler(nh, regulator_p, regulator_d, velocity_forward, 0);
+  pdController = PDController(nh, regulator_p, regulator_d, velocity_forward, 0);
 
 #ifndef NDEBUG
   trajectory_pub =
@@ -182,7 +182,7 @@ void ParkingController::run() {
   switch (state) {
   case DRIVE_TO_CORNER:
    // drive to the start position with the pd controller
-    pidRegler.drive(odom->pose.pose.position.y - start.point.y, false);
+    pdController.drive(odom->pose.pose.position.y - start.point.y, false);
     break;
   case TURN_RIGHT:
     cmd.motor_level = -velocity_backward;
