@@ -5,7 +5,7 @@
 #include "autu_control/rundkurs/curvedriverconstant.h"
 #include "autu_control/rundkurs/laser_utilities.h"
 #include "autu_control/rundkurs/lowpass.h"
-#include "autu_control/rundkurs/pidregler.h"
+#include "autu_control/rundkurs/pdcontroller.h"
 
 #include "nav_msgs/Odometry.h"
 #include "ros/ros.h"
@@ -92,7 +92,7 @@ private:
 
   CurveDriverConstant curveDriver;
   Lowpass lowpass;
-  PIDRegler pdController;
+  PDController pdController;
 
   /**  @brief If false the sensors aren't ready yet. */
   bool initialized;

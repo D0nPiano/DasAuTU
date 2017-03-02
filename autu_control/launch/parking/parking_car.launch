@@ -55,9 +55,9 @@
     <param name="max_steering" value="35"/>
   </node>
   <node pkg="autu_control" type="main" name="main" output="screen">
-    <param name="pidregler/max_motor_level" value="0"/>
-    <param name="pidregler/p" value="10"/>
-    <param name="pidregler/d" value="3"/>
+    <param name="PDController/max_motor_level" value="0"/>
+    <param name="PDController/p" value="10"/>
+    <param name="PDController/d" value="3"/>
     <param name="curvedriver/max_motor_level" value="0"/>
     <param name="parking/regulator_p" value="25"/>
     <param name="parking/regulator_d" value="4"/>
