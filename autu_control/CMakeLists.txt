@@ -139,7 +139,7 @@ include_directories(
 )
 
 ## Declare a C++ library
-add_library(rundkursController src/rundkurs/rundkursController.cpp src/rundkurs/pidregler.cpp src/rundkurs/curvedriver.cpp src/rundkurs/curvedriver2.cpp src/rundkurs/curvedriverconstant.cpp src/rundkurs/laser_utilities.cpp src/rundkurs/lowpass.cpp src/rundkurs/line.cpp)
+add_library(rundkursController src/rundkurs/rundkursController.cpp src/rundkurs/pidregler.cpp src/rundkurs/curvedriverconstant.cpp src/rundkurs/laser_utilities.cpp src/rundkurs/lowpass.cpp src/rundkurs/line.cpp)
 add_library(laserDetector src/rundkurs/laserDetector.cpp)
 
 ## Add cmake target dependencies of the library
