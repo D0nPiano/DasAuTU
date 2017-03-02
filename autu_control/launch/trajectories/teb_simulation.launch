@@ -12,9 +12,9 @@
 
   <node pkg="autu_control" type="main" name="main" output="screen">
    <remap from="autu/command" to="pses_basis/command"/>
-    <param name="pidregler/max_motor_level" value="20"/>
-    <param name="pidregler/p" value="6"/>
-    <param name="pidregler/d" value="3"/>
+    <param name="PDController/max_motor_level" value="20"/>
+    <param name="PDController/p" value="6"/>
+    <param name="PDController/d" value="3"/>
 
     <param name="curvedriver/max_motor_level" value="8"/>
     <param name="curvedriver/curve_radius" value="2.5"/>
