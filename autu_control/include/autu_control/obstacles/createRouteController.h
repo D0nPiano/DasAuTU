@@ -32,16 +32,29 @@
 #include <geometry_msgs/PoseStamped.h>
 
 typedef pses_basis::Command command_data;
-
+/**
+*@brief Controller to save goals for the obstacleController
+*
+*Saves navigation goals drawn in Rviz in an XML file.
+*
+*/
 class CreateRouteController : public AutoController {
 public:
+  /**
+  *@brief Initalizes an empty XML file
+  */
   CreateRouteController(ros::NodeHandle *n, ros::Publisher *command_pub);
+  /**
+  *@brief Saves XML file
+  */
   ~CreateRouteController();
   void run();
 
 private:
   ros::NodeHandle *n;
-  void addToPoints(const geometry_msgs::PointStampedConstPtr &currentPoint);
+  /**
+*@brief Adds a navigation goal drawn in Rviz to the XML file
+*/
   void poseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
   ros::Subscriber plan_command_sub;
   ros::Subscriber clicked_point_sub;
