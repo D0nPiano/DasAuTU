@@ -4,8 +4,6 @@
 #include "autu_control/obstacles/obstacleController.h"
 #include "ros/ros.h"
 
-
-
 ObstacleController::ObstacleController(ros::NodeHandle *n,
                                        ros::Publisher *command_pub,
                                        bool startDriving)
@@ -24,7 +22,6 @@ ObstacleController::ObstacleController(ros::NodeHandle *n,
 
   usFrontPub = n->advertise<sensor_msgs::Range>("/front_us_range", 10);
 
-
   if (!startDriving) {
     ROS_INFO("Warte auf Befehle...");
   } else {
@@ -41,7 +38,7 @@ ObstacleController::ObstacleController(ros::NodeHandle *n,
     tinyxml2::XMLElement *currentPointElement =
         pRoot->FirstChildElement("point");
 
-    //save goals from xml file in pose vector
+    // save goals from xml file in pose vector
     while (currentPointElement != nullptr) {
       float currentX;
       float currentY, w, z;
@@ -59,8 +56,6 @@ ObstacleController::ObstacleController(ros::NodeHandle *n,
       poses.push_back(currentPoint);
       currentPointElement = currentPointElement->NextSiblingElement("point");
     }
-
-
   }
 
   currentGoal = -1;
@@ -93,7 +88,7 @@ bool ObstacleController::isNearToNextGoal(
     return true;
   }
 
-  //euklidian xy distance to current goal
+  // euklidian xy distance to current goal
 
   float diffx =
       pow(currentPosition->point.x - poses[currentGoal].position.x, 2);
@@ -108,7 +103,7 @@ void ObstacleController::convertCommand(
     const geometry_msgs::Twist::ConstPtr &motionIn) {
   command_data cmd;
 
-  //Steering level for curve radius of 0.85m
+  // Steering level for curve radius of 0.85m
   const float alpha_max = M_PI_2 - std::atan(0.85 / 0.28);
   const float maxSteeringLeft = 45;
   const float maxSteeringRight = -45;
@@ -118,8 +113,7 @@ void ObstacleController::convertCommand(
   cmd.steering_level =
       steeringMitte + (motionIn->angular.z / alpha_max) * steeringWidth / 2;
 
-
-  //limits steering_level
+  // limits steering_level
   if (cmd.steering_level > 45) {
     cmd.steering_level = 45;
   } else if (cmd.steering_level < -45) {
@@ -128,7 +122,6 @@ void ObstacleController::convertCommand(
 
   cmd.motor_level = int(motionIn->linear.x * 20);
 
-
   //ḿinimal motor_levels
   if (motionIn->linear.x > 0 && cmd.motor_level < 5) {
     cmd.motor_level = 5;
@@ -136,7 +129,7 @@ void ObstacleController::convertCommand(
     cmd.motor_level = -10;
   }
 
-  //limits motor_level
+  // limits motor_level
   if (cmd.motor_level > 13)
     cmd.motor_level = 13;
   else if (cmd.motor_level < -12)
@@ -168,7 +161,7 @@ void ObstacleController::run() {
     transformListener.transformPoint("/map", positionInBaseLink,
                                      currentPosition);
     currentPosition.point.z = 0;
-    //send nextGoal if 1m close to current goal
+    // send nextGoal if 1m close to current goal
     if (isNearToNextGoal(&currentPosition)) {
       sendNextGoal();
     }
@@ -189,7 +182,6 @@ void ObstacleController::sensorDataCallback(
   range.range = msg->range_sensor_front;
   range.radiation_type = 0;
   usFrontPub.publish(range);
-
 }
 
 #endif

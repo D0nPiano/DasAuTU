@@ -35,14 +35,15 @@ typedef pses_basis::Command command_data;
 
 typedef struct { float x, y; } Point;
 
-
- /**
-   * @brief Controller for roundtrip with obstacles
-   *
-   * Publishes navigation goals, set with createRouteController, for teb_planner.
-   * Robot follows pathe set by the navigation goals. Sends next goal if robot is 1m close to the current goal.
-   * Converts motions provided by teb_planner into pses_basis commands to follow trajectories.
-   */
+/**
+  * @brief Controller for roundtrip with obstacles
+  *
+  * Publishes navigation goals, set with createRouteController, for teb_planner.
+  * Robot follows pathe set by the navigation goals. Sends next goal if robot is
+ * 1m close to the current goal.
+  * Converts motions provided by teb_planner into pses_basis commands to follow
+ * trajectories.
+  */
 class ObstacleController : public AutoController {
 public:
   ObstacleController(ros::NodeHandle *n, ros::Publisher *command_pub,
@@ -61,16 +62,15 @@ private:
    * @brief Publishes next navigation goal
    */
   void sendNextGoal();
-    /**
-   * @brief checks if the robot is close eneto the current goal
-   */
+  /**
+ * @brief checks if the robot is close eneto the current goal
+ */
   bool isNearToNextGoal(const geometry_msgs::PointStamped *currentPosition);
 
   /**
    * @brief goals fond in the xml file
    */
   std::vector<geometry_msgs::Pose> poses;
-
 
   ros::NodeHandle *n;
   ros::Subscriber sensorDataSub;

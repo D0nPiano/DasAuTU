@@ -40,14 +40,13 @@ typedef pses_basis::Command command_data;
 */
 class CreateRouteController : public AutoController {
 public:
-	
-/**
-*@brief Initalizes an empty XML file
-*/
+  /**
+  *@brief Initalizes an empty XML file
+  */
   CreateRouteController(ros::NodeHandle *n, ros::Publisher *command_pub);
-/**
-*@brief Saves XML file
-*/
+  /**
+  *@brief Saves XML file
+  */
   ~CreateRouteController();
   void run();
 

@@ -6,12 +6,10 @@
 #include "autu_control/obstacles/createRouteController.h"
 #include "std_msgs/Header.h"
 
-
 CreateRouteController::CreateRouteController(ros::NodeHandle *n,
                                              ros::Publisher *command_pub)
     : n(n), command_pub(command_pub) {
   ROS_INFO("New CreateRouteController");
-
 
   poses_sub = n->subscribe("/move_base_simple/goal", 10,
                            &CreateRouteController::poseCallback, this);
@@ -29,7 +27,6 @@ CreateRouteController::~CreateRouteController() {
 
   plan_command_sub.shutdown();
 }
-
 
 void CreateRouteController::poseCallback(
     const geometry_msgs::PoseStampedConstPtr &msg) {
