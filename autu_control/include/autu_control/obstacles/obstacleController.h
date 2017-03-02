@@ -55,6 +55,7 @@ private:
   ros::Publisher goal_pub;
   tinyxml2::XMLDocument routeXML;
   std::vector<Point> points;
+  std::vector<geometry_msgs::Pose> poses;
   tf::TransformListener transformListener;
   int currentGoal;
   float us_front;
