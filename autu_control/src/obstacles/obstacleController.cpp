@@ -4,12 +4,7 @@
 #include "autu_control/obstacles/obstacleController.h"
 #include "ros/ros.h"
 
-Point point_new(float x, float y) {
-  Point a;
-  a.x = x;
-  a.y = y;
-  return a;
-}
+
 
 ObstacleController::ObstacleController(ros::NodeHandle *n,
                                        ros::Publisher *command_pub,
@@ -26,10 +21,9 @@ ObstacleController::ObstacleController(ros::NodeHandle *n,
   sensorDataSub = n->subscribe<pses_basis::SensorData>(
       "pses_basis/sensor_data", 10, &ObstacleController::sensorDataCallback,
       this);
-  //['/front_us_range', '/left_us_range', '/right_us_range']
+
   usFrontPub = n->advertise<sensor_msgs::Range>("/front_us_range", 10);
-  usLeftPub = n->advertise<sensor_msgs::Range>("/left_us_range", 10);
-  usRightPub = n->advertise<sensor_msgs::Range>("/right_us_range", 10);
+
 
   if (!startDriving) {
     ROS_INFO("Warte auf Befehle...");
@@ -46,6 +40,8 @@ ObstacleController::ObstacleController(ros::NodeHandle *n,
 
     tinyxml2::XMLElement *currentPointElement =
         pRoot->FirstChildElement("point");
+
+    //save goals from xml file in pose vector
     while (currentPointElement != nullptr) {
       float currentX;
       float currentY, w, z;
@@ -64,9 +60,7 @@ ObstacleController::ObstacleController(ros::NodeHandle *n,
       currentPointElement = currentPointElement->NextSiblingElement("point");
     }
 
-    for (Point i : points) {
-      ROS_INFO("Points: [%f], [%f]", i.x, i.y);
-    }
+
   }
 
   currentGoal = -1;
@@ -84,14 +78,6 @@ void ObstacleController::sendNextGoal() {
     currentGoal = 0;
   }
   geometry_msgs::PoseStamped nextGoal;
-  /*nextGoal.pose.position.x = points[currentGoal].x;
-  nextGoal.pose.position.y = points[currentGoal].y;
-  nextGoal.pose.position.z = 0.0;
-
-  nextGoal.pose.orientation.x = 0.0;
-  nextGoal.pose.orientation.y = 0.0;
-  nextGoal.pose.orientation.z = 0.015;
-  nextGoal.pose.orientation.w = 0.998;*/
 
   nextGoal.pose = poses[currentGoal];
 
@@ -107,11 +93,7 @@ bool ObstacleController::isNearToNextGoal(
     return true;
   }
 
-  /*ROS_INFO("Current Position: [%f], [%f]", currentPosition->point.x,
-  currentPosition->point.y);
-  ROS_INFO("currentGoal: [%d]", currentGoal);
-  ROS_INFO("Vektor X: [%f]", points[currentGoal].x);
-  */
+  //euklidian xy distance to current goal
 
   float diffx =
       pow(currentPosition->point.x - poses[currentGoal].position.x, 2);
@@ -119,7 +101,6 @@ bool ObstacleController::isNearToNextGoal(
       pow(currentPosition->point.y - poses[currentGoal].position.y, 2);
   float distance = sqrt(diffx + diffy);
 
-  // ROS_INFO("Distance: [%f]", distance);
   return (distance < 1.0);
 }
 
@@ -127,6 +108,7 @@ void ObstacleController::convertCommand(
     const geometry_msgs::Twist::ConstPtr &motionIn) {
   command_data cmd;
 
+  //Steering level for curve radius of 0.85m
   const float alpha_max = M_PI_2 - std::atan(0.85 / 0.28);
   const float maxSteeringLeft = 45;
   const float maxSteeringRight = -45;
@@ -136,27 +118,25 @@ void ObstacleController::convertCommand(
   cmd.steering_level =
       steeringMitte + (motionIn->angular.z / alpha_max) * steeringWidth / 2;
 
+
+  //limits steering_level
   if (cmd.steering_level > 45) {
     cmd.steering_level = 45;
   } else if (cmd.steering_level < -45) {
     cmd.steering_level = -45;
   }
 
-  /*if (us_front > 0.65 && std::abs(cmd.steering_level - steeringMitte) < 10) {
-    cmd.motor_level = motionIn->linear.x * 50;
-  } else*/
   cmd.motor_level = int(motionIn->linear.x * 20);
 
+
+  //ḿinimal motor_levels
   if (motionIn->linear.x > 0 && cmd.motor_level < 5) {
     cmd.motor_level = 5;
   } else if (motionIn->linear.x < 0.0 && cmd.motor_level > -10) {
     cmd.motor_level = -10;
   }
 
-  ROS_INFO("motionIn->linear.x: %f -> Motor Level: %i us_front: %f steering "
-           "level: %f",
-           motionIn->linear.x, cmd.motor_level, us_front,
-           std::abs(cmd.steering_level - steeringMitte));
+  //limits motor_level
   if (cmd.motor_level > 13)
     cmd.motor_level = 13;
   else if (cmd.motor_level < -12)
@@ -169,7 +149,7 @@ void ObstacleController::convertCommand(
 
 void ObstacleController::run() {
 
-  // Trans
+  // Transformations
   try {
     tf::StampedTransform transform;
     geometry_msgs::PointStamped currentPosition;
@@ -188,7 +168,7 @@ void ObstacleController::run() {
     transformListener.transformPoint("/map", positionInBaseLink,
                                      currentPosition);
     currentPosition.point.z = 0;
-
+    //send nextGoal if 1m close to current goal
     if (isNearToNextGoal(&currentPosition)) {
       sendNextGoal();
     }
@@ -209,10 +189,7 @@ void ObstacleController::sensorDataCallback(
   range.range = msg->range_sensor_front;
   range.radiation_type = 0;
   usFrontPub.publish(range);
-  range.range = msg->range_sensor_left;
-  // usLeftPub.publish(range);
-  range.range = msg->range_sensor_right;
-  // usRightPub.publish(range);
+
 }
 
 #endif
