@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <launch>
   <include file="$(find pses_simulation)/launch/simulation.launch">
-  	<arg name="rviz" value="false"/>
+  	<arg name="rviz" value="true"/>
   	<arg name="dashboard" value="false"/>
   </include>
 
@@ -35,6 +35,4 @@
     <param name="curvedriver_constant/radius" value="1.25"/>
     <param name="curvedriver_constant/corner_safety_distance" value="0.15"/>
   </node>
-
-  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find autu_control)/launch/rundkurs/simulation.rviz"/>
 </launch>

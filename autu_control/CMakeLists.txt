@@ -140,9 +140,7 @@ include_directories(
 
 ## Declare a C++ library
 
-add_library(rundkursController src/rundkurs/rundkursController.cpp src/rundkurs/pdcontroller.cpp src/rundkurs/curvedriverconstant.cpp src/rundkurs/laser_utilities.cpp src/rundkurs/lowpass.cpp src/rundkurs/line.cpp)
-
-add_library(laserDetector src/rundkurs/laserDetector.cpp)
+add_library(rundkursController src/rundkurs/rundkursController.cpp src/rundkurs/pdcontroller.cpp src/rundkurs/curvedriverconstant.cpp src/parking/laser_utilities.cpp src/rundkurs/lowpass.cpp src/rundkurs/line.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -150,7 +148,6 @@ add_library(laserDetector src/rundkurs/laserDetector.cpp)
 # add_dependencies(autu_control ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 add_dependencies(rundkursController ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(laserDetector ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
 # add_executable(autu_control_node src/autu_control_node.cpp)
@@ -192,7 +189,6 @@ target_link_libraries(emergency_brake ${catkin_LIBRARIES})
 add_executable(main src/main.cpp)
 target_link_libraries(main ${catkin_LIBRARIES})
 target_link_libraries(main rundkursController)
-target_link_libraries(main laserDetector)
 target_link_libraries(main ps3_controller)
 target_link_libraries(main parking_controller)
 target_link_libraries(main obstacleController)
@@ -225,7 +221,7 @@ target_link_libraries(main tinyxml)
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS rundkursController laserDetector
+install(TARGETS rundkursController
    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

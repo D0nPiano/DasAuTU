@@ -3,7 +3,6 @@
 
 #include "autu_control/AutoController.h"
 #include "autu_control/rundkurs/curvedriverconstant.h"
-#include "autu_control/rundkurs/laser_utilities.h"
 #include "autu_control/rundkurs/lowpass.h"
 #include "autu_control/rundkurs/pdcontroller.h"
 

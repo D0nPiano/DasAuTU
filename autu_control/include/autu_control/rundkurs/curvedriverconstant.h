@@ -1,8 +1,6 @@
 #ifndef CURVEDRIVERCONSTANT_H
 #define CURVEDRIVERCONSTANT_H
 
-#include "autu_control/rundkurs/laser_utilities.h"
-
 #include "nav_msgs/Odometry.h"
 #include "ros/ros.h"
 #include "sensor_msgs/LaserScan.h"
