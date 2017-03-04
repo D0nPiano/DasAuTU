@@ -34,6 +34,12 @@ void infoCallback(const info_data::ConstPtr& info, Ui::Dashboard* ui);
 void cameraCallback(const image_msg::ConstPtr& img, Ui::Dashboard* ui);
 void depthCallback(const image_msg::ConstPtr& img, Ui::Dashboard* ui);
 
+
+/**
+ * @brief Dashbord with some modes added
+ *
+ * A copy of the pses basis dashbord wit additional modes 
+ */
 class Dashboard : public QMainWindow
 {
         Q_OBJECT

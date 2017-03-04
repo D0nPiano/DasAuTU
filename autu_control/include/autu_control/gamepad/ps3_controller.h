@@ -4,7 +4,10 @@
 #include "autu_control/AutoController.h"
 #include "ros/ros.h"
 #include <sensor_msgs/Joy.h>
-
+/**
+ * @brief Controller for controlling the car with a (wireless) PlayStation 3 gamepad
+ *
+ */
 class PS3_Controller : public AutoController {
 public:
   PS3_Controller(ros::NodeHandle *n, ros::Publisher *command_pub);

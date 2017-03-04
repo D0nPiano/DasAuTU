@@ -5,7 +5,6 @@ Dashboard::Dashboard(ros::NodeHandle *nh, QWidget *parent)
     : QMainWindow(parent), ui(new Ui::Dashboard), nh(nh) {
   ui->setupUi(this);
   modeControl = nh->advertise<string_msg>("pses_basis/mode_control", 10);
-  //robotCommand = nh->advertise<command_data>("autu/command", 10);
   robotCommand = nh->advertise<command_data>("pses_basis/command", 10);
   robotOdometry = nh->subscribe<odometry_data>(
       "odom", 10, boost::bind(odometryCallback, _1, ui));
@@ -33,6 +32,7 @@ Dashboard::Dashboard(ros::NodeHandle *nh, QWidget *parent)
   ui->modeSelection->addItem(QString("Park Car"), QVariant());
   ui->modeSelection->addItem(QString("Lane Detection"), QVariant());
   ui->modeSelection->addItem(QString("Exploration"), QVariant());
+  //additional modes
   ui->modeSelection->addItem(QString("Gamepad"), QVariant());
   ui->modeSelection->addItem(QString("Trajectories"), QVariant());
   ui->modeSelection->addItem(QString("Create Route"), QVariant());
