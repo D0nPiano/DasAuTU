@@ -8,6 +8,10 @@
 #include "pses_basis/Command.h"
 #include "pses_basis/SensorData.h"
 
+/**
+ * @brief The EmergencyBrake class
+ * Calculates distance of nearest Obstacle in Front and sets motorlevel to 0 if neccesarry
+ */
 class EmergencyBrake {
 public:
   EmergencyBrake(ros::NodeHandle *n);
@@ -16,9 +20,16 @@ public:
   void commandCallback(const pses_basis::CommandConstPtr &cmd);
   void sensorDataCallback(const pses_basis::SensorDataConstPtr &msg);
   void laserscanCallback(const sensor_msgs::LaserScanConstPtr &msg);
+  /**
+   * @brief timerCallback sets motorlevel to 0 if motorlevel is too high
+   * the maximum of motorlevel is determined dynamically in relation to distance to Obstacle
+   */
   void timerCallback(const ros::TimerEvent &);
 
 private:
+  /**
+   * @brief updateDistanceToObstacle calculates distance of nearest Obstacle in sight of US_Front or Kinect
+   */
   void updateDistanceToObstacle();
   ros::Publisher command_pub;
   // ros::Publisher debug_pub;

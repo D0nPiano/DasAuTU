@@ -74,10 +74,6 @@ void EmergencyBrake::sensorDataCallback(
   us_front = msg->range_sensor_front;
   if (!std::isnan(msg->hall_sensor_dt)) {
     currentSpeed = DRIVEN_DISTANCE_PER_TICK / msg->hall_sensor_dt;
-    /*ROS_INFO("Current Speed: %f", currentSpeed);
-    std_msgs::Float32 msg;
-    msg.data = currentSpeed;
-    debug_pub.publish(msg);*/
   }
 }
 
@@ -85,6 +81,7 @@ void EmergencyBrake::updateDistanceToObstacle() {
   if (laserscan != nullptr) {
     float d_min = std::numeric_limits<float>::max();
 
+    //calculates distance to nearest object in sight of Kinect
     for (size_t i = 0; i < laserscan->ranges.size(); ++i) {
       const float r = laserscan->ranges[i];
       if (laserscan->range_min < r && r < laserscan->range_max) {
@@ -126,8 +123,6 @@ void EmergencyBrake::laserscanCallback(
 }
 
 void EmergencyBrake::timerCallback(const ros::TimerEvent &) {
-  // if (ros::Time::now().toSec() - speedTimestamp > 3)
-  // currentSpeed = 0;
   updateDistanceToObstacle();
   const float maxSpeed = std::sqrt(2 * deceleration * distanceToObstacle);
   switch (state) {
@@ -161,11 +156,6 @@ void EmergencyBrake::timerCallback(const ros::TimerEvent &) {
   default:
     break;
   }
-  // if (maxMotorLevel <= 3)
-  // maxMotorLevel = 0;
-  //  ROS_INFO("state: %d dist: %f cur_speed: %f max_speed: %f maxLevel: %d",
-  //  state,
-  //         distanceToObstacle, currentSpeed, maxSpeed, maxMotorLevel);
 }
 
 int main(int argc, char **argv) {
