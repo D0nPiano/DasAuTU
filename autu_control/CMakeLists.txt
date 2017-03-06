@@ -138,9 +138,9 @@ include_directories(
   include/autu_control
 )
 
-## Declare a C++ library
+## Roundtrip
 
-add_library(rundkursController src/rundkurs/rundkursController.cpp src/rundkurs/pdcontroller.cpp src/rundkurs/curvedriverconstant.cpp src/parking/laser_utilities.cpp src/rundkurs/lowpass.cpp src/rundkurs/line.cpp)
+add_library(rundkursController src/rundkurs/rundkursController.cpp src/rundkurs/pdcontroller.cpp src/rundkurs/curvedriverconstant.cpp src/rundkurs/lowpass.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -161,7 +161,7 @@ target_link_libraries(autu_dashboard_ui Qt5::Widgets Qt5::Core Qt5::Gui ${catkin
 target_link_libraries(autu_dashboard ${catkin_LIBRARIES} autu_dashboard_ui)
 
 ## Parking 
-add_library(parking_controller src/parking/parking_controller.cpp src/parking/corner.cpp)
+add_library(parking_controller src/parking/parking_controller.cpp src/parking/corner.cpp src/parking/line.cpp src/parking/laser_utilities.cpp)
 target_link_libraries(parking_controller ${catkin_LIBRARIES})
 
 
