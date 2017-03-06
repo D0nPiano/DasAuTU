@@ -4,7 +4,7 @@
 #include "Eigen/Dense"
 #include "Eigen/StdVector"
 #include "autu_control/parking/corner.h"
-#include "autu_control/rundkurs/line.h"
+#include "autu_control/parking/line.h"
 #include "ros/ros.h"
 #include "sensor_msgs/LaserScan.h"
 #include <vector>
@@ -70,12 +70,16 @@ private:
   size_t minimumLineSize;
 
   /**
-   * @brief Used by convertToCartesian to filter out points which are far away.
+   * @brief Used by LaserUtil::convertToCartesian to filter out points which are
+   * far
+   * away.
    */
   float maxWallScope;
 
   /**
-   * @brief Used by convertToCartesian to filter out points which are far away.
+   * @brief Used by LaserUtil::convertToCartesian to filter out points which are
+   * far
+   * away.
    */
   float maxWallDistance;
 

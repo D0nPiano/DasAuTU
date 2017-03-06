@@ -1,7 +1,7 @@
 #ifndef CORNER_H
 #define CORNER_H
 
-#include "autu_control/rundkurs/line.h"
+#include "autu_control/parking/line.h"
 
 #include "Eigen/Dense"
 
