@@ -7,8 +7,7 @@ using std::fmax;
 using Eigen::ParametrizedLine;
 using Eigen::Vector2f;
 
-Corner::Corner(const Eigen::Vector2f &a, const Eigen::Vector2f &b,
-               const Eigen::Vector2f &c)
+Corner::Corner(const Vector2f &a, const Vector2f &b, const Vector2f &c)
     : a(a), b(b), c(c) {}
 
 Corner::Corner(const Line &line1, const Line &line2) {
@@ -63,4 +62,4 @@ nav_msgs::Path Corner::toPathMsg2() const {
   return msg;
 }
 
-Eigen::Vector2f Corner::getB() const { return b; }
+Vector2f Corner::getB() const { return b; }
