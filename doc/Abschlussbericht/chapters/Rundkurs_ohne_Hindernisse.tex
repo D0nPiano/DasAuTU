@@ -1,70 +1,29 @@
 \section{Rundkurs ohne Hindernisse}
-	Bei dieser Aufgabe musste das Auto einen bekannten Rundkurs im Flur des Instituts in 	m\"{o}glichst kurzer Zeit bewltigen. 
+	Bei dieser Aufgabe muss das Auto einen bekannten Rundkurs im Flur des Instituts in 	möglichst kurzer Zeit bewältigen. 
 
   \subsection{Grundidee}
-    Der Rundkurs besteht aus Geraden an deren Ende sich jeweils eine Kurve befindet. Demnach existieren in diesem System zwei Hauptzustnde: "Fahrzeug auf der Geraden" oder "Fahrzeug in Kurve". 
+    Der Rundkurs besteht aus Geraden, an deren Ende sich jeweils eine Kurve befindet. Demnach existieren in diesem System zwei Hauptzustände: \glqq Fahrzeug auf der Geraden\grqq ~oder \grqq Fahrzeug in Kurve\grqq. Die Modellierung des Ganzen als Zustandsautomat erscheint also sinnvoll.
 
   \subsection{Regelung der Fahrt auf den Geraden}
-    Die Klasse unterst"utzt alle Klassenoptionen der tudreport-Klasse.
-    \paragraph{Neue Optionen}
-    \begin{itemize}
-      \item \textbf{type=<dr|drfinal|diplom|msc|pp|bsc|sta>}\\
-        Hiermit wird die Art der Arbeit angegeben. Dies legt verschiedene
-        Formatierungen fest.\\
-        \begin{tabular}{ll}
-        \textaccent{dr} &f"ur eingereichte Dissertationen\\
-        \textaccent{drfinal} &f"ur genehmigte Dissertationen\\
-        \textaccent{diplom} &f"ur Diplomarbeiten\\
-        \textaccent{msc} &f"ur Master-Theses\\
-        \textaccent{pp} &f"ur Project-Proposals\\
-        \textaccent{bsc} &f"ur Bachelor-Theses\\
-        \textaccent{sta} &f"ur Studienarbeiten
-        \end{tabular}
-      \item \textbf{dr=<rernat|ing|phil>}\\
-        Hiermit wird die Art des Doktorgrads angegeben.\\
-        \begin{tabular}{ll}
-        \textaccent{rernat} &f"ur Dr. rer. nat.\\
-        \textaccent{ing} &f"ur Dr.-Ing.\\
-        \textaccent{phil} &f"ur Dr. phil.
-        \end{tabular}\\
-        F"ur den Fall, dass der gew"unschte Titel nicht vorhanden ist, gibt
-        es den Befehl \textbf{\textbackslash drtext\{\#1\}}, wobei \#1 z.B.
-        \glqq Zur Erlangung des Grades eines Doktors der
-        Technischen Wissenschaften (Dr.\ rer.\ tech.)\grqq\ ist.
-    \end{itemize}
+	Jede Gerade hat den Vorteil, dass sie durch eine Wand begrenzt ist, an welcher sich das Fahrzeug orientieren kann. Der aktuelle Abstand zur Wand kann nämlich näherungsweise mit dem Ultraschall-Sensor, der auf der linken Seite des Autos montiert ist, bestimmt 		werden. Mit Hilfe eines PD-Reglers wird sichergestellt, dass das Auto sich parallel zur 	Wand fortbewegt.
+	\\
+	Die dazu benötigten Parameter wurden bei Testfahrten empirisch ermittelt. Außerdem 		werden die Messwerte des Ultraschall-Sensors geglättet, um nervöse Lenkbewegungen zu 		vermeiden, indem aus den letzten 10 Messwerten ein Mittelwert gebildet wird.      
 
-  \subsection{Befehle}
-    \begin{itemize}\itemsep-0.5\parsep
-      \item \textbf{\textbackslash thesistitle\{\#1\}\{\#2\}}\\
-        \#1: Titel der Arbeit in der Erstsprache (z.B. Deutsch)\\
-        \#2: Titel der Arbeit in der zweiten Sprache (z.B. Englisch)
-      \item \textbf{\textbackslash makethesistitle}\\
-        Erzeugt die korrekte Titelseite
-      \item \textbf{\textbackslash author\{\#1\}}\\
-        \#1: Name des Autors
-      \item \textbf{\textbackslash birthplace\{\#1\}}\\
-        \#1: Geburtsort des Autors (bei Dr.-Arbeit verbindlich)
-      \item \textbf{\textbackslash date\{\#1\}}\\
-        Standard ist der aktuelle Monat und das aktuelle Jahr (z.B. \getmydate)\\
-        \#1: individuelles Datum
-      \item \textbf{\textbackslash referee\{\#1\}\{\#2\}[\#3]}\\
-        Namen der Gutachter, (3. Gutachter optional)
-      \item \textbf{\textbackslash department\{\#1\}}\\
-        Fachbereich an dem die Arbeit durchgef"uhrt wurde. Standard ist
-        \glqq Fachbereich Physik\grqq.
-      \item \textbf{\textbackslash group\{\#1\}}\\
-        Arbeitsgruppe / Institut an dem die Arbeit durchgef"uhrt wurde
-      \item \textbf{\textbackslash dateofexam\{\#1\}\{\#2\}}\\
-        \#1: Tag der Einreichung der Arbeit\\
-        \#2: Tag der Pr"ufung / Tag des Abschlusses\\
-        \textaccentcolor{Wird nur bei \textaccent{type=drfinal} verwendet.
-        Ansonsten wird ein leeres Feld erzeugt, in das bei Abgabe der 
-        Arbeit ein Stempel gesetzt wird.}
-      \item \textbf{\textbackslash tuprints\{\#1\}\{\#2\}}\\
-        \#1: \textaccent{<URN-ID>} aus \textaccent{urn:nbn:de:tuda-tuprints-<URN-ID>}\\
-        \#2: \textaccent{<tuprints-ID>} aus \textaccent{http://tuprints.ulb.tu-darmstadt.de/<tuprints-ID>}\\
-        Entspricht der Empfehlung auf der tuprints FAQ-Seite: \textaccent{http://tuprints.ulb.tu-darmstadt.de/faq.html\#urlreservation}
-      \item \textbf{\textbackslash affidavit[\#1]\{\#2\}}\\
-        \#1: Datum der Eigenst"andigkeitserkl"arung (optional)\\
-        \#2: Signatur unter der Unterschrift
-    \end{itemize}
+  \subsection{Steuerung der Fahrt in den Kurven}
+  	Zu Beginn wurde auch hier versucht, das Problem mittels einer Regelung zu lösen. Mit der Zeit sollte sich jedoch herausstellen, dass eine simple Steuerung bessere Ergebnisse 	erzielt. In der Kurve wird also einfach ein fester Lenkwinkel eingestellt, der während 		der gesamten Kurvenfahrt konstant bleibt.
+  	
+  \subsection{Kurvenerkennung}
+  	Die Kurvenerkennung entspricht im Zustandsautomaten dem Übergang von der Geraden hin zur	Kurve. Wie erkennt man also eine Kurve? Verlässt man sich ausschließlich auf den 		Ultraschall-Sensor, kann man eine Kurve erst detektieren, wenn sich links des Fahrzeugs 	keine Wand mehr befindet. Dann befindet sich das Auto allerdings schon mitten im 			Kurvenbereich und eine vernünftige Linie kann keinesfalls mehr erreicht werden.
+  	\\
+	An dieser Stelle kommt die Kinect-Kamera ins Spiel. Durch sie ist es möglich, bereits 	deutlich vor einer anstehenden Kurve selbige zu erkennen. Somit wird es überhaupt erst 		möglich eine optimale Kurvenlinie zu fahren.
+	\\
+	Auf diesem Rundkurs zeichnet sich eine Kurve dadurch aus, dass am Kurvenbeginn die Wand abrupt endet. Die gemessenen Distanzen im von der Kinect generierten Laserscan steigen an dieser Stelle also sprunghaft an.  
+  
+  \subsection{Kurvenende}	
+  	Der vorgegebene Rundkurs enthält ausschließlich 90°-Kurven. Am Kurvenausgang ist demnach der Gierwinkel des Fahrzeugs etwa 90° größer als am Kurveneingang. Steigt der Gierwinkel also über einen gewissen Schwellwert, übernimmt der PD-Regler wieder die Kontrolle.
+  	
+  \subsection{Probleme}
+  \subsubsection{Kurvenerkennung am Kurvenausgang}
+  WTF
+  
+    
