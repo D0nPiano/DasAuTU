@@ -114,22 +114,52 @@ private:
    */
   float getCurrentDistanceToCorner() const;
 
+  /**
+   * @brief Publisher for motor and steering commands
+   */
   ros::Publisher commandPub;
+
+  /**
+   * @brief Publisher for the detected corner in the curve
+   */
   ros::Publisher cornerPub;
+
+  /**
+   * @brief Publisher for values to analyze why the corner detection failed
+   */
   ros::Publisher infoPub;
 
+  /**
+   * @brief Helper for TF
+   */
   tf::TransformListener transformListener;
+
+  /**
+   * @brief Helper for TF
+   */
   tf::StampedTransform transform;
+
+  /**
+   * @brief Current laserscan
+   */
   sensor_msgs::LaserScanConstPtr laserscan;
+
+  /**
+   * @brief Current odometry data
+   */
   nav_msgs::OdometryConstPtr odom;
 
   /**
    * @brief Car's position when the curve was detected
+   *
+   * TF-Frame: odom
    */
   geometry_msgs::Pose cornerSeen;
 
   /**
    * @brief Car's position when entering the curve.
+   *
+   * TF-Frame: odom
    */
   geometry_msgs::Pose curveBegin;
 

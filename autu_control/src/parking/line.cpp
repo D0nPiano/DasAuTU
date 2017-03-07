@@ -1,6 +1,9 @@
-#include "autu_control/rundkurs/line.h"
+#include "autu_control/parking/line.h"
 
-Line::Line(const Eigen::Vector2f &first, const Eigen::Vector2f &last)
+using Eigen::Vector2f;
+using Eigen::ParametrizedLine;
+
+Line::Line(const Vector2f &first, const Vector2f &last)
     : origin(first), end(last) {}
 
 nav_msgs::Path Line::toPathMsg() const {
@@ -19,15 +22,15 @@ nav_msgs::Path Line::toPathMsg() const {
   return msg;
 }
 
-bool Line::hasPointInCommon(const Line &other) {
+bool Line::hasPointInCommon(const Line &other) const {
   return origin == other.origin || origin == other.end || end == other.origin ||
          end == other.end;
 }
 
-Eigen::ParametrizedLine<float, 2> Line::toEigenLine() const {
-  return Eigen::ParametrizedLine<float, 2>::Through(origin, end);
+ParametrizedLine<float, 2> Line::toEigenLine() const {
+  return ParametrizedLine<float, 2>::Through(origin, end);
 }
 
-Eigen::Vector2f Line::getOrigin() const { return origin; }
+Vector2f Line::getOrigin() const { return origin; }
 
-Eigen::Vector2f Line::getEnd() const { return end; }
+Vector2f Line::getEnd() const { return end; }

@@ -12,6 +12,7 @@ using std::atan;
 using std::sin;
 using std::cos;
 using std::abs;
+using Eigen::Vector2f;
 
 CurveDriverConstant::CurveDriverConstant(ros::NodeHandle &nh) : scanOffset(0) {
   commandPub = nh.advertise<pses_basis::Command>("autu/command", 1);
@@ -49,47 +50,79 @@ bool CurveDriverConstant::isAroundTheCorner() const {
   tf::quaternionMsgToTF(curveBegin.orientation, start);
   tf::quaternionMsgToTF(odom->pose.pose.orientation, current);
 
+  // angle() returns only the current angle divided by 2
   return start.angle(current) > cornerEndAngle * M_PI_2 / 180.0f;
 }
 
-void CurveDriverConstant::curveInit() { curveBegin = odom->pose.pose; }
+void CurveDriverConstant::curveInit() {
+  // remember the car's position and orientation at the beginning of the curve
+  curveBegin = odom->pose.pose;
+}
 
 bool CurveDriverConstant::isNextToGlas(float cornerX, float cornerY) {
+
+  // distance to the end of the curve area
   const float maxDist = cornerX + 1.2f;
+
+  // last angle which is relevant for the curve area
   const float minAlpha = M_PI_2 - atan(maxDist / cornerY);
+
+  // counter for points in the curve area
   int counter = 0;
+
+  // iterate from left to the center of the scan
   for (size_t i = laserscan->ranges.size() - 1;
        i > laserscan->ranges.size() / 2; --i) {
+
     const float r = laserscan->ranges[i];
+
+    // ignore invalid scan values
     if (laserscan->range_min < r && r < laserscan->range_max) {
+      // angle of the current point
       const float alpha = laserscan->angle_min + i * laserscan->angle_increment;
 
+      // points are not more in the curve area
       if (alpha < minAlpha)
         break;
 
+      // convert to cartesian coordinates
       const float x = r * cos(alpha);
       const float y = r * sin(alpha);
 
       if (cornerX + 0.1f < x && x < maxDist)
         if (y < cornerY + 0.5f)
+          // count points which are in the curve area
           ++counter;
     }
   }
+
+  // if too many points are in the area of the curve, it is not a real curve
   return counter >= 5;
 }
 
 bool CurveDriverConstant::wallFound(float cornerX, float cornerY) {
+  // angle of the detected corner in the scan
   const float minAlpha = M_PI_2 - atan(cornerX / cornerY);
+
+  // counter for points ahead of the corner
   int counter = 0;
+
+  // iterate from left to the center of the scan
   for (size_t i = laserscan->ranges.size() - 1;
        i > laserscan->ranges.size() / 2; --i) {
+
     const float r = laserscan->ranges[i];
+
+    // ignore invalid scan values
     if (laserscan->range_min < r && r < laserscan->range_max) {
+      // angle of the current point
       const float alpha = laserscan->angle_min + i * laserscan->angle_increment;
 
+      // points are now after the corner and must be ignored
       if (alpha < minAlpha)
         break;
 
+      // convert to cartesian coordinates
       const float x = r * cos(alpha);
       const float y = r * sin(alpha);
 
@@ -99,41 +132,56 @@ bool CurveDriverConstant::wallFound(float cornerX, float cornerY) {
     }
   }
 
+  // at least 80 point must be near the corner or it was a false-positive
   return counter >= 80;
 }
 
 bool CurveDriverConstant::isNextToCorner(float speed) {
   if (laserscan == nullptr)
     return false;
+
+  // calculate laserscan delay
   updateScanOffset(speed);
 
-  Eigen::Vector2f vecToCorner;
+  // vector pointing to the detected corner
+  Vector2f vecToCorner;
   float last_r = std::numeric_limits<float>::max();
 
   size_t i;
+  // iterate from left to the center of the scan
   for (i = laserscan->ranges.size() - 1; i > laserscan->ranges.size() / 2;
        --i) {
+
     const float r = laserscan->ranges[i];
+
+    // ignore invalid points and points which are too close to be valid
     if (laserscan->range_min < r && 0.4f < r && r < laserscan->range_max) {
       if (r - last_r > cornerThreshold)
+        // big step between 2 values detected -> curve possibly found
         break;
       else
+        // remember last point
         last_r = r;
     }
   }
 
+  // angle of the detected corner
   const float alpha =
       abs(laserscan->angle_min + (i + 1) * laserscan->angle_increment);
 
+  // consider laserscan delay
   corner.x = last_r * cos(alpha) - scanOffset;
   corner.y = last_r * sin(alpha);
 
+  // corner is too far away to be analyzed correctly
   if (corner.x > 4.0f)
     return false;
 
+  // convert corner to cartesian coordinates
   vecToCorner[0] = last_r * cos(alpha);
   vecToCorner[1] = last_r * sin(alpha);
 
+  // remember where the car was when the curve was detected
   cornerSeen = odom->pose.pose;
 
   /*const float vc = maxMotorLevel / 10.0f;
@@ -143,6 +191,7 @@ bool CurveDriverConstant::isNextToCorner(float speed) {
    if (rollout_distance < 0)
      rollout_distance = 0;*/
 
+  // rollout is ignored
   rolloutDistance = 0;
 
   std_msgs::String debugMsg;
@@ -151,6 +200,7 @@ bool CurveDriverConstant::isNextToCorner(float speed) {
       if (corner.x - 0.1f <
           precurveDistance + rolloutDistance + blindnessOffset) {
 
+        // publish the detected corner
         try {
           tf::StampedTransform transform;
           transformListener.waitForTransform("/base_laser", "/odom",
@@ -202,6 +252,7 @@ void CurveDriverConstant::setLaserscan(
   if (scan == nullptr)
     return;
   if (laserscan == nullptr || scan != laserscan) {
+    // a new scan was received so reset the scanOffset
     scanOffset = 0;
     scanOffsetStamp = scan->header.stamp.toSec();
     laserscan = scan;
@@ -212,6 +263,7 @@ float CurveDriverConstant::getCurrentDistanceToCorner() const {
   const float xDif = cornerInOdom.point.x - odom->pose.pose.position.x;
   const float yDif = cornerInOdom.point.y - odom->pose.pose.position.y;
 
+  // calculate euclidean distance
   return sqrt(xDif * xDif + yDif * yDif);
 }
 
