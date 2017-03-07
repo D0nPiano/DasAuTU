@@ -1,6 +1,6 @@
 \documentclass[12pt,
 article,
-type=bsc, %sta, diplom, bsc, pp, msc, dr, drfinal, sem, prosem
+type=prosem, %sta, diplom, bsc, pp, msc, dr, drfinal, sem, prosem
 colorbacktitle,
 instlogo,
 accentcolor=tud1c,
@@ -48,13 +48,12 @@ twoside
 
 \begin{document}
 	\counterwithin{lstlisting}{section}
-  \thesistitle{Die fabelhaften Benner-Boys präsentieren stolz das TUD-\linebreak[1]Corporate-Design für {\LaTeX}!}%
-    {The Fabulous Benner Boys present lordly the {\LaTeX} TUD corporate design!}
-  \author{Johnnie Walker}
+  \thesistitle{{\Huge Abschlussbericht \mbox{Projektseminar Echtzeitsysteme}}}%
+    {Team Das AuTU}
+  \author{Hendrik Göttmann}
   %do not add your student id!
   %\studentidx{1145456}
-	\thesisnumber{ES-B-0060}
-  \referee{Clemens v. Loewenich}{Johannes Werner}
+  \referee{Géza Kulcsár}{Géza Kulcsár}
 	
   \iflanguage{english}{
 		\department{	\mbox{Department of Electrical Engineering}\\ and Information Technology (FB18)\\\\Adjunct Member Department of\\ Computer Science (FB20)\\\\Prof. Dr. rer. nat. A. Schürr\\\ Merckstraße 25\\64283 Darmstadt\\\\www.es.tu-darmstadt.de}
@@ -66,7 +65,7 @@ twoside
   
   \dateofsubmit{\today}
   \makethesistitle
-  \affidavit{J. Walker}
+  \affidavit{Hendrik Göttmann}
 	
 	\cleardoublepage
 	\begin {abstract}
@@ -87,6 +86,8 @@ twoside
 	\input{chapters/Introduction}
 	\cleardoublepage
 	\input{chapters/Second}
+	\cleardoublepage
+	\input{chapters/Rundkurs_ohne_Hindernisse}
 	\cleardoublepage
   
 	\bibliographystyle{alphadin}
