@@ -17,13 +17,28 @@
   	\\
 	An dieser Stelle kommt die Kinect-Kamera ins Spiel. Durch sie ist es möglich, bereits 	deutlich vor einer anstehenden Kurve selbige zu erkennen. Somit wird es überhaupt erst 		möglich eine optimale Kurvenlinie zu fahren.
 	\\
-	Auf diesem Rundkurs zeichnet sich eine Kurve dadurch aus, dass am Kurvenbeginn die Wand abrupt endet. Die gemessenen Distanzen im von der Kinect generierten Laserscan steigen an dieser Stelle also sprunghaft an.  
+	Auf diesem Rundkurs zeichnet sich eine Kurve dadurch aus, dass am Kurvenbeginn die Wand abrupt endet. Die gemessenen Distanzen im von der Kinect generierten Laserscan steigen an dieser Stelle also sprunghaft an, was detektiert werden kann.  
   
   \subsection{Kurvenende}	
   	Der vorgegebene Rundkurs enthält ausschließlich 90°-Kurven. Am Kurvenausgang ist demnach der Gierwinkel des Fahrzeugs etwa 90° größer als am Kurveneingang. Steigt der Gierwinkel also über einen gewissen Schwellwert, übernimmt der PD-Regler wieder die Kontrolle.
   	
   \subsection{Probleme}
-  \subsubsection{Kurvenerkennung am Kurvenausgang}
-  WTF
+   \subsubsection{Kurvenerkennung am Kurvenausgang}
+  Am Kurvenausgang, wenn gerade wieder auf den PD-Regler umgeschaltet wurde, befindet sich die linke Wand nicht unbedingt im Sichtfeld der Kinect. Dadurch kommt die weiter oben beschriebene Kurvenerkennung aus dem Tritt. Es kommt zu einem False-Positive: Eine Kurve wird in der Punktmenge des Laserscans erkannt, die gar nicht existiert. In Folge dessen lenkt das Auto direkt in die Wand.
+  \\
+  Durch Einführung einer Totzeit kann dieses Problem gelöst werden. Nachdem eine Kurve beendet wurde, muss erst eine gewisse Zeitspanne vergehen, bis die Kurvenerkennung reaktiviert wird. Dann ist die Wand schon wieder im Sichtfeld und die Kurvenerkennung arbeitet somit wieder korrekt.
   
-    
+   \subsubsection{Glaserkennung}
+  Auf dem Rundkurs befindet sich ein Besprechungsraum mit mehreren Glasscheiben. Durch diese schaut die Kinect einfach durch. In dem daraus resultierenden Laserscan wird auch hier wieder eine Kurve erkannt werden.
+  \\
+  In einer Eigenschaft unterscheiden sich allerdings Glasscheiben von echten Kurven: Die breiteste Glasscheibe misst etwa 80cm in der Breite, der schmalste Flur 160cm. Für den Fall, dass eine Ecke erkannt wird, wird in einem Bereich nach der Ecke überprüft, ob sich dort Objekte befinden. Durch geeignete Wahl dieses Bereichs kann zwischen \glqq echten\grqq ~und \glqq falschen\grqq ~Kurven unterschieden werden.
+  \\
+  Darüber hinaus ist die Glaserkennung nicht nur für Glasscheiben nützlich. Wegen wahrscheinlich von LED-Lampen verursachten Störungen treten sporadisch Lücken in der Wand auf. Da sich diese Lücken hinsichtlich der Glaserkennung allerdings exakt gleich verhalten, wurde dieses Problem hiermit bereits adressiert.
+  
+  \subsubsection{Begrenztes Sichtfeld der Kinect}
+  Der Winkel des Sichtfeldes der Kinect ist stark begrenzt. In Folge dessen kann es passieren, dass eine Ecke, der man zu nahe kommt, aus dem sichtbaren Bereich verschwindet. Die Position der Ecke muss also gespeichert werden solange die Kinect sie noch sieht. Anschließend kann mit Hilfe der Odometrie der korrekte Einlenkzeitpunkt bestimmt werden.
+  
+  \subsubsection{Entkopplung von Geraden- und Kurvengeschwindigkeit}
+  Bei höheren Geschwindigkeiten kann es sinnvoll sein, in den Kurven langsamer zu fahren als auf den Geraden. Ein normales Auto würde dazu sicherlich vor den Kurven abbremsen, bei diesem Modell ist es ausreichend kurz vor den Kurven den Motor abzuschalten.
+\\    
+  Um die Strecke zu bestimmen, wie weit das Fahrzeug vor der Kurve vom Gas gehen muss, wurden folgende Berechnungen durchgeführt.
