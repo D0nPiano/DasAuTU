@@ -1,30 +1,48 @@
 \section{Rundkurs mit Hindernissen}
-	Bei dieser Aufgabe muss das Auto einen bekannten Rundkurs im Flur des Instituts in 	möglichst kurzer Zeit bewältigen. Allerdings befinden sich auf der Strecke nicht verzeichnete Hindernisse, die dynamisch erkannt und umfahren werden müssen.
+	Bei dieser Aufgabe muss das Auto einen bekannten Rundkurs im Flur des Instituts in möglichst kurzer Zeit bewältigen. Allerdings befinden sich auf der Strecke nicht verzeichnete Hindernisse, die dynamisch erkannt und umfahren werden müssen.
 
   \subsection{Grundidee}
-  Da unser Ursprünglicher Ansatz der Erkennung der weitesten Distanz und der entsprechenden Reglung (wie unten beschreiben) in einer so kurzen Zeit nicht umsetzbar war, entschied sich unsere Gruppe für den Abschlussvortrag dafür, bestehende Bibliotheken zu verwenden. Unsere gewählte Methode besteht aus:
+  Da unser Ursprünglicher Ansatz der Erkennung der weitesten Distanz und der entsprechenden Reglung (wie unten beschreiben) in einer so kurzen Zeit nicht zufriedenstellend umsetzbar war, entschied sich unsere Gruppe für den Abschlusspräsentation, bestehende Bibliotheken zu verwenden. Unsere gewählte Methode besteht aus:
 	\paragraph{Positionierung}
 Hierfür haben wir "`Adaptive Monte Carlo Localization"' (nachfolgend AMCL) gewählt. Dieser benötigt eine Karte und Laserscans, und kann anhand dessen die Position des Fahrzeugs annähern und diese als Odometrie-Daten veröffentlichen.
 	\paragraph{Costmaps}
-Um einen Globalen Plan zu erstellen, muss beschrieben werden, welche Zonen auf der Karte vermieden werden sollten. Hierfür kann "`costmap\_2d"' Costmaps erstellen. Dafür wird ein Hinderniskarte verwendet und die Hindernisse zusätzlich "`aufgepustet"', um zu vermeiden, dass das Fahrzeug ihnen zu nahe kommt.
+Um einen Globalen Plan zu erstellen, muss beschrieben werden, welche Zonen auf der Karte vermieden werden sollten. Hierzu kann "`costmap\_2d"' Costmaps erstellen. Dafür wird eine Hinderniskarte verwendet und die Hindernisse zusätzlich "`aufgepustet"' (inflation), um zu vermeiden, dass das Fahrzeug ihnen zu nahe kommt.
 	\paragraph{Globaler Planer}
 Auf dem Navigation Stack aufbauend, können wir mit Hilfe des globalen Planers einen Pfad zu einem Navigationsziel erstellen. Dies beachtet keine lokalen Hindernisse, sondern nur die globale Costmap der vorgegebenen Karte.
 	\paragraph{Lokaler Planer}
-Dabei haben wir den "`Timed Elastic Band Local Planner"' (nachfolgend teb) gewählt. Damit dieser richtig funktioniert, müssen einige Parameter angepasst werden. Teb ist insbesondere für Auto-ähnliche Roboter eine sinnvolle Wahl, da bei den meisten anderen Planern der Roboter als holonom angenommen wird -- wir jedoch das Fahrzeug nicht um die eigene Achse drehen können.
+Dabei haben wir den "`Timed Elastic Band Local Planner"' (nachfolgend teb) gewählt. Damit dieser richtig funktioniert, müssen einige Parameter angepasst werden. Teb ist insbesondere für Auto-ähnliche Roboter eine sinnvolle Wahl, da bei den meisten anderen Planern der Roboter als holonom angenommen wird -- wir jedoch das Fahrzeug nicht um die eigene Achse drehen können. Aus Rückwärts-Bewegungen können so sinnvoll umgesetzt werden.
  
-\paragraph{}
+\subsection{Umsetzung}
 Anhand dieser Grundeinrichtung können wir uns bereits auf einer Karte positionieren und anhand von Kriterien, die im globalen und lokalen Planer beschrieben werden, Routen erstellen.
-Teb sendet hierbei Steuerbefehle, die von einem von uns erstellten Controller in pses\_basis-Befehle übersetzt werden. Wenn das Fahrzeug sich dann in einem von uns bestimmten Abstand zum Navigationsziel befindet, published der Controller das nächste Ziel aus einem Array von Navigationszielen, und der globale Planer passt die Route entsprechend an. Wenn das letzte Ziel im Array erreicht wurde, beginnt die Prozedur von vorne.
-Das Array von Navigationszielen kann, der Einfachheit halber in einem eigenen Modus erstellt werden. Hierfür bietet das AuTU-Dashbord die Option "`Create Route"'. Nach auswählen des Modus können auf der Karte nacheinander Navigationsziele gesetzt werden. Diese werden beim Verlassen des Modus in eine XML-Datei gespeichert und können anschließend vom Controller des Modus "`Rundkurs mit Hindernissen"' eingelesen werden.
+Teb sendet hierbei Steuerbefehle, die von einem von uns erstellten Controller in "`pses\_basis"'-Befehle übersetzt werden. Wenn das Fahrzeug sich dann in einem von uns bestimmten Abstand zum Navigationsziel befindet, published der Controller das nächste Ziel aus einem Array von Navigationszielen, und der globale Planer passt die Route entsprechend an. Wenn das letzte Ziel im Array erreicht wurde, beginnt die Prozedur von vorne.
+Das Array von Navigationszielen kann der Einfachheit halber in einem eigenen Modus erstellt werden. Hierfür bietet das AuTU-Dashbord die Option "`Create Route"'. Nach auswählen des Modus können auf der Karte nacheinander Navigationsziele gesetzt werden. Diese werden beim Verlassen des Modus (Controller-Zerstörung) in eine XML-Datei gespeichert und können anschließend vom Controller des Modus "`Rundkurs mit Hindernissen"' eingelesen und abgefahren werden.
 
 \subsection{Fazit}
 Die gewählte Variante des Speicherns von Navigationspunkten in einer XML-Datei und dem Abfahren mit dem teb-Local-Planner bietet eine solide Variante, den Rundkurs mit Hindernissen zu bewältigen. Die XML-Datei kann auch nach Neustarten des Fahrzeuges wiederverwendet werden, und der Modus "`Create Route"' bietet eine einfache Möglichkeit, Richtung, Ort und Anfangspunkt zu ändern.
-Die Positionierung auf einer Karte mit AMCL war besonders bei geringen Geschwindigkeiten und kleinen Lenkwinkeln problematisch, sodass andere Gruppen auf zusätzliche Drehgeber oder Magnetkompasse zurückgreifen mussten. Für einen einfachen Rundkurs ist es jedoch völlig ausreichend.
-Zusätzlich ist die Pfadplanung mit globalem und lokalem Pfad nicht immer optimal. Es wird oft sehr dicht zu einem Hindernis gefahren, bis diesem dann ausgewichen wird, weshalb wir ursprünglich eine andere Idee verfolgten.
+Die Positionierung auf einer Karte mit AMCL war besonders bei geringen Geschwindigkeiten und kleinen Lenkwinkeln problematisch, sodass andere Gruppen auf einen zusätzlichen Drehgeber oder Magnetkompass zurückgreifen mussten. Für einen einfachen Rundkurs ist die vorhandene Odometrie jedoch völlig ausreichend.
+Zusätzlich ist die Pfadplanung mit globalem und lokalem Pfad nicht immer optimal.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.1\textwidth]{images/rndkMitTeb.jpg}
+    \caption {Zustandsdiagramm}
+    \label{fig: Zustandsdiagramm}
+\end{figure}
+
+Es wird oft sehr dicht zu einem Hindernis gefahren, bis diesem dann ausgewichen wird, da der lokale Planer versucht dem globalen Planer möglichst nahe zu kommen. Deshalb kam uns ursprünglich die Idee, nicht möglichst genau dem globalen Pfad zu folgen, sondern, vereinfacht ausgedrückt, dorthin zu fahren, wo am meisten Platz ist.
     
   \subsection{Alternative (verworfene) Lösung}
   	Im Laufe des Projekts haben wir auch eine andere Lösung für den Rundkurs mit Hindernissen programmiert, die jedoch später wieder verworfen wurde. Der Algorithmus besteht generell aus zwei Teilen:
-  	Beim ersten Teil sucht sich das Auto mithilfe der Kinect Kamera den Punkt, der am weitesten von dem Auto entfernt ist. Dann steuert das Auto gerade auf diesen Punkt zu. Um jedoch um Kurven fahren zu können, braucht das Auto einen Linksdrall, da es ansonsten einfach an der Kurve geradeaus den Gang herunter fahren würde. Dazu wird eine Funktion auf alle Laserscan-Punkte angewendet, die in Abhängigkeit zum Winkel zur Fahrtrichtung den gemessenen Abstand verringert, je weiter rechts desto mehr. Außerdem wurde die Funktion bei großen Ultraschall-Abstandswerten nach links verstärkt, um nochmals besser um Kurven herum zu kommen.
+  	Beim ersten Teil sucht sich das Auto mithilfe der Kinect Kamera den Punkt, der am weitesten von dem Auto entfernt ist.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.1\textwidth]{images/rndkMitLaser.jpg}
+    \caption {Zustandsdiagramm}
+    \label{fig: Zustandsdiagramm}
+\end{figure}
+
+  	Dann steuert das Auto gerade auf diesen Punkt zu. Um jedoch um Kurven fahren zu können, braucht das Auto einen Linksdrall, da es ansonsten einfach an der Kurve geradeaus den Gang herunter fahren würde. Dazu wird eine Funktion auf alle Laserscan-Punkte angewendet, die in Abhängigkeit zum Winkel zur Fahrtrichtung den gemessenen Abstand verringert, je weiter rechts desto mehr. Außerdem wurde die Funktion bei großen Ultraschall-Abstandswerten nach links verstärkt, um nochmals besser um Kurven herum zu kommen.
+
   	Dieser Ansatz hat beim Hindernis umfahren und Kurven fahren gut funktioniert, jedoch führte der Linksdrall auf geraden zu stark schwankender Fahrt, da das Auto immer wieder auf die Wand zusteuerte und dann wieder ausweichen musste. Aus diesem Grund haben wir den Algorithmus um den zweiten Teil, einem PD-Regler, erweitert. Dieser funktionierte im Prinzip bis auf leicht andere Parameter genauso wie bei dem Rundkurs ohne Hindernisse: Der Regler hält den Abstand zur linken Wand auf einem konstanten Niveau, solange kein Hindernis von der Kinect Kamera vor dem Auto in einem bestimmten Abstand erkannt wurde. Diese Hinderniserkennung suchte ein etwa 1,2 Meter langes und 0,4 Meter breites Rechteck vor dem Auto nach Laserscan Punkten ab, die ein Hindernis andeuten. Sollte solch ein Hindernis erkannt werden, wurde der Regler deaktiviert und der weiteste-Distanz-Controller benutzt.
   	Der Regler war allerdings nicht stark genug, um um enge Kurven herum zu fahren. Darum haben wir wiederum die Kurvenerkennung aus dem Rundkurs ohne Hindernisse benutzt, um den Regler für einige Sekunden zu deaktivieren und die Kurve mit dem weiteste-Distanz-Algorithmus zu fahren. Die Kurvenerkennung war jedoch aufgrund der unregelmäßigen Positionierung von Hindernissen und dem unregelmäßigen Abstand zur Wand nicht mehr ganz zuverlässig, insbesondere false-positive-Fehler traten immer wieder auf. Dies war jedoch noch verschmerzbar, da der weiteste-Distanz-Controller generell auch gut auf der Geraden fahren kann.
   	Letztendlich wurde der Algorithmus aber aufgrund verschiedener kleiner Probleme verworfen, insbesondere das fehlende Gedächtnis war ein Problem (also dass das Auto sich bereits vorher erkannte Hindernisse nicht merkt und es auch keinerlei Wissen über die aktuelle Position besitzt). 
