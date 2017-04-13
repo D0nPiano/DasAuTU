@@ -2,11 +2,10 @@
 \label{sec:projektstruktur}
 
 \subsection{Hauptprogramm}
-Um einen einfachen Ãœbergang von einem Modus in einen anderen zu ermÃ¶glichen, entschieden wir uns dafÃ¼r, nicht jeden Modus als eigenstÃ¤ndige Node zu schreiben, sondern eine Hauptnode zu erstellen, die im jeweiligen Modus dann nur den dazugehÃ¶rigen Controller erstellt.
+Um einen einfachen Übergang von einem Modus in einen anderen zu ermöglichen, entschieden wir uns dafür, nicht jeden Modus als eigenständige Node zu schreiben, sondern eine Hauptnode zu erstellen, die im jeweiligen Modus dann nur den dazugehörigen Controller erstellt.
 
-\paragraph{â€¢}
-Die Controller implementieren hierbei jeweils eine Run-Methode
+\paragraph{}
+Die Controller implementieren hierbei jeweils eine Run-Methode und kann direkt auf den Command-Publisher der Hauptnode zugreifen. Kommandos werden nur von der Run-Methode gesendet. Dies bietet einerseits den Vorteil, dass Kommandos nur mit einer in der Hauptnode definierten, bestimmten Frequenz an das Microcontroller Board gesendet werden und andererseits die Möglichkeit, Controller für Zeiträume die Publish-Befugnis zu entziehen. Dadurch ist es zum Beispiel möglich, eine globale Notbremse zu implementieren oder global einen Controller anzuschließen, der immer die Daten des jeweiligen Modus überschreibt.
 
-Fazit:
-- Notbremse
-- Schnellerer Wechsel (Neue Controller mÃ¼ssen nicht erst warten bis nÃ¤chster Laserscan gesendet wird, sondern kÃ¶nnen auf die in der Hauptmethode gespeicherten Daten zugreifen)
+\paragraph{Fazit}
+Das Prinzip des übergeordneten Hauptprogramms ermöglichte uns in der Praxis, sehr simpel globale Änderungen an z.B. der Notbremse vorzunehmen. Auch eine Controllerübergreifende Nutzung von Daten wurde dadurch möglich, in dem beispielsweise die Hauptnode Laserscans abboniert, und der Pointer an die Controller übergeben wird. Neue Controller müssen so nicht erst warten bis nächster Laserscan gesendet wird, sondern können bereits beim Moduswechsel auf die in der Hauptmethode gespeicherten Daten zugreifen. 
