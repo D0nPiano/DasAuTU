@@ -4,6 +4,23 @@
   \subsection{Grundidee}
   Das Fahrzeug fährt zu einer zuvor berechneten Startposition. Dort angekommen wird nach rechts eingelenkt und rückwärts gefahren. Wird nun ein gewisser Gierwinkel erreicht, wird nach links gelenkt bis das Fahrzeug in der Parklücke steht. 
   
+  \subsection{Ackermann-Lenkung}
+  Als erstes ist es wichtig zu verstehen, wie sich das Auto bei Lenkbewegungen verhält. Dazu greift man auf das Modell der Ackermann-Lenkung zurück.
+  Das Auto bewegt sich beim Kurven fahren auf einer Kreisbahn, wobei sämtliche Ränder im 90° Winkel zum Rotationszentrum stehen. Das Rotationszentrum liegt also im hinteren Bereich des Autos auf Höhe der hinteren Räder.
+  
+  \subsection{minimale Parklücke}
+  In der Aufgabenstellung ist gefordert, dass die Parklücke möglichst klein sein soll. Was ist also die minimal benötigte Parklückengröße bei gegebenem Kurvenradius des Fahrzeugs? Besagte Größe lässt sich mit einem Gedankenexperiment recht leicht ermitteln. Hierfür wird angenommen, dass sich das Auto bereits in der optimalen Parklücke befindet. In diesem Fall gelingt es dem Auto gerade noch so bei voll eingeschlagener Lenkung aus der Lücke heraus zu fahren, ohne andere Objekte zu berühren.
+  Verwendete Variablen:\begin{itemize}
+  \item r: minimaler Kurvenradius
+  \item w: Breite des Autos
+  \item b: Distanz zwischen Hinterrad und vordere Ecke des Autos
+  \item theta: Gierwinkel
+  \end{itemize}
+  
+  \subsection{Parklückenerkennung}
+  Unsere Annahme ist, dass sich vor uns im Sichtbereich der Kinect-Kamera ein geparktes Auto befindet, an dem man sich orientieren kann. Wir erkennen die hintere linke Ecke des geparkten Autos, indem wir die Punkte des Laserscans mittels Linienerkennung nach 2 Linien absuchen, die zu einer Ecke passen.
+  
   \subsection{Berechnung des maximalen Gierwinkels}
   
-  \subsection{Sicherheitsabstand}   
+  \subsection{Sicherheitsabstand} 
+  Die bisherigen Annahmen wurden unter idealen Bedingungen gemacht, sodass das Auto etwa mit Abstand 0 an anderen Objekten vorbei fährt. Da dies in echt nicht praktikabel ist, berechnen wir alle Werte mit einem zusätzlichen Sicherheitsabstand. Dies wird erreicht, indem wir sowohl unser Auto breiter annehmen als es eigentlich ist und noch die Startposition für die Einlenkbewegung etwas verschieben.  
