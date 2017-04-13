@@ -1,0 +1,12 @@
+\section{Projektstruktur}
+\label{sec:projektstruktur}
+
+\subsection{Hauptprogramm}
+Um einen einfachen Übergang von einem Modus in einen anderen zu ermöglichen, entschieden wir uns dafür, nicht jeden Modus als eigenständige Node zu schreiben, sondern eine Hauptnode zu erstellen, die im jeweiligen Modus dann nur den dazugehörigen Controller erstellt.
+
+\paragraph{•}
+Die Controller implementieren hierbei jeweils eine Run-Methode
+
+Fazit:
+- Notbremse
+- Schnellerer Wechsel (Neue Controller müssen nicht erst warten bis nächster Laserscan gesendet wird, sondern können auf die in der Hauptmethode gespeicherten Daten zugreifen)
