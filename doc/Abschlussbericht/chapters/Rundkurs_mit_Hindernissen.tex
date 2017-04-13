@@ -2,6 +2,24 @@
 	Bei dieser Aufgabe muss das Auto einen bekannten Rundkurs im Flur des Instituts in 	möglichst kurzer Zeit bewältigen. Allerdings befinden sich auf der Strecke nicht verzeichnete Hindernisse, die dynamisch erkannt und umfahren werden müssen.
 
   \subsection{Grundidee}
+  Da unser Ursprünglicher Ansatz der Erkennung der weitesten Distanz und der entsprechenden Reglung (wie unten beschreiben) in einer so kurzen Zeit nicht umsetzbar war, entschied sich unsere Gruppe für den Abschlussvortrag dafür, bestehende Bibliotheken zu verwenden. Unsere gewählte Methode besteht aus:
+	\paragraph{Positionierung}
+Hierfür haben wir "`Adaptive Monte Carlo Localization"' (nachfolgend AMCL) gewählt. Dieser benötigt eine Karte und Laserscans, und kann anhand dessen die Position des Fahrzeugs annähern und diese als Odometrie-Daten veröffentlichen.
+	\paragraph{Costmaps}
+Um einen Globalen Plan zu erstellen, muss beschrieben werden, welche Zonen auf der Karte vermieden werden sollten. Hierfür kann "`costmap\_2d"' Costmaps erstellen. Dafür wird ein Hinderniskarte verwendet und die Hindernisse zusätzlich "`aufgepustet"', um zu vermeiden, dass das Fahrzeug ihnen zu nahe kommt.
+	\paragraph{Globaler Planer}
+Auf dem Navigation Stack aufbauend, können wir mit Hilfe des globalen Planers einen Pfad zu einem Navigationsziel erstellen. Dies beachtet keine lokalen Hindernisse, sondern nur die globale Costmap der vorgegebenen Karte.
+	\paragraph{Lokaler Planer}
+Dabei haben wir den "`Timed Elastic Band Local Planner"' (nachfolgend teb) gewählt. Damit dieser richtig funktioniert, müssen einige Parameter angepasst werden. Teb ist insbesondere für Auto-ähnliche Roboter eine sinnvolle Wahl, da bei den meisten anderen Planern der Roboter als holonom angenommen wird -- wir jedoch das Fahrzeug nicht um die eigene Achse drehen können.
+ 
+\paragraph{}
+Anhand dieser Grundeinrichtung können wir uns bereits auf einer Karte positionieren und anhand von Kriterien, die im globalen und lokalen Planer beschrieben werden, Routen erstellen.
+Teb sendet hierbei Steuerbefehle, die von einem von uns erstellten Controller in pses\_basis-Befehle übersetzt werden. Wenn das Fahrzeug sich dann in einem von uns bestimmten Abstand zum Navigationsziel befindet, published der Controller das nächste Ziel aus einem Array von Navigationszielen, und der globale Planer passt die Route entsprechend an. Wenn das letzte Ziel im Array erreicht wurde, beginnt die Prozedur von vorne.
+Das Array von Navigationszielen kann, der Einfachheit halber in einem eigenen Modus erstellt werden. Hierfür bietet das AuTU-Dashbord die Option "`Create Route"'. Nach auswählen des Modus können auf der Karte nacheinander Navigationsziele gesetzt werden. Diese werden beim Verlassen des Modus in eine XML-Datei gespeichert und können anschließend vom Controller des Modus "`Rundkurs mit Hindernissen"' eingelesen werden.
+	\paragraph{Fazit}
+Die gewählte Variante des Speicherns von Navigationspunkten in einer XML-Datei und dem Abfahren mit dem teb-Local-Planner bietet eine solide Variante, den Rundkurs mit Hindernissen zu bewältigen. Die XML-Datei kann auch nach Neustarten des Fahrzeuges wiederverwendet werden, und der Modus "`Create Route"' bietet eine einfache Möglichkeit, Richtung, Ort und Anfangspunkt zu ändern.
+Die Positionierung auf einer Karte mit AMCL war besonders bei geringen Geschwindigkeiten und kleinen Lenkwinkeln problematisch, sodass andere Gruppen auf zusätzliche Drehgeber oder Magnetkompasse zurückgreifen mussten. Für einen einfachen Rundkurs ist es jedoch völlig ausreichend.
+Zusätzlich ist die Pfadplanung mit globalem und lokalem Pfad nicht immer optimal. Es wird oft sehr dicht zu einem Hindernis gefahren, bis diesem dann ausgewichen wird, weshalb wir ursprünglich eine andere Idee verfolgten.
     
   \subsection{Alternative (verworfene) Lösung}
   	Im Laufe des Projekts haben wir auch eine andere Lösung für den Rundkurs mit Hindernissen programmiert, die jedoch später wieder verworfen wurde. Der Algorithmus besteht generell aus zwei Teilen:
