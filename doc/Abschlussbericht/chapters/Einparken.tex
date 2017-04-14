@@ -1,5 +1,5 @@
 \section{Paralleles Einparken}
-	Bei dieser Aufgabe muss das Auto in eine möglichst kleine Parklücke hinter einem anderen bereits geparkten Fahrzeug rückwärts parallel einparken. Die theoretischen Grundlagen der in diesem Abschnitt gemachten Annahmen entstammen der Dissertation HIER QUELLE EINFÜGEN. Die Herleitung der Formeln kann der Quelle entnommen werden.
+	Bei dieser Aufgabe muss das Auto in eine möglichst kleine Parklücke hinter einem anderen bereits geparkten Fahrzeug rückwärts parallel einparken. Die theoretischen Grundlagen der in diesem Abschnitt gemachten Annahmen entstammen der wissenschaftlichen Arbeit \cite{Weltformel:1}, in der sich eingehend mit der Geometrie des Einparkens auseinandergesetzt wird. Die Herleitung der Formeln kann der Quelle entnommen werden.
 
   \subsection{Grundidee}
   Das Fahrzeug fährt zu einer zuvor berechneten Startposition. Dort angekommen wird nach rechts eingelenkt und rückwärts gefahren. Wird nun ein gewisser Gierwinkel erreicht, wird nach links gelenkt bis das Fahrzeug in der Parklücke steht. 
@@ -9,12 +9,25 @@
   Das Auto bewegt sich beim Kurven fahren auf einer Kreisbahn, wobei sämtliche Ränder im 90° Winkel zum Rotationszentrum stehen. Das Rotationszentrum liegt also im hinteren Bereich des Autos auf Höhe der hinteren Räder.
   
   
-  \subsection{minimale Parklücke}
+  \subsection{Minimale Parklücke}
   In der Aufgabenstellung ist gefordert, dass die Parklücke möglichst klein sein soll. Was ist also die minimal benötigte Parklückengröße bei gegebenem Kurvenradius des Fahrzeugs? Besagte Größe lässt sich mit einem Gedankenexperiment recht leicht ermitteln. Hierfür wird angenommen, dass sich das Auto bereits in der optimalen Parklücke befindet. In diesem Fall gelingt es dem Auto gerade noch so bei voll eingeschlagener Lenkung aus der Lücke heraus zu fahren, ohne andere Objekte zu berühren.
   
   \subsection{Parklückenerkennung}
-  Unsere Annahme ist, dass sich vor uns im Sichtbereich der Kinect-Kamera ein geparktes Auto befindet, an dem man sich orientieren kann. Wir erkennen die hintere linke Ecke des geparkten Autos, indem wir die Punkte des Laserscans mittels Linienerkennung nach 2 Linien absuchen, die zu einer Ecke passen.
+  Unsere Annahme ist, dass sich vor uns im Sichtbereich der Kinect-Kamera ein geparktes Auto befindet, an dem man sich orientieren kann. Wir erkennen die hintere linke Ecke des geparkten Autos, indem wir die Punkte des Laserscans mittels Linienerkennung nach 2 Linien absuchen, die einen gemeinsamen Punkte besitzen und somit eine Ecke darstellen.
   
+  \subsubsection{Linienerkennung via RANSAC}
+  Mit Hilfe eines Random Sample Consensus-Algorithmus (RANSAC) lassen sich Linien in den Laserscans erkennen. Die einzelnen Schritte sind im Folgenden erklärt:
+  \begin{enumerate}
+  \item Wähle zwei Punkte zufällig aus.
+  \item Erzeuge mit Hilfe dieser beiden Punkte eine Linie.
+  \item Iteriere über alle Punkte und zähle, wie viele Punkte sich in der unmittelbaren Umgebung der Linie befinden.
+  \item Unterstützen genug Punkte das Modell auf diese Weise, wird die Lösung gespeichert. Die Menge der unterstützenden Punkte wird als \textit{Consensus Set} bezeichnet.
+  \item Wiederhole die ersten vier Schritte. Wurden genügend Operationen durchgeführt, wird das Modell mit dem größten Consensus Set ausgewählt.
+  \end{enumerate}
+  Die Qualität und Zuverlässigkeit der Lösung hängen dabei stark ab von der Anzahl der durchgeführten Iterationen und der größtmöglichen Entfernung eines Punktes von der Linie, für welche er noch im Consensus Set liegt, ab.
+  \subsubsection{Linienerkennung via RLF}
+  Um in einer Menge von Punkten Linien zu erkennen, geht man beim Recursive Line Fitting (RLF) wie folgt vor: Man verbindet die beiden äußeren Punkte im Laserscan mit einer Linie. Nun wird der am weitesten von der Linie entfernte Punkt bestimmt. Ist diese Abweichung kleiner als ein gewisser Schwellwert, wird die Linie als solche akzeptiert. Ansonsten wird die Punktmenge an dieser Stelle aufgetrennt und der Algorithmus rekursiv auf die beiden Teilmengen angewendet. Zusätzlich bricht der Algorithmus ab, wenn die Punktmenge nicht eine gewisse Mindestzahl an Elementen aufweist. \\
+  Aufgrund des deterministischen Verhaltens und des deutlich geringeren Rechenaufwandes wird RLF zur Linienerkennung eingesetzt und nicht der oben beschriebene RANSAC.
   \subsection{Berechnung des maximalen Gierwinkels}
   \[R_e=\sqrt{R^2+b^2}\]
   \[\alpha = \arccos(1-\frac{b^2}{4R^2})\]
