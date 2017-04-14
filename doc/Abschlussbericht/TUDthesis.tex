@@ -11,15 +11,16 @@ twoside
 %\usepackage[english]{babel}
 
 \usepackage[latin1]{inputenc}
-%\usepackage[applemac]{inputenc}
 
 % linebreak for urls in bitex
 \usepackage{url}
 \urlstyle{rm}
-
+\usepackage{amsmath}
 %listings
 \usepackage{listings}
 \usepackage{graphicx}
+\let\circledS\undefined
+\usepackage{amssymb}
 
 \newcommand{\getmydate}{%
 \iflanguage{ngerman}{%
@@ -84,8 +85,8 @@ twoside
 	\cleardoublepage
 	
 	\pagenumbering{arabic}
-	\input{chapters/Introduction}
-	\cleardoublepage
+
+	\input{chapters/Vorwort}
 	\input{chapters/Rundkurs_ohne_Hindernisse}
 	\cleardoublepage
 	\input{chapters/Rundkurs_mit_Hindernissen}
@@ -96,6 +97,9 @@ twoside
 	\cleardoublepage
 	\input{chapters/Boostmode}
 	\cleardoublepage
+	\input{chapters/Fazit}
+	%\cleardoublepage
+	%\input{chapters/Quellen}
   
 	\bibliographystyle{alphadin}
 	\bibliography{literature}
