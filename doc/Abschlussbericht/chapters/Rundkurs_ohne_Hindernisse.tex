@@ -2,7 +2,7 @@
 	Bei dieser Aufgabe muss das Auto einen bekannten Rundkurs im Flur des Instituts in 	möglichst kurzer Zeit bewältigen. 
 
   \subsection{Grundidee}
-    Der Rundkurs besteht aus Geraden, an deren Ende sich jeweils eine Kurve befindet. Demnach existieren in diesem System zwei Hauptzustände: \glqq Fahrzeug auf der Geraden\grqq ~oder \grqq Fahrzeug in Kurve\grqq. Die Modellierung des Ganzen als Zustandsautomat erscheint also sinnvoll.
+    Der Rundkurs besteht aus Geraden, an deren Ende sich jeweils eine Kurve befindet. Demnach existieren in diesem System zwei Hauptzustände: \glqq Fahrzeug auf der Geraden\grqq{} oder \glqq Fahrzeug in Kurve\grqq. Die Modellierung des Ganzen als Zustandsautomat erscheint also sinnvoll.
     
 \begin{figure}[htbp]
     \centering
@@ -14,13 +14,13 @@
   \subsection{Regelung der Fahrt auf den Geraden}
 	Jede Gerade hat den Vorteil, dass sie durch eine Wand begrenzt ist, an welcher sich das Fahrzeug orientieren kann. Der aktuelle Abstand zur Wand kann nämlich näherungsweise mit dem Ultraschall-Sensor, der auf der linken Seite des Autos montiert ist, bestimmt 		werden. Mit Hilfe eines PD-Reglers wird sichergestellt, dass sich das Auto parallel zur 	Wand fortbewegt.
 	\\
-	Die dazu benötigten Parameter wurden bei Testfahrten empirisch ermittelt. Außerdem 		werden die Messwerte des Ultraschall-Sensors geglättet, um nervöse Lenkbewegungen zu 		vermeiden, indem aus den letzten 10 Messwerten ein Mittelwert gebildet wird.      
+	Die dazu benötigten Parameter wurden bei Testfahrten empirisch ermittelt. Außerdem 		werden die Messwerte des Ultraschall-Sensors geglättet, um nervöse Lenkbewegungen zu 		vermeiden, indem aus den letzten 10 Messwerten ein Mittelwert gebildet wird.
 
   \subsection{Steuerung der Fahrt in den Kurven}
-  	Zu Beginn wurde auch hier versucht, das Problem mittels einer Regelung zu lösen. Mit der Zeit sollte sich jedoch herausstellen, dass eine simple Steuerung bessere Ergebnisse 	erzielt. In der Kurve wird also einfach ein fester Lenkwinkel eingestellt, der während 		der gesamten Kurvenfahrt konstant bleibt.
+  	Zu Beginn wurde auch hier versucht, das Problem mittels einer Regelung zu lösen. Mit der Zeit sollte sich jedoch herausstellen, dass eine simple Steuerung bessere Ergebnisse 	erzielt. In der Kurve wird also einfach ein fester Lenkwinkel eingestellt, der während 		der gesamten Kurvenfahrt konstant bleibt.\pagebreak
   	
   \subsection{Kurvenerkennung}
-  	Die Kurvenerkennung entspricht im Zustandsautomaten dem Übergang von der Geraden hin zur	Kurve. Wie erkennt man also eine Kurve? Verlässt man sich ausschließlich auf den 		Ultraschall-Sensor, kann man eine Kurve erst detektieren, wenn sich links des Fahrzeugs 	keine Wand mehr befindet. Dann befindet sich das Auto allerdings schon mitten im 			Kurvenbereich und eine vernünftige Linie kann keinesfalls mehr erreicht werden.
+  	Die Kurvenerkennung entspricht im Zustandsautomaten dem Übergang von der Geraden hin zur	Kurve. Wie erkennt man also eine Kurve? Verlässt man sich ausschließlich auf den 		Ultraschall-Sensor, kann man eine Kurve erst detektieren, wenn links des Fahrzeugs 	keine Wand mehr vorhanden ist. Dann befindet sich das Auto allerdings schon mitten im 			Kurvenbereich und eine vernünftige Linie kann keinesfalls mehr erreicht werden.
 
 \begin{figure}[htbp]
     \centering
@@ -36,6 +36,7 @@
   \subsection{Kurvenende}	
   	Der vorgegebene Rundkurs enthält ausschließlich 90°-Kurven. Am Kurvenausgang ist demnach der Gierwinkel des Fahrzeugs etwa 90° größer als am Kurveneingang. Steigt der Gierwinkel also über einen gewissen Schwellwert, übernimmt der PD-Regler wieder die Kontrolle.
   	
+  \newpage	
   \subsection{Probleme}
    \subsubsection{Kurvenerkennung am Kurvenausgang}
   Am Kurvenausgang, wenn gerade wieder auf den PD-Regler umgeschaltet wurde, befindet sich die linke Wand nicht unbedingt im Sichtfeld der Kinect. Dadurch kommt die weiter oben beschriebene Kurvenerkennung aus dem Tritt. Es kommt zu einem False-Positive: Eine Kurve wird in der Punktmenge des Laserscans erkannt, die gar nicht existiert. In Folge dessen lenkt das Auto direkt in die Wand.
