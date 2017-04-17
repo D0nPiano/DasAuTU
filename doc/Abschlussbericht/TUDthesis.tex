@@ -21,6 +21,8 @@ twoside
 \usepackage{graphicx}
 \let\circledS\undefined
 \usepackage{amssymb}
+\usepackage[none]{hyphenat}
+\usepackage{enumerate}
 
 \newcommand{\getmydate}{%
 \iflanguage{ngerman}{%
@@ -69,43 +71,52 @@ twoside
   \makethesistitle
   \affidavit{Hendrik Göttmann, Dominik Lorych, Florian Netzer, Raphael Wenzel, Lars Wolf}
 	
-	\cleardoublepage
-	\begin {abstract}
-	...
-	\end{abstract} 
-	
-	\cleardoublepage
 	\pagenumbering{roman}
-	\addtocontents{Anhang}{}
+	%\addtocontents{Anhang}{}
 	\tableofcontents
-	\cleardoublepage
-	\listoffigures
-	\cleardoublepage
-	\listoftables
-	\cleardoublepage
+	%\cleardoublepage
+	%\listoffigures
 	
 	\pagenumbering{arabic}
+	\raggedbottom
 
+	\newpage 
 	\input{chapters/Vorwort}
+	\newpage
 	\input{chapters/Rundkurs_ohne_Hindernisse}
-	\cleardoublepage
+	\newpage
 	\input{chapters/Rundkurs_mit_Hindernissen}
-	\cleardoublepage
+	\newpage
 	\input{chapters/Einparken}
-	\cleardoublepage
+	\newpage
 	\input{chapters/Projektstruktur}
-	\cleardoublepage
+	\newpage
 	\input{chapters/Boostmode}
-	\cleardoublepage
+	\newpage
 	\input{chapters/Fazit}
-	%\cleardoublepage
-	%\input{chapters/Quellen}
+	
+	\nocite{Navguide}
+	\nocite{xavier2005fast}
   
+  	\newpage
+  	\section{Quellen}
+	\textit{Quellenverzeichnis vom 14.04.2017: } 	
+  	\begin{enumerate}[(1)]
+  	\item \url{http://wiki.ros.org/amcl}
+  	\item \url{http://wiki.ros.org/depthimage_to_laserscan}
+  	\item \url{http://eigen.tuxfamily.org}
+  	\item \url{http://wiki.ros.org/costmap_2d?distro=indigo}
+  	\item \url{http://wiki.ros.org/base_local_planner?distro=indigo}
+  	\item \url{http://wiki.ros.org/teb_local_planner}
+  	\end{enumerate}
+  	
 	\bibliographystyle{alphadin}
 	\bibliography{literature}
 	
-	\begin{appendix}
-	\section{Erster Anhang}
-	\end{appendix}
+	
+	
+	%\begin{appendix}
+	%\section{Erster Anhang}
+	%\end{appendix}
 
 \end{document}
