@@ -22,6 +22,7 @@ twoside
 \let\circledS\undefined
 \usepackage{amssymb}
 \usepackage[none]{hyphenat}
+\usepackage{enumerate}
 
 \newcommand{\getmydate}{%
 \iflanguage{ngerman}{%
@@ -87,7 +88,7 @@ twoside
 	\input{chapters/Rundkurs_mit_Hindernissen}
 	\newpage
 	\input{chapters/Einparken}
-	\cleardoublepage
+	\newpage
 	\input{chapters/Projektstruktur}
 	\newpage
 	\input{chapters/Boostmode}
@@ -95,9 +96,24 @@ twoside
 	\input{chapters/Fazit}
 	
 	\nocite{Navguide}
+	\nocite{xavier2005fast}
   
+  	\newpage
+  	\section{Quellen}
+	\textit{Quellenverzeichnis vom 14.04.2017: } 	
+  	\begin{enumerate}[(1)]
+  	\item \url{http://wiki.ros.org/amcl}
+  	\item \url{http://wiki.ros.org/depthimage_to_laserscan}
+  	\item \url{http://eigen.tuxfamily.org}
+  	\item \url{http://wiki.ros.org/costmap_2d?distro=indigo}
+  	\item \url{http://wiki.ros.org/base_local_planner?distro=indigo}
+  	\item \url{http://wiki.ros.org/teb_local_planner}
+  	\end{enumerate}
+  	
 	\bibliographystyle{alphadin}
 	\bibliography{literature}
+	
+	
 	
 	%\begin{appendix}
 	%\section{Erster Anhang}
