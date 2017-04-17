@@ -21,6 +21,7 @@ twoside
 \usepackage{graphicx}
 \let\circledS\undefined
 \usepackage{amssymb}
+\usepackage[none]{hyphenat}
 
 \newcommand{\getmydate}{%
 \iflanguage{ngerman}{%
@@ -70,10 +71,10 @@ twoside
   \affidavit{Hendrik Göttmann, Dominik Lorych, Florian Netzer, Raphael Wenzel, Lars Wolf}
 	
 	\pagenumbering{roman}
-	\addtocontents{Anhang}{}
+	%\addtocontents{Anhang}{}
 	\tableofcontents
-	\cleardoublepage
-	\listoffigures
+	%\cleardoublepage
+	%\listoffigures
 	
 	\pagenumbering{arabic}
 	\raggedbottom
@@ -82,7 +83,7 @@ twoside
 	\input{chapters/Vorwort}
 	\newpage
 	\input{chapters/Rundkurs_ohne_Hindernisse}
-	\cleardoublepage
+	\newpage
 	\input{chapters/Rundkurs_mit_Hindernissen}
 	\newpage
 	\input{chapters/Einparken}
@@ -92,12 +93,14 @@ twoside
 	\input{chapters/Boostmode}
 	\newpage
 	\input{chapters/Fazit}
+	
+	\nocite{Navguide}
   
 	\bibliographystyle{alphadin}
 	\bibliography{literature}
 	
-	\begin{appendix}
-	\section{Erster Anhang}
-	\end{appendix}
+	%\begin{appendix}
+	%\section{Erster Anhang}
+	%\end{appendix}
 
 \end{document}
