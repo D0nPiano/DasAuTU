@@ -1,0 +1,104 @@
+\section{Rundkurs ohne Hindernisse}
+	Bei dieser Aufgabe muss das Auto einen bekannten Rundkurs im Flur des Instituts in 	möglichst kurzer Zeit bewältigen. 
+
+  \subsection{Grundidee}
+    Der Rundkurs besteht aus Geraden, an deren Ende sich jeweils eine Kurve befindet. Demnach existieren in diesem System zwei Hauptzustände: \glqq Fahrzeug auf der Geraden\grqq{} oder \glqq Fahrzeug in Kurve\grqq. Die Modellierung des Ganzen als Zustandsautomat erscheint also sinnvoll.
+    
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/rndkOhneZustandsdiag.jpg}
+    \caption {Zustandsdiagramm}
+    \label{fig: Zustandsdiagramm}
+\end{figure}
+
+  \subsection{Regelung der Fahrt auf den Geraden}
+	Jede Gerade hat den Vorteil, dass sie durch eine Wand begrenzt ist, an welcher sich das Fahrzeug orientieren kann. Der aktuelle Abstand zur Wand kann nämlich näherungsweise mit dem Ultraschall-Sensor, der auf der linken Seite des Autos montiert ist, bestimmt 		werden. Mit Hilfe eines PD-Reglers wird sichergestellt, dass sich das Auto parallel zur 	Wand fortbewegt.
+	\\
+	Die dazu benötigten Parameter wurden bei Testfahrten empirisch ermittelt. Außerdem 		werden die Messwerte des Ultraschall-Sensors geglättet, um nervöse Lenkbewegungen zu 		vermeiden, indem aus den letzten 10 Messwerten ein Mittelwert gebildet wird.
+
+  \subsection{Steuerung der Fahrt in den Kurven}
+  	Zu Beginn wurde auch hier versucht, das Problem mittels einer Regelung zu lösen. Mit der Zeit sollte sich jedoch herausstellen, dass eine simple Steuerung bessere Ergebnisse 	erzielt. In der Kurve wird also einfach ein fester Lenkwinkel eingestellt, der während 		der gesamten Kurvenfahrt konstant bleibt.\pagebreak
+  	
+  \subsection{Kurvenerkennung}
+  	Die Kurvenerkennung entspricht im Zustandsautomaten dem Übergang von der Geraden hin zur	Kurve. Wie erkennt man also eine Kurve? Verlässt man sich ausschließlich auf den 		Ultraschall-Sensor, kann man eine Kurve erst detektieren, wenn links des Fahrzeugs 	keine Wand mehr vorhanden ist. Dann befindet sich das Auto allerdings schon mitten im 			Kurvenbereich und hat somit den optimalen Punkt zum Einlenken bereits weit hinter sich gelassen.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/rndkOhneKurvenerkennung.jpg}
+    \caption {Kurvenerkennung}
+    \label{fig: Kurvenerkennung}
+\end{figure}
+
+	An dieser Stelle kommt die Kinect-Kamera ins Spiel. Durch sie ist es möglich, bereits 	deutlich vor einer anstehenden Kurve selbige zu erkennen. Somit wird es überhaupt erst 		möglich eine optimale Kurvenlinie zu fahren.
+	\\
+	Auf diesem Rundkurs zeichnet sich eine Kurve dadurch aus, dass am Kurvenbeginn die Wand abrupt endet. Die gemessenen Distanzen im von der Kinect generierten Laserscan steigen an dieser Stelle also sprunghaft an, was detektiert werden kann.  
+  
+  \subsection{Kurvenende}	
+  	Der vorgegebene Rundkurs enthält ausschließlich 90°-Kurven. Am Kurvenausgang ist demnach der Gierwinkel des Fahrzeugs etwa 90° größer als am Kurveneingang. Steigt der Gierwinkel also über einen gewissen Schwellwert, übernimmt der PD-Regler wieder die Kontrolle.
+  	
+  \newpage	
+  \subsection{Probleme}
+   \subsubsection{Kurvenerkennung am Kurvenausgang}
+  Am Kurvenausgang, wenn gerade wieder auf den PD-Regler umgeschaltet wurde, befindet sich die linke Wand meist nicht im Sichtfeld der Kinect. Dadurch kommt die weiter oben beschriebene Kurvenerkennung aus dem Tritt. Es kommt zu einem False-Positive: Eine Kurve wird in der Punktmenge des Laserscans erkannt, die gar nicht existiert. In Folge dessen lenkt das Auto direkt in die Wand.
+  \\
+  Durch Einführung einer Totzeit kann dieses Problem gelöst werden. Nachdem eine Kurve beendet wurde, muss erst eine gewisse Zeitspanne vergehen, bis die Kurvenerkennung reaktiviert wird. Dann ist die Wand schon wieder im Sichtfeld und die Kurvenerkennung arbeitet somit wieder korrekt.
+  
+   \subsubsection{Glaserkennung}
+  Auf dem Rundkurs befindet sich ein Besprechungsraum mit mehreren Glasscheiben. Durch diese schaut die Kinect einfach hindurch. In dem daraus resultierenden Laserscan wird auch hier wieder eine Kurve erkannt.
+  \\
+  In einer Eigenschaft unterscheiden sich allerdings Glasscheiben von echten Kurven: Die breiteste Glasscheibe misst etwa 80cm in der Breite, der schmalste Flur 160cm. Für den Fall, dass eine Ecke erkannt wird, wird in einem gewissen Bereich nach der Ecke überprüft, ob sich dort Objekte befinden. Durch geeignete Wahl dieses Bereichs kann zwischen \glqq echten\grqq ~und \glqq falschen\grqq ~Kurven unterschieden werden.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/rndkOhneKeinGlas.jpg}
+    \caption {Glaserkennung an Kurven}
+    \label{fig: Glaserkennung an Kurven}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/rndkOhneGlas.jpg}
+    \caption {Glaserkennung an Glasscheiben}
+    \label{fig: Glaserkennung an Glasscheiben}
+\end{figure}
+
+\noindent
+Darüber hinaus ist die Glaserkennung nicht nur für Glasscheiben nützlich. Wegen wahrscheinlich von LED-Lampen verursachten Störungen treten sporadisch Lücken in der Wand auf. Da sich diese Lücken hinsichtlich der Glaserkennung allerdings exakt gleich verhalten, wurde dieses Problem hiermit bereits adressiert.
+  
+  \subsubsection{Begrenztes Sichtfeld der Kinect}
+  Der Winkel des Sichtfeldes der Kinect ist stark begrenzt. In Folge dessen kann es passieren, dass eine Ecke, der das Fahrzeug zu nahe kommt, aus dem sichtbaren Bereich verschwindet.\\Veranschaulichen lässt sich diese Problematik am besten an einem Beispiel: Die optimale Stelle zum Einlenken in die Kurve liege 75cm vor der Ecke. Unglücklicherweise verschwindet die Ecke bereits aus dem Sichtfeld der Kamera bei einer Entfernung von 100cm. Die Position der Ecke muss also gespeichert werden solange die Kinect sie noch sieht. Anschließend kann mit Hilfe der Odometrie der korrekte Einlenkzeitpunkt bestimmt werden. Im gegebenen Beispiel müsste das Auto also noch 25cm blind geradeaus fahren bevor es mit dem Einlenken beginnt. 
+  
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/rndkOhneSichtfeld.jpg}
+    \caption {Sichtfeld der Kinect}
+    \label{fig: Sichtfeld der Kinect}
+\end{figure}
+
+\pagebreak
+  \subsubsection{Entkopplung von Geraden- und Kurvengeschwindigkeit}
+  Bei höheren Geschwindigkeiten kann es sinnvoll sein, in den Kurven langsamer zu fahren als auf den Geraden. Ein normales Auto würde dazu sicherlich vor den Kurven abbremsen, bei diesem Modell hingegen ist es ausreichend, kurz vor den Kurven den Motor abzuschalten. Aus einigen Experimenten mit dem Auto ging hervor, dass die Verzögerung beim Ausrollen näherungsweise als konstant angenommen werden kann. Eine gute Schätzung für diesen Wert ist $1 m/s^{2}$. 
+\\    
+Auf Basis dieser Überlegungen lässt sich die Länge der Strecke zum Ausrollen berechnen:
+  
+\begin{itemize}
+\item[] $a$: Verzögerung des Fahrzeugs bei Motorlevel 0 in $m/s^{2}$
+\item[] $v_{0}$: Geschwindigkeit auf der Geraden in $m/s$   
+\item[] $v_{k}$: Gewünschte Geschwindigkeit in der Kurve in $m/s$ \\
+\end{itemize}
+
+\noindent
+Zu jedem betrachteten Zeitpunkt t beträgt die Geschwindigkeit
+\[v(t) = \dot{x}(t) = v_{0} - at\]
+
+\noindent
+Mit der Anfangsbedingung $x(0)=0$ erhält man durch Integration die zurückgelegte Strecke
+\[x(t) = v_{0}t - \frac{1}{2}at^{2}\]
+
+\noindent
+Nun wird die benötigte Dauer zum Ausrollen bestimmt, um das Auto auf Kurventempo abzubremsen
+\[v(t_{a}) = v_{k} \Rightarrow t_{a} = \frac{v_{0}-v_{k}}{a}\]
+
+\noindent
+Daraus ergibt sich die benötigte Strecke zum Ausrollen
+\[x(t_{a}) = v_{0}\frac{v_{0}-v_{k}}{a} - \frac{1}{2}\frac{(v_{0}-v_{k})^{2}}{a} = \frac{1}{2a}(v_{0}^{2} - v_{k}^{2})\]

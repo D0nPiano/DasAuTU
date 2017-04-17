@@ -1,0 +1,3 @@
+\section{Erster Anhang}
+	\subsection{Kalman-Filter}
+	Zur Verbesserung der eigenen Positionsdaten wurde auch ein Kalman-Filter benutzt. Jedoch haben wir dies nicht selber implementiert, sondern das robot_localization-Paket benutzt. Die Konfiguration war recht simpel: Das Paket bekam die vom Basis-Paket bereitgestellte Odometrie und alle verfügbaren Sensorwerte übergeben und hat selbst eine eigene, etwas genauere und gleichmäßigere Odometrie ausgegeben. Das Paket wurde letztendlich jedoch bei keinem unserer Ansätze benutzt, da auch die bereit gestellte Basis-Paket-Odometrie zufriedenstellende Ergebnisse lieferte.

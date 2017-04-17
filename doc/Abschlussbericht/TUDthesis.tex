@@ -1,0 +1,122 @@
+\documentclass[12pt,
+article,
+type=projektsem, %sta, diplom, bsc, pp, msc, dr, drfinal, sem, prosem
+colorbacktitle,
+instlogo,
+accentcolor=tud1c,
+twoside
+]{tudthesis}
+
+\usepackage[ngerman]{babel}
+%\usepackage[english]{babel}
+
+\usepackage[latin1]{inputenc}
+
+% linebreak for urls in bitex
+\usepackage{url}
+\urlstyle{rm}
+\usepackage{amsmath}
+%listings
+\usepackage{listings}
+\usepackage{graphicx}
+\let\circledS\undefined
+\usepackage{amssymb}
+\usepackage[none]{hyphenat}
+\usepackage{enumerate}
+
+\newcommand{\getmydate}{%
+\iflanguage{ngerman}{%
+  \ifcase\month%
+    \or Januar\or Februar\or M\"arz%
+    \or April\or Mai\or Juni\or Juli%
+    \or August\or September\or Oktober%
+    \or November\or Dezember%
+  \fi\ \number\year%
+}%
+\iflanguage{english}{%
+  \ifcase\month%
+    \or January\or February\or March%
+    \or April\or May\or June\or July%
+    \or August\or September\or October%
+    \or November\or December%
+  \fi\ \number\year%
+}
+}
+% changed counter for section wise counting
+\usepackage{chngcntr}
+\counterwithin{figure}{section} 
+\counterwithin{table}{section} 
+
+ 
+\setinstitutionlogo[height]{logo/ESlogo.png}
+
+\begin{document}
+	\counterwithin{lstlisting}{section}
+  \thesistitle{{\Huge Abschlussbericht \mbox{Projektseminar Echtzeitsysteme}}}%
+    {Team Das AuTU}
+  \author{Hendrik Göttmann, Dominik Lorych, Florian Netzer, Raphael Wenzel, Lars Wolf}
+  %do not add your student id!
+  %\studentidx{1145456}
+  \referee{Géza Kulcsár}{Géza Kulcsár}
+	
+  \iflanguage{english}{
+		\department{	\mbox{Department of Electrical Engineering}\\ and Information Technology (FB18)\\\\Adjunct Member Department of\\ Computer Science (FB20)\\\\Prof. Dr. rer. nat. A. Schürr\\\ Merckstraße 25\\64283 Darmstadt\\\\www.es.tu-darmstadt.de}
+		\group{Real-Time Systems Lab}
+	}{
+		\department{Elektrotechnik und \\Informationstechnik (FB18)\\\\Zweitmitglied Informatik (FB20)\\\\Prof. Dr. rer. nat. A. Schürr\\\ Merckstraße 25\\64283 Darmstadt\\\\www.es.tu-darmstadt.de}
+		\group{Fachgebiet Echtzeitsysteme}
+	}
+  
+  \dateofsubmit{\today}
+  \makethesistitle
+  \affidavit{Hendrik Göttmann, Dominik Lorych, Florian Netzer, Raphael Wenzel, Lars Wolf}
+	
+	\pagenumbering{roman}
+	%\addtocontents{Anhang}{}
+	\tableofcontents
+	%\cleardoublepage
+	%\listoffigures
+	
+	\pagenumbering{arabic}
+	\raggedbottom
+
+	\newpage 
+	\input{chapters/Vorwort}
+	\newpage
+	\input{chapters/Rundkurs_ohne_Hindernisse}
+	\newpage
+	\input{chapters/Rundkurs_mit_Hindernissen}
+	\newpage
+	\input{chapters/Einparken}
+	\newpage
+	\input{chapters/Projektstruktur}
+	\newpage
+	\input{chapters/Boostmode}
+	\newpage
+	\input{chapters/Fazit}
+	
+	\nocite{Navguide}
+	\nocite{xavier2005fast}
+  
+  	\newpage
+  	\section{Quellen}
+	\textit{Quellenverzeichnis vom 14.04.2017: } 	
+  	\begin{enumerate}[(1)]
+  	\item \url{http://wiki.ros.org/amcl}
+  	\item \url{http://wiki.ros.org/depthimage_to_laserscan}
+  	\item \url{http://eigen.tuxfamily.org}
+  	\item \url{http://wiki.ros.org/costmap_2d?distro=indigo}
+  	\item \url{http://wiki.ros.org/base_local_planner?distro=indigo}
+  	\item \url{http://wiki.ros.org/teb_local_planner}
+  	\end{enumerate}
+  	
+	\bibliographystyle{alphadin}
+	\bibliography{literature}
+	
+	
+	
+	%\begin{appendix}
+	%\section{Erster Anhang}
+	%\end{appendix}
+
+\end{document}
