@@ -27,7 +27,9 @@ Somit konnte das Antriebsmoment des Fahrzeugs um 67\% gesteigert werden. Durch d
 \end{equation}
 Somit ist eine neue Höchstgeschwindigkeit von $v_{max,neu}=3,3  m/s$ möglich. Diesem Potential stehen eine Reihe technischer Herausforderungen entgegen, die das Ausschöpfen des Potentials erschweren.
 Regelungstechnisch führt eine höhere Geschwindigkeit zu einem tendenziell schwerer regelbarem Systemverhalten. Für die Analyse des Systemverhaltens ist im Rahmen dieses Seminars das Ackermann-Modell verwendet worden. Daraus konnte eine Führungsübertragungsfunktion für das Querverhalten abgeleitet werden:
-	FORMEL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+\begin{equation}
+	G(s)=\frac{\gamma}{\varphi_L}=\frac{v*l_H}{l}*\frac{\frac{v}{l_H}+s}{s^2}
+\end{equation}
 
 Wie in der Gleichung zu sehen ist, hat die Geschwindigkeit wesentlichen Einfluss auf die Lage der Nullstelle des Systems. Durch eine höhere Geschwindigkeit entfernt sich diese Nullstelle immer weiter vom Nullpunkt. Der zur Regelung des Systems mit einem PD-Regler notwendige Einfluss der Nullstelle wird somit schwächer, was somit zu einer höheren Instabilität des Gesamtsystems führt. 
 Die zweite Herausforderung bei ?Hochgeschwindigkeitsfahrten? ist die wachsende Fehleranfälligkeit der visuellen Sensorik. Zum einen existiert eine nicht vernachlässigbare Latenz zwischen der Kinect und dem Empfangen der Information nach Transformation in Laserscan-Daten. Diese Latenz wurde in der Praxis zu durchschnittlich $t_L=300 ms$ ermittelt. Zum anderen sinkt die Qualität der visuellen Informationen. Die Anzahl der Fehldetektionen, sowohl falsch-positiver als auch falsch-negativer Natur nehmen zu, wodurch eine akzeptable Steuerung auf Basis der Kinect-Tiefeninformationen nicht mehr realisierbar ist. Bei praktischen Fahrversuchen konnten mit leicht gesteigerter Höchstgeschwindigkeit Rundenzeiten bis zu 19 s realisiert werden, was das Potential des Motors verdeutlicht. 
